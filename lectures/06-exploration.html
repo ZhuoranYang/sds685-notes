@@ -1,0 +1,2156 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.36">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>6&nbsp; Exploration – S&amp;DS 685 — Reinforcement Learning and Sequential Decision Making</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../lectures/07-value-based-deep-rl.html" rel="next">
+<link href="../lectures/05-certainty-equivalence.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-1db14e1c4cc35bfe1d9badc9e4551eed.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-75bfd1a986b306e51d60ba70b78c2b53.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="https://cdn.plot.ly/plotly-2.35.0.min.js" charset="utf-8"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet">
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script><script src="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css">
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../lectures/06-exploration.html">Exploration and Learning</a></li><li class="breadcrumb-item"><a href="../lectures/06-exploration.html"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Exploration</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">S&amp;DS 685 — Reinforcement Learning and Sequential Decision Making</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Welcome</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Foundations</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/01-introduction.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Introduction</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/02-mdp-basics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">MDP Basics</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/03-mdp-planning.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">MDP Planning</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Approximate Methods</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/04-approximate-planning.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Approximate Planning</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/05-certainty-equivalence.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Certainty Equivalence</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Exploration and Learning</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/06-exploration.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Exploration</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/07-value-based-deep-rl.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Deep RL I: Value-Based Methods</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/08-policy-based-deep-rl.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Deep RL II: Policy-Based Methods</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">Applications</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/09-alphago.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">AlphaGo</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/10-rl-for-llms.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">RLHF and Alignment</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/11-rl-verifiable-rewards.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">RL from Verifiable Rewards</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/summary.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Course Summary</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#sec-overview" id="toc-sec-overview" class="nav-link active" data-scroll-target="#sec-overview"><span class="header-section-number">6.1</span> What Will Be Covered</a></li>
+  <li><a href="#sec-online-rl" id="toc-sec-online-rl" class="nav-link" data-scroll-target="#sec-online-rl"><span class="header-section-number">6.2</span> Setting of Online RL</a>
+  <ul class="collapse">
+  <li><a href="#sec-protocol" id="toc-sec-protocol" class="nav-link" data-scroll-target="#sec-protocol"><span class="header-section-number">6.2.1</span> The Online Interaction Protocol</a></li>
+  <li><a href="#sec-sample-efficiency" id="toc-sec-sample-efficiency" class="nav-link" data-scroll-target="#sec-sample-efficiency"><span class="header-section-number">6.2.2</span> Sample Efficiency and Regret</a></li>
+  <li><a href="#sec-regret" id="toc-sec-regret" class="nav-link" data-scroll-target="#sec-regret"><span class="header-section-number">6.2.3</span> Regret</a></li>
+  <li><a href="#sec-examples" id="toc-sec-examples" class="nav-link" data-scroll-target="#sec-examples"><span class="header-section-number">6.2.4</span> Examples</a></li>
+  <li><a href="#sec-tradeoff" id="toc-sec-tradeoff" class="nav-link" data-scroll-target="#sec-tradeoff"><span class="header-section-number">6.2.5</span> The Exploration–Exploitation Tradeoff</a></li>
+  </ul></li>
+  <li><a href="#sec-mab" id="toc-sec-mab" class="nav-link" data-scroll-target="#sec-mab"><span class="header-section-number">6.3</span> Exploration in Multi-Armed Bandits</a>
+  <ul class="collapse">
+  <li><a href="#sec-eps-greedy" id="toc-sec-eps-greedy" class="nav-link" data-scroll-target="#sec-eps-greedy"><span class="header-section-number">6.3.1</span> <span class="math inline">\varepsilon</span>-Greedy Exploration</a></li>
+  </ul></li>
+  <li><a href="#sec-ucb" id="toc-sec-ucb" class="nav-link" data-scroll-target="#sec-ucb"><span class="header-section-number">6.4</span> Efficient Exploration: Optimism in the Face of Uncertainty (UCB)</a>
+  <ul class="collapse">
+  <li><a href="#sec-ucb-motivation" id="toc-sec-ucb-motivation" class="nav-link" data-scroll-target="#sec-ucb-motivation"><span class="header-section-number">6.4.1</span> Motivation</a></li>
+  <li><a href="#sec-ucb-alg" id="toc-sec-ucb-alg" class="nav-link" data-scroll-target="#sec-ucb-alg"><span class="header-section-number">6.4.2</span> The UCB Algorithm</a></li>
+  <li><a href="#sec-ucb-intuition" id="toc-sec-ucb-intuition" class="nav-link" data-scroll-target="#sec-ucb-intuition"><span class="header-section-number">6.4.3</span> Intuition Behind UCB</a></li>
+  <li><a href="#sec-ucb-analysis" id="toc-sec-ucb-analysis" class="nav-link" data-scroll-target="#sec-ucb-analysis"><span class="header-section-number">6.4.4</span> Why UCB Works: Optimism in the Face of Uncertainty</a></li>
+  <li><a href="#sec-ucb-regret-decomposition" id="toc-sec-ucb-regret-decomposition" class="nav-link" data-scroll-target="#sec-ucb-regret-decomposition"><span class="header-section-number">6.4.5</span> Regret Decomposition</a></li>
+  <li><a href="#sec-ucb-sum" id="toc-sec-ucb-sum" class="nav-link" data-scroll-target="#sec-ucb-sum"><span class="header-section-number">6.4.6</span> Summing the Regret</a></li>
+  </ul></li>
+  <li><a href="#sec-thompson" id="toc-sec-thompson" class="nav-link" data-scroll-target="#sec-thompson"><span class="header-section-number">6.5</span> Thompson Sampling (Posterior Sampling)</a>
+  <ul class="collapse">
+  <li><a href="#sec-thompson-motivation" id="toc-sec-thompson-motivation" class="nav-link" data-scroll-target="#sec-thompson-motivation"><span class="header-section-number">6.5.1</span> Motivation</a></li>
+  <li><a href="#sec-thompson-alg" id="toc-sec-thompson-alg" class="nav-link" data-scroll-target="#sec-thompson-alg"><span class="header-section-number">6.5.2</span> The Thompson Sampling Algorithm</a></li>
+  <li><a href="#sec-thompson-posterior" id="toc-sec-thompson-posterior" class="nav-link" data-scroll-target="#sec-thompson-posterior"><span class="header-section-number">6.5.3</span> Why <span class="math inline">\mathcal{N}(\widehat{R}^t(a), 1/n^t(a))</span>?</a></li>
+  </ul></li>
+  <li><a href="#sec-exploration-rl" id="toc-sec-exploration-rl" class="nav-link" data-scroll-target="#sec-exploration-rl"><span class="header-section-number">6.6</span> Exploration in RL</a></li>
+  <li><a href="#sec-optimism-rl" id="toc-sec-optimism-rl" class="nav-link" data-scroll-target="#sec-optimism-rl"><span class="header-section-number">6.7</span> Optimism in RL</a>
+  <ul class="collapse">
+  <li><a href="#sec-ucb-vi" id="toc-sec-ucb-vi" class="nav-link" data-scroll-target="#sec-ucb-vi"><span class="header-section-number">6.7.1</span> Online Learning in Tabular MDP: UCB-VI</a></li>
+  </ul></li>
+  <li><a href="#sec-model-free" id="toc-sec-model-free" class="nav-link" data-scroll-target="#sec-model-free"><span class="header-section-number">6.8</span> Model-Free Version: LSVI-UCB and OPPO</a>
+  <ul class="collapse">
+  <li><a href="#sec-lsvi-ucb" id="toc-sec-lsvi-ucb" class="nav-link" data-scroll-target="#sec-lsvi-ucb"><span class="header-section-number">6.8.1</span> LSVI-UCB</a></li>
+  <li><a href="#sec-oppo" id="toc-sec-oppo" class="nav-link" data-scroll-target="#sec-oppo"><span class="header-section-number">6.8.2</span> Optimistic Policy Optimization (OPPO)</a></li>
+  <li><a href="#sec-thompson-sampling-rl" id="toc-sec-thompson-sampling-rl" class="nav-link" data-scroll-target="#sec-thompson-sampling-rl"><span class="header-section-number">6.8.3</span> Thompson Sampling in RL</a></li>
+  </ul></li>
+  <li><a href="#sec-theory-ucb-vi" id="toc-sec-theory-ucb-vi" class="nav-link" data-scroll-target="#sec-theory-ucb-vi"><span class="header-section-number">6.9</span> Theory of UCB-VI</a>
+  <ul class="collapse">
+  <li><a href="#sec-ucb-vi-proof-sketch" id="toc-sec-ucb-vi-proof-sketch" class="nav-link" data-scroll-target="#sec-ucb-vi-proof-sketch"><span class="header-section-number">6.9.1</span> Regret Analysis for UCB-VI</a></li>
+  </ul></li>
+  <li><a href="#sec-exploration-deep-rl" id="toc-sec-exploration-deep-rl" class="nav-link" data-scroll-target="#sec-exploration-deep-rl"><span class="header-section-number">6.10</span> Exploration in Deep RL</a>
+  <ul class="collapse">
+  <li><a href="#sec-epsilon-greedy" id="toc-sec-epsilon-greedy" class="nav-link" data-scroll-target="#sec-epsilon-greedy"><span class="header-section-number">6.10.1</span> <span class="math inline">\varepsilon</span>-Greedy Exploration</a></li>
+  <li><a href="#sec-pseudo-count" id="toc-sec-pseudo-count" class="nav-link" data-scroll-target="#sec-pseudo-count"><span class="header-section-number">6.10.2</span> Count-Based Exploration (Pseudo-Count)</a></li>
+  <li><a href="#sec-prediction-error-bonus" id="toc-sec-prediction-error-bonus" class="nav-link" data-scroll-target="#sec-prediction-error-bonus"><span class="header-section-number">6.10.3</span> Use Prediction Error as “Novelty” (Bonus)</a></li>
+  </ul></li>
+  <li><a href="#sec-chapter-summary" id="toc-sec-chapter-summary" class="nav-link" data-scroll-target="#sec-chapter-summary"><span class="header-section-number">6.11</span> Chapter Summary</a>
+  <ul class="collapse">
+  <li><a href="#summary-of-exploration-algorithms" id="toc-summary-of-exploration-algorithms" class="nav-link" data-scroll-target="#summary-of-exploration-algorithms"><span class="header-section-number">6.11.1</span> Summary of Exploration Algorithms</a></li>
+  <li><a href="#hierarchy-of-exploration-problems" id="toc-hierarchy-of-exploration-problems" class="nav-link" data-scroll-target="#hierarchy-of-exploration-problems"><span class="header-section-number">6.11.2</span> Hierarchy of Exploration Problems</a></li>
+  <li><a href="#key-concepts" id="toc-key-concepts" class="nav-link" data-scroll-target="#key-concepts"><span class="header-section-number">6.11.3</span> Key Concepts</a></li>
+  <li><a href="#sec-ch6-references" id="toc-sec-ch6-references" class="nav-link" data-scroll-target="#sec-ch6-references"><span class="header-section-number">6.11.4</span> References</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../lectures/06-exploration.html">Exploration and Learning</a></li><li class="breadcrumb-item"><a href="../lectures/06-exploration.html"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Exploration</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Exploration</span></h1>
+<p class="subtitle lead">UCB, Thompson sampling, and the exploration–exploitation tradeoff</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>In reinforcement learning, collecting high-quality data is not a passive task — it is a strategic one. Unlike supervised learning, where a fixed dataset is provided upfront, an RL agent must decide which actions to take and, in doing so, determines the data it will learn from. This creates a fundamental tension: the agent must <em>explore</em> the environment to discover which actions yield the best outcomes, while simultaneously <em>exploiting</em> its current knowledge to accumulate reward. This tension, known as the exploration–exploitation tradeoff, is the central challenge of online reinforcement learning.</p>
+<p>Exploration is, in essence, the problem of designing good data collection strategies. A poorly exploring agent may converge to a suboptimal policy because it never gathers enough information about promising alternatives. A purely exploring agent wastes valuable episodes on uninformative actions when it could be reaping rewards. The algorithms we develop in this lecture — <span class="math inline">\varepsilon</span>-greedy, upper confidence bound (UCB), and Thompson sampling — represent increasingly sophisticated ways to navigate this tradeoff.</p>
+<p>We begin with the simplest setting, the multi-armed bandit, where the ideas are cleanest and the analysis most transparent. Each algorithm illustrates a distinct philosophy: <span class="math inline">\varepsilon</span>-greedy separates exploration and exploitation through randomization, UCB merges them via optimistic reward estimates, and Thompson sampling achieves the same through posterior randomization. These principles extend naturally to the full MDP setting and to deep RL, as we will see in later lectures.</p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>The Central Question
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><em>How should an agent balance exploring unknown actions to gather information with exploiting its current knowledge to maximize cumulative reward?</em></p>
+</div>
+</div>
+<section id="sec-overview" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="sec-overview"><span class="header-section-number">6.1</span> What Will Be Covered</h2>
+<ul>
+<li><strong>Setting of online RL:</strong> The interaction protocol, sample complexity, and the regret criterion.</li>
+<li><strong>Exploration in multi-armed bandits:</strong> Three foundational algorithms:
+<ul>
+<li><span class="math inline">\varepsilon</span>-greedy exploration,</li>
+<li>Upper confidence bound (UCB),</li>
+<li>Thompson sampling.</li>
+</ul></li>
+<li><strong>Regret analysis:</strong> Formal regret bounds for <span class="math inline">\varepsilon</span>-greedy (<span class="math inline">\widetilde{O}(T^{2/3})</span>) and UCB (<span class="math inline">\widetilde{O}(\sqrt{T})</span>).</li>
+<li><strong>Key examples:</strong> Multi-armed bandits, linear bandits, and contextual bandits as special cases of the online RL framework.</li>
+</ul>
+</section>
+<section id="sec-online-rl" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="sec-online-rl"><span class="header-section-number">6.2</span> Setting of Online RL</h2>
+<section id="sec-protocol" class="level3" data-number="6.2.1">
+<h3 data-number="6.2.1" class="anchored" data-anchor-id="sec-protocol"><span class="header-section-number">6.2.1</span> The Online Interaction Protocol</h3>
+<p>In the online setting, the agent has no prior knowledge or data. It learns how to make decisions <em>only through interacting with the environment</em>. This is sometimes called “learning by doing,” in contrast with offline RL, which is “learning from data.”</p>
+<p>The environment is modeled as a stochastic decision process, which may be a bandit or an episodic MDP. The agent interacts with the environment according to the following protocol.</p>
+<div id="fig-online-rl-loop" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-online-rl-loop-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/online-rl-loop.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Figure&nbsp;6.1: The online RL interaction loop. The agent deploys a policy, collects a trajectory, updates its dataset, and refines the policy."><img src="figures/online-rl-loop.svg" class="img-fluid figure-img" style="width:90.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-online-rl-loop-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6.1: The online RL interaction loop. The agent deploys a policy, collects a trajectory, updates its dataset, and refines the policy.
+</figcaption>
+</figure>
+</div>
+<p>The loop repeats for <span class="math inline">t = 1, 2, \ldots, T</span>:</p>
+<ol type="1">
+<li>The agent selects a policy <span class="math inline">\pi^t</span>.</li>
+<li>The policy is deployed in the environment, generating a trajectory <span class="math inline">\tau^t \sim \mathbb{P}^{\pi^t}</span>.</li>
+<li>The trajectory is saved to the dataset: <span class="math inline">D^t = D^{t-1} \cup \{\tau^t\}</span>.</li>
+<li>The agent updates its policy: <span class="math inline">\pi^{t+1} = \text{Update}(\pi^t, D^t)</span>.</li>
+</ol>
+</section>
+<section id="sec-sample-efficiency" class="level3" data-number="6.2.2">
+<h3 data-number="6.2.2" class="anchored" data-anchor-id="sec-sample-efficiency"><span class="header-section-number">6.2.2</span> Sample Efficiency and Regret</h3>
+<p>In the online setting, we assume that the RL agent interacts with the environment for many iterations. In each iteration the agent deploys a policy, collects a trajectory, and gets some rewards and observations. The central theoretical question is again <strong>sample efficiency</strong>:</p>
+<blockquote class="blockquote">
+<p><em>How many samples do we need to find an <span class="math inline">\varepsilon</span>-optimal policy?</em></p>
+</blockquote>
+<p>The total number of samples is <span class="math inline">\text{\#samples} = (\text{\#iterations}) \times (\text{\#steps per iteration})</span>. For simplicity, when dealing with multi-stage problems we consider <strong>episodic settings</strong> where the number of steps per episode is <span class="math inline">H</span>. If we run an RL algorithm for <span class="math inline">T</span> iterations, the total sample count is <span class="math inline">T \cdot H</span>.</p>
+<p>Sample complexity focuses on <em>finding</em> a good policy, but that policy might never be executed during training. One could imagine deploying a fixed behavior policy and running offline RL at the end — but then we would waste all the reward during training. We therefore want the <em>executed</em> policies to also perform well. To capture this desideratum, we use the notion of <strong>regret</strong>.</p>
+</section>
+<section id="sec-regret" class="level3" data-number="6.2.3">
+<h3 data-number="6.2.3" class="anchored" data-anchor-id="sec-regret"><span class="header-section-number">6.2.3</span> Regret</h3>
+<p>Consider a finite-horizon stochastic decision process <span class="math inline">\mathcal{M}</span>. The agent interacts with <span class="math inline">\mathcal{M}</span> for <span class="math inline">T</span> episodes according to the following protocol.</p>
+<p>For <span class="math inline">t = 1, 2, \ldots, T</span>:</p>
+<ul>
+<li>At the beginning of the <span class="math inline">t</span>-th episode, the agent specifies a policy <span class="math inline">\pi^t</span>.</li>
+<li>The policy <span class="math inline">\pi^t</span> generates a trajectory <span class="math inline">\tau^t = (o_1^t, a_1^t, \ldots, o_H^t, a_H^t, o_{H+1}^t)</span> as follows:
+<ul>
+<li><span class="math inline">o_1^t \sim \mu \in \Delta(\mathcal{O})</span> (or generated adversarially).</li>
+<li><span class="math inline">\tau_1^t = (o_1^t)</span>. The partial histories <span class="math inline">\{\tau_h^t\}</span> accumulate observations and actions.</li>
+<li><span class="math inline">a_h^t \sim \pi^t(\cdot \mid \tau_h^t)</span>.</li>
+<li><span class="math inline">o_{h+1}^t \sim P(\cdot \mid \tau_h^t, a_h^t)</span>.</li>
+<li>The reward <span class="math inline">r_h^t</span> has mean <span class="math inline">\mathbb{E}[r_h^t \mid \tau_h^t, a_h^t] = R(\tau_h^t, a_h^t)</span>.</li>
+</ul></li>
+</ul>
+<p>The <strong>performance</strong> of policy <span class="math inline">\pi^t</span> is</p>
+<p><span class="math display">
+J(\pi^t) = \mathbb{E}\left[\sum_{h=1}^{H} r_h^t\right].
+</span></p>
+<p>The <strong>suboptimality</strong> of <span class="math inline">\pi^t</span> is <span class="math inline">J(\pi^*) - J(\pi^t)</span>.</p>
+<p>To capture the cumulative cost of learning, we aggregate the per-episode suboptimality over all <span class="math inline">T</span> episodes into a single quantity called the <strong>regret</strong>.</p>
+<div id="def-regret" class="theorem definition">
+<p><span class="theorem-title"><strong>Definition 6.1 (Regret)</strong></span> The <strong>regret</strong> of an online RL algorithm over <span class="math inline">T</span> episodes is defined as the sum of the suboptimality terms:</p>
+<p><span id="eq-regret"><span class="math display">
+\text{Regret}(T) = \sum_{t=1}^{T} \bigl(J(\pi^*) - J(\pi^t)\bigr).
+\tag{6.1}</span></span></p>
+<p>Equivalently, regret measures the difference between the optimal cumulative reward over <span class="math inline">T</span> episodes and the cumulative reward actually collected by the algorithm.</p>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Remarks on Regret
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ol type="1">
+<li><p><strong>Sublinear growth.</strong> Regret<span class="math inline">(T)</span> grows in <span class="math inline">T</span>, but we want <span class="math inline">\text{Regret}(T) = o(T)</span>, meaning the regret grows sub-linearly. An algorithm achieving this is called <strong>no-regret</strong>.</p></li>
+<li><p><strong>Polynomial dependence on problem size.</strong> More concretely, we seek <span class="math inline">\text{Regret}(T) = o(T) \cdot \text{poly}(\text{size})</span>, where the polynomial factor depends on problem dimensions such as <span class="math inline">|\mathcal{A}|</span>, <span class="math inline">|\mathcal{S}|</span>, <span class="math inline">H</span>, etc.</p></li>
+<li><p><strong>From no-regret to <span class="math inline">\varepsilon</span>-optimal policy.</strong> Suppose <span class="math inline">\text{Regret}(T) = T^{\alpha}</span> with <span class="math inline">\alpha &lt; 1</span>. If we return a random policy <span class="math inline">\widehat{\pi}</span> drawn uniformly from <span class="math inline">\{\pi^1, \ldots, \pi^T\}</span>, then <span class="math display">
+\mathbb{E}[\text{SubOpt}(\widehat{\pi})] = \frac{1}{T}\sum_{t=1}^{T}\bigl[J(\pi^*) - J(\pi^t)\bigr] = \frac{\text{Regret}(T)}{T} = T^{\alpha - 1}.
+</span> Setting <span class="math inline">T^{\alpha - 1} = \varepsilon</span> gives <span class="math inline">T = (1/\varepsilon)^{1/(1-\alpha)}</span>. After this many episodes, we obtain an <span class="math inline">\varepsilon</span>-optimal policy.</p></li>
+<li><p><strong>Theoretical interest.</strong> Regret is mainly of interest for the sake of theory; in practice, sample complexity is often the more natural metric.</p></li>
+</ol>
+</div>
+</div>
+</section>
+<section id="sec-examples" class="level3" data-number="6.2.4">
+<h3 data-number="6.2.4" class="anchored" data-anchor-id="sec-examples"><span class="header-section-number">6.2.4</span> Examples</h3>
+<p>To make the online RL framework concrete, we consider several important special cases.</p>
+<div id="exm-mab" class="theorem example">
+<p><span class="theorem-title"><strong>Example 6.1 (Multi-Armed Bandit)</strong></span> In the multi-armed bandit (MAB), there is no observation, <span class="math inline">|\mathcal{A}|</span> is finite, and <span class="math inline">H = 1</span>. Let <span class="math inline">\mathcal{A} = \{a_1, a_2, \ldots, a_m\}</span>. The reward function satisfies</p>
+<p><span class="math display">
+\mathbb{E}[r \mid a] = R^*(a), \qquad R^*: \mathcal{A} \to [0,1].
+</span></p>
+<p>The regret simplifies to</p>
+<p><span id="eq-regret-mab"><span class="math display">
+\text{Regret}(T) = T \cdot \max_{a \in \mathcal{A}} R^*(a) - \sum_{t=1}^{T} \mathbb{E}_{a \sim \pi^t}\bigl[R^*(a)\bigr].
+\tag{6.2}</span></span></p>
+</div>
+<div id="exm-linear-bandit" class="theorem example">
+<p><span class="theorem-title"><strong>Example 6.2 (Bandit with Function Approximation)</strong></span> The action set <span class="math inline">\mathcal{A}</span> can be infinite, and the reward function <span class="math inline">R^* \in \mathcal{F}</span> belongs to some function class. For example, in a <strong>linear bandit</strong>, <span class="math inline">R^* \in \mathcal{F}_{\text{lin}}</span>, meaning there exists <span class="math inline">\theta^* \in \mathbb{R}^d</span> such that</p>
+<p><span class="math display">
+R(a) = \phi(a)^\top \theta^*.
+</span></p>
+<p>In bandits, a policy is <span class="math inline">\pi \in \Delta(\mathcal{A})</span>.</p>
+</div>
+<div id="exm-contextual-bandit" class="theorem example">
+<p><span class="theorem-title"><strong>Example 6.3 (Contextual Bandit)</strong></span> At each iteration, the agent observes a context <span class="math inline">x^t \in \mathcal{X}</span>. A policy <span class="math inline">\pi: \mathcal{X} \to \Delta(\mathcal{A})</span> maps contexts to distributions over actions. The contexts <span class="math inline">\{x^t\}</span> can be adversarially generated and thus are nonstationary (not following a fixed distribution).</p>
+<p>The reward function</p>
+<p><span class="math display">
+R^*(x, a) = \mathbb{E}[r^t \mid x^t = x]
+</span></p>
+<p>is fixed across all <span class="math inline">t \geq 1</span>. The optimal policy is</p>
+<p><span class="math display">
+\pi^*(x) = \operatorname*{argmax}_{a} R^*(x, a), \qquad (\pi^* = \text{greedy}(R^*)).
+</span></p>
+<p>The regret becomes</p>
+<p><span id="eq-regret-contextual"><span class="math display">
+\text{Regret}(T) = \sum_{t=1}^{T} \Bigl(R^*\bigl(x^t, \pi^*(x^t)\bigr) - \mathbb{E}_{a^t \sim \pi^t(\cdot \mid x^t)}\bigl[R^*(x^t, a^t)\bigr]\Bigr).
+\tag{6.3}</span></span></p>
+<p>To handle large <span class="math inline">|\mathcal{X}|</span> and <span class="math inline">|\mathcal{A}|</span>, we often assume <span class="math inline">R^*</span> belongs to some function class. For example, in a <strong>linear contextual bandit</strong>,</p>
+<p><span class="math display">
+R(x, a) = \phi(x, a)^\top \theta^*.
+</span></p>
+<p>Note the nesting of generality: <span class="math display">
+\text{Linear contextual bandit} \supseteq \text{Linear bandit} \supseteq \text{Multi-armed bandit}.
+</span></p>
+</div>
+</section>
+<section id="sec-tradeoff" class="level3" data-number="6.2.5">
+<h3 data-number="6.2.5" class="anchored" data-anchor-id="sec-tradeoff"><span class="header-section-number">6.2.5</span> The Exploration–Exploitation Tradeoff</h3>
+<div id="fig-exploration-exploitation" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-exploration-exploitation-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/exploration-exploitation-tradeoff.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-2" title="Figure&nbsp;6.2: The exploration–exploitation tradeoff in a multi-armed bandit. Well-explored arms (a1, a5) have narrow confidence intervals, making their reward estimates reliable (exploit). Poorly explored arms (a3, a4) have wide confidence intervals — their true reward could be much higher or lower than estimated. Should the agent explore these uncertain arms to learn more, or exploit its current best estimate?"><img src="figures/exploration-exploitation-tradeoff.svg" class="img-fluid figure-img" style="width:80.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-exploration-exploitation-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6.2: The exploration–exploitation tradeoff in a multi-armed bandit. Well-explored arms (a1, a5) have narrow confidence intervals, making their reward estimates reliable (exploit). Poorly explored arms (a3, a4) have wide confidence intervals — their true reward could be much higher or lower than estimated. Should the agent explore these uncertain arms to learn more, or exploit its current best estimate?
+</figcaption>
+</figure>
+</div>
+<p>The foundational challenge in online learning is the <strong>exploration–exploitation tradeoff</strong>.</p>
+<p>We want to find the optimal policy <span class="math inline">\pi^*</span>, but we do not know the true environment. We must find <span class="math inline">\pi^*</span> from data, which requires solving a statistical problem (e.g., estimating the transition function or value function). But we also need to decide <em>how</em> to collect data. High-quality data — meaning data with good coverage — leads to better estimation accuracy.</p>
+<p>In addition, because we care about regret, we cannot spend all iterations on data collection. We need to also deploy near-optimal policies. This gives rise to the fundamental tension:</p>
+<ul>
+<li><strong>Exploration:</strong> Collect data that has good coverage (e.g., <span class="math inline">\pi = \text{Unif}(\mathcal{A})</span> in MAB).</li>
+<li><strong>Exploitation:</strong> Deploy policies we believe are near-optimal (e.g., <span class="math inline">\pi = \text{greedy}(\widehat{R})</span>, where <span class="math inline">\widehat{R}</span> is an estimated reward function).</li>
+</ul>
+</section>
+</section>
+<section id="sec-mab" class="level2" data-number="6.3">
+<h2 data-number="6.3" class="anchored" data-anchor-id="sec-mab"><span class="header-section-number">6.3</span> Exploration in Multi-Armed Bandits</h2>
+<p>We first focus on multi-armed bandits and introduce several exploration algorithms. These methods also apply to MDPs in general.</p>
+<p><strong>Setup.</strong> There are <span class="math inline">m</span> actions, <span class="math inline">\mathcal{A} = \{a_1, \ldots, a_m\}</span>. For <span class="math inline">t = 1, 2, \ldots, T</span>, in the <span class="math inline">t</span>-th round, we pick an arm <span class="math inline">a^t</span> and observe reward <span class="math inline">r^t</span>. The expected reward satisfies</p>
+<p><span class="math display">
+\mathbb{E}[r^t \mid a^t = a] = R(a), \qquad \forall\, a \in \mathcal{A}.
+</span></p>
+<p>Let <span class="math inline">a^* = \operatorname*{argmax}_{a \in \mathcal{A}} R^*(a)</span>. The optimal policy always pulls <span class="math inline">a^*</span>.</p>
+<section id="sec-eps-greedy" class="level3" data-number="6.3.1">
+<h3 data-number="6.3.1" class="anchored" data-anchor-id="sec-eps-greedy"><span class="header-section-number">6.3.1</span> <span class="math inline">\varepsilon</span>-Greedy Exploration</h3>
+<p>The <span class="math inline">\varepsilon</span>-greedy strategy is a simple-to-implement exploration method. In each round, we first flip a biased coin with <span class="math inline">\mathbb{P}(\text{head}) = \varepsilon_t</span>:</p>
+<ul>
+<li><strong>If head (with probability <span class="math inline">\varepsilon_t</span>):</strong> uniformly choose an action <span class="math inline">a \in \mathcal{A}</span> with probability <span class="math inline">1/|\mathcal{A}|</span>. <em>(Explore.)</em></li>
+<li><strong>If tail (with probability <span class="math inline">1 - \varepsilon_t</span>):</strong> take the best action according to the current estimate of <span class="math inline">R</span>. <em>(Exploit.)</em></li>
+</ul>
+<p>A natural question is: what should the current estimate of <span class="math inline">R</span> be in each round?</p>
+<section id="sec-reward-estimator" class="level4" data-number="6.3.1.1">
+<h4 data-number="6.3.1.1" class="anchored" data-anchor-id="sec-reward-estimator"><span class="header-section-number">6.3.1.1</span> Constructing the Reward Estimator <span class="math inline">\widehat{R}^t</span></h4>
+<p>Before the <span class="math inline">t</span>-th iteration, we have <span class="math inline">(t-1)</span> action–reward pairs <span class="math inline">\{a^\ell, r^\ell\}_{\ell \leq t-1}</span>, where each <span class="math inline">a^\ell \in \{a_1, \ldots, a_m\}</span>. We can estimate each <span class="math inline">R(a)</span> using the <strong>empirical mean</strong> of the rewards from rounds where arm <span class="math inline">a</span> was pulled:</p>
+<p><span id="eq-reward-estimator"><span class="math display">
+\widehat{R}^t(a) = \frac{1}{n^t(a)} \sum_{\ell=1}^{t-1} \mathbb{1}\{a^\ell = a\} \cdot r^\ell,
+\tag{6.4}</span></span></p>
+<p>where the <strong>visit count</strong> is</p>
+<p><span class="math display">
+n^t(a) = 1 + \sum_{\ell=1}^{t-1} \mathbb{1}\{a^\ell = a\} = 1 + \text{\# pulls of arm } a \text{ in the first } (t-1) \text{ rounds}.
+</span></p>
+<p>Equivalently,</p>
+<p><span class="math display">
+\widehat{R}^t(a) = \frac{1}{1 + \sum_{\ell=1}^{t-1}\mathbb{1}\{a^\ell = a\}} \sum_{\ell=1}^{t-1} \mathbb{1}\{a^\ell = a\} \cdot r^\ell.
+</span></p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Why Add 1 in <span class="math inline">n^t(a)</span>?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>We add <span class="math inline">1</span> to the count to avoid division by zero when arm <span class="math inline">a</span> has never been pulled. By choosing <span class="math inline">n^t(a) = 1 + \sum_{k=1}^{t-1}\mathbb{1}\{a^k = a\}</span>, we ensure <span class="math inline">n^t(a) \geq 1</span> for all <span class="math inline">t \geq 1</span> and <span class="math inline">a \in \mathcal{A}</span>.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>A Regression Perspective on <span class="math inline">\widehat{R}^t</span>
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The estimator <span class="math inline">\widehat{R}^t</span> can be viewed as the solution to a <strong>ridge regression</strong> problem. Consider</p>
+<p><span class="math display">
+\min_{R \in \mathbb{R}^{|\mathcal{A}|}} \left\{ \sum_{k=1}^{t-1} \bigl(r^k - \phi(a^k)^\top R\bigr)^2 + \|R\|_2^2 \right\},
+</span></p>
+<p>where <span class="math inline">\phi</span> is the canonical feature, i.e., <span class="math inline">\phi(a) = e_a</span> is the standard basis vector with a <span class="math inline">1</span> in the position corresponding to arm <span class="math inline">a</span> and <span class="math inline">0</span> elsewhere.</p>
+<p><strong>Exercise:</strong> Verify that <span class="math inline">\widehat{R}^t</span> defined in (<a href="#eq-reward-estimator" class="quarto-xref"><span>6.4</span></a>) is the solution to this ridge regression problem.</p>
+</div>
+</div>
+</section>
+<section id="sec-eps-greedy-alg" class="level4" data-number="6.3.1.2">
+<h4 data-number="6.3.1.2" class="anchored" data-anchor-id="sec-eps-greedy-alg"><span class="header-section-number">6.3.1.2</span> The <span class="math inline">\varepsilon</span>-Greedy Algorithm</h4>
+<p>The complete algorithm is as follows.</p>
+<p><strong><span class="math inline">\varepsilon</span>-Greedy Algorithm.</strong> For <span class="math inline">t = 1, 2, \ldots, T</span>:</p>
+<ol type="1">
+<li>Update the reward estimator <span class="math inline">\widehat{R}^t</span>.</li>
+<li>With probability <span class="math inline">\varepsilon_t</span>, sample <span class="math inline">a^t \sim \text{Unif}(\mathcal{A})</span>.</li>
+<li>With probability <span class="math inline">1 - \varepsilon_t</span>, set <span class="math inline">a^t = \operatorname*{argmax}_{a \in \mathcal{A}} \widehat{R}^t(a)</span>.</li>
+</ol>
+</section>
+<section id="sec-eps-greedy-effective" class="level4" data-number="6.3.1.3">
+<h4 data-number="6.3.1.3" class="anchored" data-anchor-id="sec-eps-greedy-effective"><span class="header-section-number">6.3.1.3</span> Is <span class="math inline">\varepsilon</span>-Greedy Effective?</h4>
+<p>The answer is nuanced: <strong>theoretically, no; empirically, yes in many cases.</strong></p>
+<p>Why is it not theoretically optimal? Consider using a fixed <span class="math inline">\varepsilon</span>. When <span class="math inline">t</span> is very large and <span class="math inline">\mathcal{A}</span> is finite, we accumulate <span class="math inline">\Omega(\varepsilon \cdot T / m)</span> observations of each arm. In this regime, <span class="math inline">\|\widehat{R} - R\|_\infty</span> is very small, so we can safely trust <span class="math inline">\operatorname*{argmax}_a \widehat{R}(a)</span>. However, <span class="math inline">\varepsilon</span>-greedy tells us to <em>always explore</em>, even when we do not need to. Thus, <span class="math inline">\varepsilon</span>-greedy with constant <span class="math inline">\varepsilon</span> is not efficient.</p>
+<p><strong>Asymptotic regret of <span class="math inline">\varepsilon</span>-greedy.</strong> For constant <span class="math inline">\varepsilon</span>, the per-episode regret converges to</p>
+<p><span id="eq-eps-greedy-asymptotic"><span class="math display">
+\lim_{T \to \infty} \frac{R(T)}{T} = \varepsilon \cdot \frac{1}{|\mathcal{A}|} \sum_{a \in \mathcal{A}} \bigl[R(a^*) - R(a)\bigr].
+\tag{6.5}</span></span></p>
+<p>The right-hand side is the regret incurred when uniformly exploring <span class="math inline">\mathcal{A}</span> in a single iteration. Because the regret grows linearly with <span class="math inline">T</span>, constant <span class="math inline">\varepsilon</span>-greedy is <strong>not</strong> a no-regret algorithm.</p>
+</section>
+<section id="sec-eps-greedy-decay" class="level4" data-number="6.3.1.4">
+<h4 data-number="6.3.1.4" class="anchored" data-anchor-id="sec-eps-greedy-decay"><span class="header-section-number">6.3.1.4</span> <span class="math inline">\varepsilon</span>-Greedy with Decaying <span class="math inline">\varepsilon_t</span></h4>
+<p>As shown above, we do not need to explore when <span class="math inline">\widehat{R}^t</span> is accurate, which is the case when <span class="math inline">t</span> is large. Thus, a better approach is to set <span class="math inline">\varepsilon_t</span> as a <strong>decreasing function</strong> of <span class="math inline">t</span>.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Practical Implementation
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This is what is used in practice:</p>
+<ol type="1">
+<li><strong>Warm-start period:</strong> During an initial period, the agent takes completely random actions. Set a “learning starts” parameter.</li>
+<li><strong>Decay schedule:</strong> Starting from a large <span class="math inline">\varepsilon</span> (e.g., 1.0), gradually decrease to a small value (e.g., 0.05).</li>
+</ol>
+</div>
+</div>
+</section>
+<section id="sec-eps-greedy-regret" class="level4" data-number="6.3.1.5">
+<h4 data-number="6.3.1.5" class="anchored" data-anchor-id="sec-eps-greedy-regret"><span class="header-section-number">6.3.1.5</span> Regret Analysis for <span class="math inline">\varepsilon</span>-Greedy</h4>
+<p>We now show that setting a small <span class="math inline">\varepsilon_t</span> (depending on <span class="math inline">t</span>) yields a no-regret algorithm. For simplicity, we use a constant <span class="math inline">\varepsilon</span> but let it depend on <span class="math inline">T</span>.</p>
+<div id="thm-eps-greedy-regret" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 6.1 (Regret of <span class="math inline">\varepsilon</span>-Greedy)</strong></span> Set <span class="math inline">\varepsilon = T^{-1/3}\bigl(|\mathcal{A}| \cdot \log(T|\mathcal{A}|)\bigr)^{1/3}</span>. Then the regret of the <span class="math inline">\varepsilon</span>-greedy algorithm satisfies</p>
+<p><span class="math display">
+\text{Regret}(T) = O\!\left(T^{2/3} \bigl(|\mathcal{A}| \cdot \log(T|\mathcal{A}|)\bigr)^{1/3}\right)
+</span></p>
+<p>with high probability.</p>
+</div>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>We consider the regret incurred during exploration and exploitation rounds separately.</p>
+<p><strong>Exploration rounds.</strong> If the <span class="math inline">t</span>-th round is an exploration round, the expected immediate regret is</p>
+<p><span class="math display">
+\text{reg}_t = \mathbb{E}\bigl[R(a^*) - R(a_t)\bigr] = \frac{\varepsilon}{|\mathcal{A}|} \sum_{a \in \mathcal{A}} \bigl[R(a^*) - R(a)\bigr] \leq \varepsilon.
+</span></p>
+<p><strong>Exploitation rounds.</strong> When we choose <span class="math inline">a_t = \operatorname*{argmax}_a \widehat{R}^t(a)</span> in the <span class="math inline">t</span>-th round, a key result we use is that, for all <span class="math inline">a \in \mathcal{A}</span> and all <span class="math inline">t \in [T]</span>,</p>
+<p><span class="math display">
+\bigl|\widehat{R}^t(a) - R(a)\bigr| \leq \widetilde{O}\!\left(\frac{1}{\sqrt{n^t(a)}}\right).
+</span></p>
+<p>This gives us two bounds:</p>
+<p><span class="math display">
+\bigl|\widehat{R}^t(a^t) - R(a^t)\bigr| \lesssim \frac{1}{\sqrt{n^t(a^t)}}, \qquad \bigl|R(a^*) - \widehat{R}^t(a^*)\bigr| \lesssim \frac{1}{\sqrt{n^t(a^*)}}.
+</span></p>
+<p>Since <span class="math inline">a^t = \operatorname*{argmax}_a \widehat{R}^t(a)</span>, we have <span class="math inline">\widehat{R}^t(a^t) \geq \widehat{R}^t(a^*)</span>, and therefore</p>
+<p><span class="math display">
+\text{reg}_t = R(a^*) - R(a^t) \leq \widehat{R}^t(a^*) + \frac{1}{\sqrt{n^t(a^*)}} - \widehat{R}^t(a^t) + \frac{1}{\sqrt{n^t(a^t)}} \leq \frac{1}{\sqrt{n^t(a^*)}} + \frac{1}{\sqrt{n^t(a^t)}}.
+</span></p>
+<p>In the <span class="math inline">t</span>-th round, each arm has been explored at least <span class="math inline">\varepsilon \cdot t / |\mathcal{A}|</span> times in expectation. We can therefore replace <span class="math inline">n^t(a^*)</span> and <span class="math inline">n^t(a^t)</span> by <span class="math inline">\varepsilon \cdot t / |\mathcal{A}|</span>, giving</p>
+<p><span class="math display">
+\text{reg}_t \lesssim \sqrt{\frac{|\mathcal{A}|}{\varepsilon \cdot t}}.
+</span></p>
+<p><strong>Overall regret.</strong> Summing over all rounds,</p>
+<p><span class="math display">
+\text{Regret}(T) \lesssim \sum_{t=1}^{T} \left(\varepsilon + \sqrt{\frac{|\mathcal{A}|}{\varepsilon \cdot t}}\right) = T\varepsilon + \sqrt{\frac{|\mathcal{A}|}{\varepsilon}} \cdot \sum_{t=1}^{T} \frac{1}{\sqrt{t}}.
+</span></p>
+<p>Since <span class="math inline">\sum_{t=1}^T 1/\sqrt{t} \sim O(\sqrt{T})</span>, we obtain</p>
+<p><span class="math display">
+\text{Regret}(T) \lesssim T\varepsilon + \sqrt{\frac{|\mathcal{A}| T}{\varepsilon}}.
+</span></p>
+<p>Balancing the two terms by setting <span class="math inline">\varepsilon = \bigl(|\mathcal{A}|/T\bigr)^{1/3}</span> gives</p>
+<p><span class="math display">
+\text{Regret}(T) = \widetilde{O}\!\left(|\mathcal{A}|^{1/3} \, T^{2/3}\right).
+</span></p>
+<p>This completes the proof. <span class="math inline">\blacksquare</span></p>
+</div>
+</section>
+</section>
+</section>
+<section id="sec-ucb" class="level2" data-number="6.4">
+<h2 data-number="6.4" class="anchored" data-anchor-id="sec-ucb"><span class="header-section-number">6.4</span> Efficient Exploration: Optimism in the Face of Uncertainty (UCB)</h2>
+<section id="sec-ucb-motivation" class="level3" data-number="6.4.1">
+<h3 data-number="6.4.1" class="anchored" data-anchor-id="sec-ucb-motivation"><span class="header-section-number">6.4.1</span> Motivation</h3>
+<p>The <span class="math inline">\varepsilon</span>-greedy algorithm is suboptimal because it artificially separates exploration from exploitation. In every round, it either explores (uniformly at random) or exploits (greedily), but never does both at the same time. Can we design an algorithm that combines exploration and exploitation more systematically?</p>
+<p>The answer is <strong>optimism in the face of uncertainty</strong>, also known as the <strong>upper confidence bound (UCB)</strong> method.</p>
+</section>
+<section id="sec-ucb-alg" class="level3" data-number="6.4.2">
+<h3 data-number="6.4.2" class="anchored" data-anchor-id="sec-ucb-alg"><span class="header-section-number">6.4.2</span> The UCB Algorithm</h3>
+<p>Consider the MAB case. For any <span class="math inline">t \geq 1</span>, in each iteration we maintain two functions:</p>
+<ul>
+<li><span class="math inline">\widehat{R}^t: \mathcal{A} \to [0,1]</span> — the estimated reward function based on data collected before the <span class="math inline">t</span>-th iteration.</li>
+<li><span class="math inline">b^t: \mathcal{A} \to \mathbb{R}</span> — a <strong>bonus function</strong> that reflects the uncertainty we have about each arm.</li>
+</ul>
+<p>We then define a new reward function estimator <span class="math inline">R^t</span> by adding the bonus:</p>
+<p><span class="math display">
+R^t(a) = \text{Truncate}_{[0,1]}\!\bigl(\widehat{R}^t(a) + b^t(a)\bigr), \qquad \forall\, a \in \mathcal{A}.
+</span></p>
+<p>The policy <span class="math inline">\pi^t \in \Delta(\mathcal{A})</span> is defined as the greedy policy with respect to <span class="math inline">R^t</span>:</p>
+<p><span class="math display">
+\pi^t(a) = \mathbb{1}\{a = \operatorname*{argmax}_{a'} R^t(a')\}.
+</span></p>
+<p>That is, <span class="math inline">\pi^t</span> is a <strong>deterministic</strong> policy that chooses <span class="math inline">a^t = \operatorname*{argmax}_{a} R^t(a)</span>.</p>
+<p><strong>Constructing <span class="math inline">\widehat{R}^t</span> and <span class="math inline">b^t</span>.</strong> Given data <span class="math inline">D^t = \{(a^k, r^k): k \leq t-1\}</span>:</p>
+<p><span class="math display">
+\widehat{R}^t(a) = \frac{1}{n^t(a)} \sum_{k=1}^{t-1} \mathbb{1}\{a^k = a\} \cdot r^k, \qquad n^t(a) = 1 + \sum_{k=1}^{t-1} \mathbb{1}\{a^k = a\}.
+</span></p>
+<p><span id="eq-ucb-bonus"><span class="math display">
+b^t(a) = \beta \cdot \sqrt{\frac{1}{n^t(a)}}, \qquad \text{where} \quad \beta = C \cdot \sqrt{\log(T|\mathcal{A}|/\delta)}.
+\tag{6.6}</span></span></p>
+<p>Intuitively, <span class="math inline">b^t(a)</span> reflects the <strong>uncertainty</strong> about arm <span class="math inline">a</span> after we have collected data <span class="math inline">D^t</span>: arms that have been pulled fewer times have larger bonuses.</p>
+</section>
+<section id="sec-ucb-intuition" class="level3" data-number="6.4.3">
+<h3 data-number="6.4.3" class="anchored" data-anchor-id="sec-ucb-intuition"><span class="header-section-number">6.4.3</span> Intuition Behind UCB</h3>
+<div id="fig-ucb-selection" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ucb-selection-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/ucb-selection.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-3" title="Figure&nbsp;6.3: UCB arm selection. Each arm has an estimated mean R-hat(a) (dot) and an upper confidence bound UCB(a) = R-hat(a) + b(a) (dashed line). Arm a2 has a lower estimated mean than a1 but much higher uncertainty (wider confidence interval), so its UCB is the highest. UCB selects arm a2 because the true reward of an uncertain arm could be very high."><img src="figures/ucb-selection.svg" class="img-fluid figure-img" style="width:80.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ucb-selection-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6.3: UCB arm selection. Each arm has an estimated mean R-hat(a) (dot) and an upper confidence bound UCB(a) = R-hat(a) + b(a) (dashed line). Arm a2 has a lower estimated mean than a1 but much higher uncertainty (wider confidence interval), so its UCB is the highest. UCB selects arm a2 because the true reward of an uncertain arm could be very high.
+</figcaption>
+</figure>
+</div>
+<p>The UCB algorithm smoothly balances exploration and exploitation through a single mechanism. The estimated reward <span class="math inline">\widehat{R}^t</span> captures what we have learned so far (exploitation), while the bonus <span class="math inline">b^t</span> captures what we are uncertain about (exploration). By taking</p>
+<p><span class="math display">
+a^t = \operatorname*{argmax}_{a}\bigl\{\widehat{R}^t(a) + b^t(a)\bigr\},
+</span></p>
+<p>we choose an action either because <span class="math inline">\widehat{R}^t</span> is large (exploit) or because <span class="math inline">b^t</span> is large (explore).</p>
+<div class="figure-container">
+  <div id="fig-ucb-intuition"></div>
+  <div class="figure-caption">Figure 6.2: UCB selects the arm with the highest upper confidence bound. Arm 2 has a lower estimated reward than arm 1 but higher uncertainty, making its UCB the largest.</div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Generate Gaussian-shaped curves for three arms
+  const N = 200;
+  const xArr = Array.from({length: N}, (_, i) => i / (N - 1));
+  function gauss(x, mu, sig, amp) { return amp * Math.exp(-0.5 * ((x - mu) / sig) ** 2); }
+
+  const y1m = xArr.map(x => gauss(x, 0.25, 0.06, 0.65));
+  const y1u = xArr.map(x => gauss(x, 0.25, 0.066, 0.85));
+  const y1l = xArr.map(x => gauss(x, 0.25, 0.054, 0.45));
+
+  const y2m = xArr.map(x => gauss(x, 0.55, 0.10, 0.45));
+  const y2u = xArr.map(x => gauss(x, 0.55, 0.12, 0.80));
+  const y2l = xArr.map(x => gauss(x, 0.55, 0.08, 0.20));
+
+  const y3m = xArr.map(x => gauss(x, 0.80, 0.08, 0.35));
+  const y3u = xArr.map(x => gauss(x, 0.80, 0.088, 0.60));
+  const y3l = xArr.map(x => gauss(x, 0.80, 0.072, 0.15));
+
+  const c1 = warmtonePalette[0], c2 = warmtonePalette[1], c3 = warmtonePalette[3];
+  const traces = [
+    {x:xArr, y:y1u, mode:'lines', line:{dash:'dash', color:c1}, name:'\u0052\u0302\u1D57 + b\u1D57 (arm 1)'},
+    {x:xArr, y:y1m, mode:'lines', line:{color:c1, width:2}, name:'\u0052\u0302\u1D57 (arm 1)'},
+    {x:xArr, y:y1l, mode:'lines', line:{dash:'dot', color:c1}, name:'\u0052\u0302\u1D57 \u2212 b\u1D57 (arm 1)', showlegend:false},
+    {x:xArr, y:y2u, mode:'lines', line:{dash:'dash', color:c2}, name:'\u0052\u0302\u1D57 + b\u1D57 (arm 2)'},
+    {x:xArr, y:y2m, mode:'lines', line:{color:c2, width:2}, name:'\u0052\u0302\u1D57 (arm 2)'},
+    {x:xArr, y:y2l, mode:'lines', line:{dash:'dot', color:c2}, name:'\u0052\u0302\u1D57 \u2212 b\u1D57 (arm 2)', showlegend:false},
+    {x:xArr, y:y3u, mode:'lines', line:{dash:'dash', color:c3}, name:'\u0052\u0302\u1D57 + b\u1D57 (arm 3)'},
+    {x:xArr, y:y3m, mode:'lines', line:{color:c3, width:2}, name:'\u0052\u0302\u1D57 (arm 3)'},
+    {x:xArr, y:y3l, mode:'lines', line:{dash:'dot', color:c3}, name:'\u0052\u0302\u1D57 \u2212 b\u1D57 (arm 3)', showlegend:false}
+  ];
+  const layout = themeLayout({
+    width:650, height:380,
+    title:{text:'UCB: Greedy on Upper Confidence Bounds', font:{family:figFontHeading, size:16, color:css('--fig-text')}},
+    xaxis: Object.assign(themeAxis('Action space'), {showticklabels:false}),
+    yaxis: themeAxis('Reward estimate'),
+    margin:{l:50, r:20, t:50, b:40},
+    showlegend:true,
+    legend: Object.assign({x:1.02, y:1, font:{size:10}}, legendStyle()),
+    annotations: [{
+      x:0.55, y:0.84, text:'UCB selects arm 2:<br>highest upper bound',
+      showarrow:true, arrowhead:2, ax:60, ay:-30,
+      font:{family:figFont, size:11, color:c2}
+    }]
+  });
+  Plotly.newPlot('fig-ucb-intuition', traces, layout, plotlyConfig);
+});
+</script>
+<p>If we set <span class="math inline">\beta = 0</span>, then the agent is purely exploiting its learned knowledge. On the other hand, <span class="math inline">b^t(a)</span> reflects the uncertainty of the estimator <span class="math inline">\widehat{R}^t</span>. If we were to choose <span class="math inline">a^t = \operatorname*{argmax}_{a \in \mathcal{A}}\{b^t(a)\}</span>, then we would be purely exploring by collecting data from the most uncertain arm. By adding <span class="math inline">b^t</span> to <span class="math inline">\widehat{R}^t</span>, UCB smoothly interpolates between these two extremes.</p>
+</section>
+<section id="sec-ucb-analysis" class="level3" data-number="6.4.4">
+<h3 data-number="6.4.4" class="anchored" data-anchor-id="sec-ucb-analysis"><span class="header-section-number">6.4.4</span> Why UCB Works: Optimism in the Face of Uncertainty</h3>
+<p>The reason UCB works is that <span class="math inline">b^t</span> characterizes the uncertainty of <span class="math inline">\widehat{R}^t</span>, in the sense that, with probability at least <span class="math inline">1 - \delta</span>,</p>
+<p><span class="math display">
+\bigl|\widehat{R}^t(a) - R^*(a)\bigr| \leq b^t(a), \qquad \forall\, a \in \mathcal{A}.
+</span></p>
+<p>In other words, the set <span class="math inline">\{R : |\widehat{R}^t(a) - R(a)| &lt; b^t(a),\; \forall a \in \mathcal{A}\}</span> is a <span class="math inline">(1-\delta)</span>-confidence set for <span class="math inline">R^*</span>.</p>
+<div id="lem-confidence" class="theorem lemma">
+<p><span class="theorem-title"><strong>Lemma 6.1 (Confidence Bound)</strong></span> With probability at least <span class="math inline">1 - \delta</span>, for all <span class="math inline">t \in [T]</span> and <span class="math inline">a \in \mathcal{A}</span>,</p>
+<p><span id="eq-confidence"><span class="math display">
+\bigl|\widehat{R}^t(a) - R^*(a)\bigr| \leq 2\sqrt{\frac{\log(T|\mathcal{A}|/\delta)}{n^t(a)}}.
+\tag{6.7}</span></span></p>
+</div>
+<p>This lemma is a direct consequence of Hoeffding’s inequality and a union bound over <span class="math inline">\mathcal{A}</span>.</p>
+<p>By this lemma, when <span class="math inline">C \geq 2</span>, we can show that <span class="math inline">\widehat{R}^t(a) + b^t(a) \geq R^*(a)</span>. Moreover, since <span class="math inline">R^* \in [0,1]</span>, the truncation on <span class="math inline">(\widehat{R}^t(a) + b^t(a))</span> preserves this inequality, i.e., <span class="math inline">R^t</span> is also an upper bound of <span class="math inline">R^*</span>.</p>
+<p>Therefore, with probability <span class="math inline">1 - \delta</span>,</p>
+<p><span class="math display">
+R^t(a) \geq R^*(a) \qquad \text{for all } t \in [T] \text{ and all } a \in \mathcal{A}.
+</span></p>
+<p>This property gives the name (UCB / optimism) of the algorithm.</p>
+</section>
+<section id="sec-ucb-regret-decomposition" class="level3" data-number="6.4.5">
+<h3 data-number="6.4.5" class="anchored" data-anchor-id="sec-ucb-regret-decomposition"><span class="header-section-number">6.4.5</span> Regret Decomposition</h3>
+<p>Let us see why UCB works by decomposing the immediate regret in the <span class="math inline">t</span>-th iteration:</p>
+<p><span class="math display">
+J(\pi^*) - J(\pi^t) = \langle R^*, \pi^*\rangle_{\mathcal{A}} - \langle R^*, \pi^t\rangle_{\mathcal{A}}.
+</span></p>
+<p>We decompose this into three terms:</p>
+<p><span class="math display">
+= \underbrace{\langle R^* - R^t, \pi^*\rangle_{\mathcal{A}}}_{\text{(i)}} + \underbrace{\langle R^t, \pi^* - \pi^t\rangle_{\mathcal{A}}}_{\text{(ii)}} + \underbrace{\langle R^t - R^*, \pi^t\rangle_{\mathcal{A}}}_{\text{(iii)}}.
+</span></p>
+<p>We now bound each term:</p>
+<ul>
+<li><strong>(i) <span class="math inline">\leq 0</span></strong> because of UCB: <span class="math inline">R^t(a) \geq R^*(a)</span> for all <span class="math inline">a</span>.</li>
+<li><strong>(ii) <span class="math inline">\leq 0</span></strong> because <span class="math inline">\pi^t = \text{greedy}(R^t)</span>, so <span class="math inline">\langle R^t, \pi^t\rangle \geq \langle R^t, \pi^*\rangle</span>.</li>
+<li><strong>(iii)</strong> <span class="math inline">= \langle R^t - R^*, \pi^t\rangle_{\mathcal{A}} \leq 2 \langle b^t, \pi^t\rangle_{\mathcal{A}}</span>, because <span class="math inline">(\widehat{R}^t(a) + b^t(a)) - R^*(a) \leq 2\,b^t(a)</span>.</li>
+</ul>
+<p>Since <span class="math inline">\pi^t</span> is a deterministic policy that chooses <span class="math inline">a^t</span>, term (iii) equals <span class="math inline">2\,b^t(a^t)</span>. Therefore,</p>
+<p><span class="math display">
+J(\pi^*) - J(\pi^t) \leq 2\,b^t(a^t) = 2C\sqrt{\log(T|\mathcal{A}|/\delta)} \cdot \frac{1}{\sqrt{n^t(a^t)}}.
+</span></p>
+</section>
+<section id="sec-ucb-sum" class="level3" data-number="6.4.6">
+<h3 data-number="6.4.6" class="anchored" data-anchor-id="sec-ucb-sum"><span class="header-section-number">6.4.6</span> Summing the Regret</h3>
+<p>Now we can bound the total regret:</p>
+<p><span class="math display">
+\text{Regret}(T) \leq 2 \sum_{t=1}^{T} b^t(a^t) = 2C\sqrt{\log(T|\mathcal{A}|/\delta)} \cdot \sum_{t=1}^{T} \sqrt{\frac{1}{n^t(a^t)}}.
+</span></p>
+<p>To sum <span class="math inline">\sqrt{1/n^t(a^t)}</span>, we note that <span class="math inline">\{n^t(a^t)\}_{t=1}^T</span> can be rearranged as <span class="math inline">\{1, 2, \ldots, n^T(a_1)\} \cup \{1, 2, \ldots, n^T(a_2)\} \cup \cdots \cup \{1, 2, \ldots, n^T(a_m)\}</span>. Thus,</p>
+<p><span class="math display">
+\sum_{t=1}^{T} \sqrt{\frac{1}{n^t(a^t)}} = \sum_{a \in \mathcal{A}} \sum_{i=1}^{n^T(a)} \frac{1}{\sqrt{i}} \leq \sum_{a \in \mathcal{A}} 2\sqrt{n^T(a)},
+</span></p>
+<p>where we used <span class="math inline">\sum_{i=1}^K 1/\sqrt{i} \leq 2\sqrt{K}</span>.</p>
+<p>Note that <span class="math inline">\sum_{a \in \mathcal{A}} n^T(a) = T</span>. By the Cauchy–Schwarz inequality,</p>
+<p><span class="math display">
+\sum_{a} \sqrt{n^T(a)} \leq \sqrt{|\mathcal{A}|} \cdot \sqrt{T}.
+</span></p>
+<div id="thm-ucb-regret" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 6.2 (Regret of UCB)</strong></span> Choosing <span class="math inline">C \geq 2</span> in <span class="math inline">b^t</span> (so that <span class="math inline">b^t(a) = C\sqrt{\log(T|\mathcal{A}|/\delta) / n^t(a)}</span>), then with probability at least <span class="math inline">1 - \delta</span>,</p>
+<p><span id="eq-ucb-regret"><span class="math display">
+\text{Regret}(T) \leq 2C\sqrt{\log(T|\mathcal{A}|/\delta)} \cdot \sqrt{|\mathcal{A}| \cdot T} = \widetilde{O}\!\bigl(\sqrt{|\mathcal{A}| \cdot T}\bigr).
+\tag{6.8}</span></span></p>
+</div>
+<p>This is a <span class="math inline">\widetilde{O}(\sqrt{T})</span> regret bound, which is a significant improvement over the <span class="math inline">\widetilde{O}(T^{2/3})</span> rate of <span class="math inline">\varepsilon</span>-greedy.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Remarks on UCB
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The idea of UCB has two key components:</p>
+<ol type="1">
+<li><p><strong>Optimistic reward function.</strong> By constructing a UCB (<span class="math inline">R^t \geq R^*</span>) and executing its greedy policy, we eliminate one difficult term in the regret decomposition. The term <span class="math inline">\langle R^* - R^t, \pi^*\rangle_{\mathcal{A}}</span> is hard to control because we do not have data from <span class="math inline">\pi^*</span>; by ensuring <span class="math inline">R^t \geq R^*</span>, we simply bound it by <span class="math inline">0</span>.</p></li>
+<li><p><strong>Bounded total bonus.</strong> The regret is bounded by <span class="math inline">\sum_{t=1}^T 2\,b^t(a^t)</span>, the total bias due to UCB evaluated on the collected data. The sum <span class="math inline">\sum_{t=1}^T b^t(a^t)</span> can be bounded because <span class="math display">
+\sum_{t=1}^T \bigl(b^t(a^t)\bigr)^2 = \widetilde{O}(1) \qquad \text{(polylogarithmic in } T\text{)}.
+</span> This holds because <span class="math inline">(b^t(a^t))^2</span> is the in-sample estimation error, which is <span class="math inline">\widetilde{O}(1/n^t(a^t))</span>, and <span class="math inline">\sum_{t=1}^T 1/t \asymp \log T</span>.</p></li>
+</ol>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-thompson" class="level2" data-number="6.5">
+<h2 data-number="6.5" class="anchored" data-anchor-id="sec-thompson"><span class="header-section-number">6.5</span> Thompson Sampling (Posterior Sampling)</h2>
+<div id="fig-thompson-sampling" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-thompson-sampling-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/thompson-sampling.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Figure&nbsp;6.4: Thompson sampling (posterior sampling). Each arm has a posterior distribution over its reward, with width proportional to uncertainty (inversely proportional to the number of pulls). The agent draws one sample from each posterior and selects the arm whose sample is highest. Arms with wide posteriors (few pulls) occasionally produce high samples, driving natural exploration."><img src="figures/thompson-sampling.svg" class="img-fluid figure-img" style="width:95.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-thompson-sampling-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6.4: Thompson sampling (posterior sampling). Each arm has a posterior distribution over its reward, with width proportional to uncertainty (inversely proportional to the number of pulls). The agent draws one sample from each posterior and selects the arm whose sample is highest. Arms with wide posteriors (few pulls) occasionally produce high samples, driving natural exploration.
+</figcaption>
+</figure>
+</div>
+<section id="sec-thompson-motivation" class="level3" data-number="6.5.1">
+<h3 data-number="6.5.1" class="anchored" data-anchor-id="sec-thompson-motivation"><span class="header-section-number">6.5.1</span> Motivation</h3>
+<p>Recall the idea of UCB:</p>
+<ul>
+<li>Estimate the reward function based on data: <span class="math inline">\widehat{R}^t</span>.</li>
+<li>Quantify the uncertainty of <span class="math inline">\widehat{R}^t</span>: <span class="math inline">|\widehat{R}^t(a) - R(a)| \leq b^t(a)</span>, where <span class="math inline">b^t(a) \propto 1/\sqrt{n^t(a)}</span> and <span class="math inline">n^t(a)</span> is the number of pulls of arm <span class="math inline">a</span> in the first <span class="math inline">t - 1</span> rounds.</li>
+<li>Maximize UCB: <span class="math inline">a^t = \operatorname*{argmax}_a \{\widehat{R}^t(a) + b^t(a)\}</span>.</li>
+</ul>
+<p>UCB replaces the unknown reward with a deterministic optimistic estimate. <strong>Thompson sampling</strong> takes a different approach: instead of a deterministic bonus, it adds <em>random noise</em> calibrated to the uncertainty.</p>
+<p>The core idea of Thompson sampling is:</p>
+<p><span class="math display">
+a^t = \operatorname*{argmax}_{a} \bigl\{\widehat{R}^t(a) + \text{Noise}^t(a)\bigr\},
+</span></p>
+<p>where the noise is scaled to the uncertainty. This uses a <strong>random</strong> reward function to explore.</p>
+</section>
+<section id="sec-thompson-alg" class="level3" data-number="6.5.2">
+<h3 data-number="6.5.2" class="anchored" data-anchor-id="sec-thompson-alg"><span class="header-section-number">6.5.2</span> The Thompson Sampling Algorithm</h3>
+<p>For <span class="math inline">t = 1, 2, \ldots, T</span>:</p>
+<ol type="1">
+<li>Before the <span class="math inline">t</span>-th round, compute <span class="math inline">\widehat{R}^t</span> and <span class="math inline">n^t</span>.</li>
+<li>Sample a <strong>random reward function</strong>: <span id="eq-thompson-sample"><span class="math display">
+R^t(a) \sim \mathcal{N}\!\left(\widehat{R}^t(a),\; \frac{1}{n^t(a)}\right).
+\tag{6.9}</span></span> Equivalently, <span class="math display">
+R^t(a) = \widehat{R}^t(a) + \frac{1}{\sqrt{n^t(a)}} \cdot Z(a), \qquad Z(a) \sim \mathcal{N}(0, 1).
+</span></li>
+<li>Take action <span class="math inline">a^t = \operatorname*{argmax}_a \{R^t(a)\}</span>.</li>
+</ol>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Key Distinction
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The noise in Thompson sampling is added to the <strong>reward function</strong> (or, more generally, the model or value function). It is <em>not</em> added to the actions. This is a crucial conceptual point: exploration happens through randomized <em>beliefs</em>, not randomized <em>actions</em>.</p>
+</div>
+</div>
+</section>
+<section id="sec-thompson-posterior" class="level3" data-number="6.5.3">
+<h3 data-number="6.5.3" class="anchored" data-anchor-id="sec-thompson-posterior"><span class="header-section-number">6.5.3</span> Why <span class="math inline">\mathcal{N}(\widehat{R}^t(a), 1/n^t(a))</span>?</h3>
+<p>The sampling distribution in (<a href="#eq-thompson-sample" class="quarto-xref"><span>6.9</span></a>) is not arbitrary — it arises naturally from a Bayesian perspective. Recall that <span class="math inline">n^t(a) = 1 + \sum_{\ell=1}^{t-1} \mathbb{1}\{a^\ell = a\}</span>.</p>
+<p>Assume a <strong>prior</strong> distribution over the reward function: <span class="math inline">R(a) \sim \mathcal{N}(0, 1)</span> for all <span class="math inline">a \in \mathcal{A}</span>, independently across arms.</p>
+<p>After observing <span class="math inline">\sum_{\ell=1}^{t-1}\mathbb{1}\{a^\ell = a\}</span> pulls of arm <span class="math inline">a</span> and the corresponding sum of rewards <span class="math inline">\sum_{\ell=1}^{t-1}\mathbb{1}\{a^\ell = a\} \cdot r^\ell</span>, the <strong>posterior</strong> distribution of <span class="math inline">R(a)</span> is</p>
+<p><span class="math display">
+R(a) \mid \text{data} \;\sim\; \mathcal{N}\!\left(\widehat{R}^t(a),\; \frac{1}{n^t(a)}\right).
+</span></p>
+<p>Thompson sampling simply draws from this posterior and acts greedily with respect to the sample. This is why it is also called <strong>posterior sampling</strong>. The posterior variance <span class="math inline">1/n^t(a)</span> is large for rarely pulled arms (encouraging exploration) and small for frequently pulled arms (encouraging exploitation) — achieving a natural, data-driven balance between exploration and exploitation without any explicit bonus term. Thus, <span class="math inline">\mathcal{N}\bigl(\widehat{R}^t(a),\, \frac{1}{n^t(a)}\bigr)</span> is the posterior of the reward function under a Gaussian prior.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Remark
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ol type="1">
+<li><p>You might wonder: why a Gaussian prior? We know that <span class="math inline">R(a) \in [0,1]</span>, right? It is okay that we use a wrong prior, as long as it covers the true range of <span class="math inline">R</span> (i.e., <span class="math inline">[0,1]</span>). The Bayesian version of the law of large numbers ensures that the posterior distribution converges to the true value of <span class="math inline">R</span> when <span class="math inline">n^t \to \infty</span>.</p></li>
+<li><p>A nice property of the Gaussian posterior is that it can be <strong>easily calculated</strong> and <strong>sampled</strong> from.</p></li>
+</ol>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-exploration-rl" class="level2" data-number="6.6">
+<h2 data-number="6.6" class="anchored" data-anchor-id="sec-exploration-rl"><span class="header-section-number">6.6</span> Exploration in RL</h2>
+<p>Having developed the core exploration ideas — UCB and Thompson Sampling — in the bandit setting, we now turn to the far richer setting of reinforcement learning. In an MDP, the agent must explore not just to learn reward functions but also to learn transition dynamics, and the consequences of exploration propagate across multiple time steps.</p>
+<ul>
+<li>We will mainly focus on UCB algorithms.</li>
+<li>We will also discuss Thompson Sampling.</li>
+</ul>
+</section>
+<section id="sec-optimism-rl" class="level2" data-number="6.7">
+<h2 data-number="6.7" class="anchored" data-anchor-id="sec-optimism-rl"><span class="header-section-number">6.7</span> Optimism in RL</h2>
+<section id="sec-ucb-vi" class="level3" data-number="6.7.1">
+<h3 data-number="6.7.1" class="anchored" data-anchor-id="sec-ucb-vi"><span class="header-section-number">6.7.1</span> Online Learning in Tabular MDP: UCB-VI</h3>
+<p>To extend the bandit UCB algorithm to episodic MDP, the direct idea is to find an upper bound on <span class="math inline">Q^*</span> by adding a bonus. The source of the bonus comes from the estimation uncertainty of the reward function in the bandit setting. In an MDP, we need to:</p>
+<ol type="1">
+<li>Estimate the transition <span class="math inline">\{P_h\}</span> and reward function <span class="math inline">\{R_h\}</span>.</li>
+<li>Run a planning algorithm on the estimated model, e.g., value iteration (VI).</li>
+</ol>
+<p>In the online bandit setting, the UCB algorithm involves:</p>
+<ol type="1">
+<li>Estimate <span class="math inline">R^*</span> using the empirical mean <span class="math inline">\widehat{R}^t</span> (with a very small bias due to setting <span class="math inline">n^t(a) = 1 + \sum_{k=1}^{t} \mathbb{1}\{a^k = a\}</span>).</li>
+<li>Solve a planning problem with <span class="math inline">\{\widehat{R}^t + b^t\}</span>.</li>
+</ol>
+<p>Following the same idea, in an MDP we need to:</p>
+<ol type="1">
+<li>Estimate <span class="math inline">R = \{R_h\}</span> and <span class="math inline">P = \{P_h\}</span> using empirical means <span class="math inline">\widehat{R}^t</span>, <span class="math inline">\widehat{P}^t</span>.</li>
+<li>Plan with the estimated model <span class="math inline">\widehat{R}^t = \{\widehat{R}_h^t\}</span> and <span class="math inline">\widehat{P}^t = \{\widehat{P}_h^t\}</span> and a bonus function <span class="math inline">\widehat{b}^t = \{\widehat{b}_h^t\}</span>, where <span class="math inline">\widehat{b}_h^t : \mathcal{S} \times \mathcal{A} \to \mathbb{R}</span>.</li>
+</ol>
+<p><strong>Data collection.</strong> Before the <span class="math inline">t</span>-th episode, our collected dataset is</p>
+<p><span class="math display">
+\mathcal{D}^t = \bigl\{ (s_h^k, a_h^k, r_h^k) \bigr\}_{h \in [H],\, k \in [t-1]}.
+</span></p>
+<p><strong>Visitation counts.</strong> Define the visitation counts:</p>
+<p><span id="eq-visitation-count-sa"><span class="math display">
+n^t(h, s, a) = 1 + \sum_{k=1}^{t-1} \mathbb{1}\{s_h^k = s,\, a_h^k = a\},
+\tag{6.10}</span></span></p>
+<p><span id="eq-visitation-count-sas"><span class="math display">
+n^t(h, s, a, s') = \sum_{k=1}^{t-1} \mathbb{1}\{s_h^k = s,\, a_h^k = a\} \cdot \mathbb{1}\{s_{h+1}^k = s'\},
+\tag{6.11}</span></span></p>
+<p><span id="eq-cumulative-reward"><span class="math display">
+r^t(h, s, a) = \sum_{k=1}^{t-1} \mathbb{1}\{s_h^k = s,\, a_h^k = a\} \cdot r_h^k.
+\tag{6.12}</span></span></p>
+<p><strong>Estimated model.</strong> Define the estimated model <span class="math inline">\widehat{R}</span>, <span class="math inline">\widehat{P}</span> by letting</p>
+<p><span id="eq-estimated-reward"><span class="math display">
+\widehat{R}_h^t(s, a) = \frac{r^t(h, s, a)}{n^t(h, s, a)},
+\tag{6.13}</span></span></p>
+<p><span id="eq-estimated-transition"><span class="math display">
+\widehat{P}_h^t(s' \mid s, a) = \frac{n^t(h, s, a, s')}{n^t(h, s, a)}.
+\tag{6.14}</span></span></p>
+<p>Then we use <span class="math inline">\widehat{R}^t</span> and <span class="math inline">\widehat{P}^t</span> to solve an <strong>optimistic</strong> version of the planning problem. Here let us consider VI.</p>
+<section id="sec-ucb-vi-planning" class="level4" data-number="6.7.1.1">
+<h4 data-number="6.7.1.1" class="anchored" data-anchor-id="sec-ucb-vi-planning"><span class="header-section-number">6.7.1.1</span> Planning Phase of UCB-VI</h4>
+<p>The planning phase of UCB-VI proceeds as follows:</p>
+<blockquote class="blockquote">
+<p><strong>Set</strong> <span class="math inline">Q_{H+1}^t = 0</span>, <span class="math inline">V_{H+1}^t = 0</span>.</p>
+<p><strong>For</strong> <span class="math inline">h = H, H-1, \ldots, 1</span>:</p>
+<p><span id="eq-ucb-vi-q-update"><span class="math display">
+Q_h^t(s, a) = \operatorname{Truncate}_{[0,\, H - h + 1]} \Bigl( \widehat{R}_h^t(s, a) + (\widehat{P}_h^t V_{h+1}^t)(s, a) + b_h^t(s, a) \Bigr),
+\tag{6.15}</span></span></p>
+<p><span class="math display">
+V_h^t(s) = \max_a \, Q_h^t(s, a).
+</span></p>
+<p><strong>Return</strong> <span class="math inline">\pi^t = \operatorname{greedy}(Q^t)</span>.</p>
+</blockquote>
+<p><strong>Bonus function.</strong> The bonus function is defined as</p>
+<p><span id="eq-ucb-vi-bonus"><span class="math display">
+b_h^t(s, a) = C \cdot H \sqrt{S} \cdot \sqrt{\frac{\log(|\mathcal{S}||\mathcal{A}|HT/\delta)}{n^t(h, s, a)}},
+\tag{6.16}</span></span></p>
+<p>which reflects the uncertainty of estimating <span class="math inline">R_h</span> and <span class="math inline">P_h V_{h+1}^t</span>.</p>
+</section>
+<section id="sec-ucb-vi-optimism" class="level4" data-number="6.7.1.2">
+<h4 data-number="6.7.1.2" class="anchored" data-anchor-id="sec-ucb-vi-optimism"><span class="header-section-number">6.7.1.2</span> Optimism in UCB-VI</h4>
+<p>In the planning stage, at each step, given <span class="math inline">V_{h+1}^t</span>, we aim to solve <span class="math inline">Q_h \leftarrow R_h + P_h V_{h+1}^t</span>. But we don’t have access to <span class="math inline">R_h</span> and <span class="math inline">P_h</span>. Thus we replace them by empirical means:</p>
+<p><span class="math display">
+R_h(s, a) \approx \frac{1}{n^t(h, s, a)} \sum_{k=1}^{t-1} \mathbb{1}\{s_h^k = s,\, a_h^k = a\} \cdot r_h^k = \widehat{R}_h^t(s, a),
+</span></p>
+<p><span class="math display">
+(P_h V_{h+1}^t)(s, a) \approx \frac{1}{n^t(h, s, a)} \sum_{k=1}^{t-1} \mathbb{1}\{s_h^k = s,\, a_h^k = a\} \cdot V_{h+1}^t(s_{h+1}^k) = (\widehat{P}_h^t V_{h+1}^t)(s, a).
+</span></p>
+<p>Here <span class="math inline">V_{h+1}^t</span> is treated as a fixed function. The purpose of adding a bonus term <span class="math inline">b_h^t</span> is to dominate the estimation error.</p>
+<div id="lem-ucb-vi-confidence" class="theorem lemma">
+<p><span class="theorem-title"><strong>Lemma 6.2 (Confidence in UCB-VI)</strong></span> With probability at least <span class="math inline">1 - \delta/2</span>, we have</p>
+<p><span id="eq-ucb-vi-confidence"><span class="math display">
+\Bigl| \bigl(\widehat{R}_h^t(s,a) + (\widehat{P}_h^t V)(s,a)\bigr) - \bigl(R_h(s,a) + (P_h V)(s,a)\bigr) \Bigr| \leq b_h^t(s,a)
+\tag{6.17}</span></span></p>
+<p>for all <span class="math inline">t \in [T]</span>, <span class="math inline">h \in [H]</span>, <span class="math inline">s \in \mathcal{S}</span>, <span class="math inline">a \in \mathcal{A}</span>, and all <span class="math inline">V: \mathcal{S} \to [0, H]</span>.</p>
+</div>
+<p>Therefore, we have</p>
+<p><span class="math display">
+Q_h^t(s, a) \geq R_h(s, a) + (P_h V_{h+1}^t)(s, a) = (\mathcal{T}_h Q_{h+1}^t)(s, a),
+</span></p>
+<p>where <span class="math inline">\mathcal{T}_h</span> denotes the Bellman operator. Optimism in UCB-VI means that <span class="math inline">Q_h^t \geq \mathcal{T}_h Q_{h+1}^t</span> for all <span class="math inline">t \in [T]</span> and <span class="math inline">h \in [H]</span>. This further implies <span class="math inline">Q_h^t \geq Q_h^*</span>.</p>
+</section>
+<section id="sec-ucb-vi-regret" class="level4" data-number="6.7.1.3">
+<h4 data-number="6.7.1.3" class="anchored" data-anchor-id="sec-ucb-vi-regret"><span class="header-section-number">6.7.1.3</span> Regret Bound of UCB-VI</h4>
+<p>The following theorem establishes the regret guarantee for UCB-VI.</p>
+<div id="thm-ucb-vi-regret" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 6.3 (Regret of UCB-VI)</strong></span> Choosing the bonus function as</p>
+<p><span class="math display">
+b_h^t(s, a) = C \cdot H\sqrt{S} \cdot \sqrt{\frac{\log(|\mathcal{S}||\mathcal{A}|HT/\delta)}{n^t(h, s, a)}},
+</span></p>
+<p>for all <span class="math inline">h \in [H]</span>, <span class="math inline">t \in [H]</span>, <span class="math inline">(s, a) \in \mathcal{S} \times \mathcal{A}</span>, with probability at least <span class="math inline">1 - \delta</span>, we have</p>
+<p><span id="eq-ucb-vi-regret"><span class="math display">
+\operatorname{Regret}(T) = \mathcal{O}\Bigl(H^2 \sqrt{|\mathcal{S}|^2 |\mathcal{A}| T} \cdot \log\bigl(|\mathcal{S}| |\mathcal{A}| TH / \delta\bigr)\Bigr) = \widetilde{\mathcal{O}}\Bigl(H^2 \sqrt{|\mathcal{S}|^2 |\mathcal{A}| T}\Bigr).
+\tag{6.18}</span></span></p>
+</div>
+</section>
+</section>
+</section>
+<section id="sec-model-free" class="level2" data-number="6.8">
+<h2 data-number="6.8" class="anchored" data-anchor-id="sec-model-free"><span class="header-section-number">6.8</span> Model-Free Version: LSVI-UCB and OPPO</h2>
+<p>UCB-VI is a model-based algorithm. It combines:</p>
+<ol type="1">
+<li><strong>Model-based planning:</strong> estimate <span class="math inline">\widehat{R}^t</span>, <span class="math inline">\widehat{P}^t</span>.</li>
+<li><strong>Add bonus functions</strong> to compensate for estimation uncertainty.</li>
+</ol>
+<p>We can change model-based planning to model-free planning, with <strong>value-based</strong> (value iteration) and <strong>policy-based</strong> (soft-policy iteration) approaches.</p>
+<section id="sec-lsvi-ucb" class="level3" data-number="6.8.1">
+<h3 data-number="6.8.1" class="anchored" data-anchor-id="sec-lsvi-ucb"><span class="header-section-number">6.8.1</span> LSVI-UCB</h3>
+<p>LSVI-UCB stands for Least-Squares Value Iteration with UCB bonus. It replaces explicit model estimation with direct value function estimation via least squares, while retaining the optimistic exploration bonus.</p>
+<p><strong>Data collection.</strong> Before the <span class="math inline">t</span>-th episode, our collected dataset is</p>
+<p><span class="math display">
+\mathcal{D}^t = \bigl\{ (s_h^k, a_h^k, r_h^k) \bigr\}_{h \in [H],\, k \in [t-1]}.
+</span></p>
+<p><strong>Visitation counts.</strong> Define the visitation counts:</p>
+<p><span class="math display">
+n^t(h, s, a) = 1 + \sum_{k=1}^{t-1} \mathbb{1}\{s_h^k = s,\, a_h^k = a\},
+</span></p>
+<p><span class="math display">
+n^t(h, s, a, s') = \sum_{k=1}^{t-1} \mathbb{1}\{s_h^k = s,\, a_h^k = a\} \cdot \mathbb{1}\{s_{h+1}^k = s'\},
+</span></p>
+<p><span class="math display">
+r^t(h, s, a) = \sum_{k=1}^{t-1} \mathbb{1}\{s_h^k = s,\, a_h^k = a\} \cdot r_h^k.
+</span></p>
+<p>We use <span class="math inline">\mathcal{D}^t</span> to estimate <span class="math inline">\{Q_h^*, V_h^*\}_{h \in [H]}</span>. Recall the Bellman equation:</p>
+<p><span class="math display">
+Q_h^* = R_h + P_h V_{h+1}^*, \qquad V_{h+1}^* = 0,
+</span></p>
+<p><span class="math display">
+V_h^*(s) = \max_a \, Q_h^*(s, a).
+</span></p>
+<section id="sec-lsvi-ucb-estimation" class="level4" data-number="6.8.1.1">
+<h4 data-number="6.8.1.1" class="anchored" data-anchor-id="sec-lsvi-ucb-estimation"><span class="header-section-number">6.8.1.1</span> Estimating <span class="math inline">\{Q_h^*\}_{h \in [H]}</span></h4>
+<p>Let <span class="math inline">\phi: \mathcal{S} \times \mathcal{A} \to \mathbb{R}^{|\mathcal{S}||\mathcal{A}|}</span> denote the canonical features.</p>
+<blockquote class="blockquote">
+<p><strong>Initialize:</strong> <span class="math inline">V_{H+1}^t = 0</span>.</p>
+<p><strong>For</strong> <span class="math inline">h = H, H-1, \ldots, 1</span>:</p>
+<p><span id="eq-lsvi-ucb-regression"><span class="math display">
+\widehat{Q}_h^t \leftarrow \operatorname*{argmin}_{Q \in \mathbb{R}^{|\mathcal{S}||\mathcal{A}|}} \sum_{k=1}^{t-1} \bigl(\phi(s_h^k, a_h^k)^\top Q - r_h^k - V_h^t(s_{h+1}^k)\bigr)^2 + \|Q\|_2^2,
+\tag{6.19}</span></span></p>
+<p><span class="math display">
+Q_h^t(s, a) \leftarrow \operatorname{Truncate}_{[0,\, H-h+1]} \bigl(\widehat{Q}_h^t(s,a) + b_h^t(s,a)\bigr),
+</span></p>
+<p><span class="math display">
+V_h^t(s) \leftarrow \max_a \, Q_h^t(s, a).
+</span></p>
+<p><strong>Return</strong> <span class="math inline">\pi^t = \operatorname{greedy}(Q_h^t)</span>.</p>
+</blockquote>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Remark
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This is the same as UCB-VI in the tabular case. They are different in the function approximation setting.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-oppo" class="level3" data-number="6.8.2">
+<h3 data-number="6.8.2" class="anchored" data-anchor-id="sec-oppo"><span class="header-section-number">6.8.2</span> Optimistic Policy Optimization (OPPO)</h3>
+<p>OPPO combines soft policy iteration (SPI) with UCB bonuses [Cai et al.]. While LSVI-UCB uses value-based planning, OPPO takes a policy-based approach, updating policies via mirror descent while maintaining optimism through bonus functions.</p>
+<p>Recall that we have introduced soft policy iteration, which generates a sequence of policies <span class="math inline">\{\pi^{(k)}\}_{k \geq 1}</span> in the following fashion.</p>
+<blockquote class="blockquote">
+<p><strong>Initialize</strong> <span class="math inline">\pi^{(1)}</span> as the uniform policy. Here we start from <span class="math inline">k = 1</span>.</p>
+<p><strong>For</strong> <span class="math inline">k = 1, 2, \ldots, K</span>:</p>
+<ul>
+<li><p>Define <span class="math inline">Q_h^{(k)} \approx Q_h^{\pi^{(k)}}</span> for all <span class="math inline">h \in [H+1]</span>.</p></li>
+<li><p>Update policy: <span class="math display">
+\pi_h^{(k+1)}(a \mid s) \propto \pi_h^{(k)}(a \mid s) \cdot \exp\bigl(\alpha \cdot Q_h^{(k)}(s, a)\bigr),
+</span></p>
+<p>or equivalently, <span class="math display">
+\pi(\cdot \mid s) = \operatorname*{argmax}_{\nu \in \Delta(\mathcal{A})} \Bigl\{ \langle Q_h^{(k)}(s, \cdot),\, \nu \rangle_\mathcal{A} - \tfrac{1}{\alpha} \operatorname{KL}\bigl(\nu \,\|\, \pi^{(k)}(\cdot \mid s)\bigr) \Bigr\}.
+</span></p></li>
+</ul>
+</blockquote>
+<p>In SPI, <span class="math inline">Q_h^{(k)}</span> does not need to be exactly <span class="math inline">Q_h^{\pi^{(k)}}</span>. We allow estimation errors, as long as they can be controlled. In fact, from the optimization perspective, because we run mirror descent per state <span class="math inline">s</span>, we can feed arbitrary <span class="math inline">Q_h^{(k)}</span> as the ascent direction. But a bad <span class="math inline">Q_h^{(k)}</span> will incur a large statistical error.</p>
+<p>Following this reasoning, we can apply SPI as the planning method in online RL. The main modification is that we need to construct <strong>optimistic estimators</strong> of <span class="math inline">Q^{\pi^t}</span>.</p>
+<p>Note that <span class="math inline">Q^\pi</span> satisfies the Bellman evaluation equation:</p>
+<p><span class="math display">
+Q_{H+1}^\pi = 0, \qquad V_{H+1}^\pi = 0,
+</span></p>
+<p><span class="math display">
+Q_h^\pi(s, a) = R_h(s, a) + (P_h V_{h+1}^\pi)(s, a),
+</span></p>
+<p><span class="math display">
+V_h^\pi(s) = \langle Q_h^\pi(s, \cdot),\, \pi_h(\cdot \mid s) \rangle_\mathcal{A}.
+</span></p>
+<p>Since <span class="math inline">R</span> and <span class="math inline">P</span> are unknown, we again estimate <span class="math inline">R_h + P_h V_{h+1}^\pi</span> using the estimated model, and add an additional bonus to explore.</p>
+<section id="sec-oppo-algorithm" class="level4" data-number="6.8.2.1">
+<h4 data-number="6.8.2.1" class="anchored" data-anchor-id="sec-oppo-algorithm"><span class="header-section-number">6.8.2.1</span> Algorithm: OPPO</h4>
+<blockquote class="blockquote">
+<p><strong>Initialize</strong> <span class="math inline">\pi^1</span> by letting <span class="math inline">\pi_h^0(\cdot \mid s) = \operatorname{Unif}(\mathcal{A})</span> for all <span class="math inline">h \in [H]</span>, <span class="math inline">s \in \mathcal{S}</span>.</p>
+<p><strong>For</strong> <span class="math inline">t = 1, 2, \ldots, T</span>:</p>
+<ul>
+<li><p>Execute <span class="math inline">\pi^t</span> to get <span class="math inline">\{(s_h^t, a_h^t, r_h^t)\}_{h \in [H]}</span>.</p></li>
+<li><p>Estimate model by dataset <span class="math inline">\mathcal{D}^t = \{(s_h^k, a_h^k, r_h^k)\}_{h \in [H],\, k \in [t-1]}</span>.</p></li>
+<li><p>Define <span class="math inline">\{\widehat{R}_h^t,\, \widehat{P}_h^t,\, b_h^t\}</span> in the same way as in UCB-VI.</p></li>
+<li><p><strong>Get <span class="math inline">Q^t</span> by evaluating <span class="math inline">\pi^{(t-1)}</span> with optimism:</strong></p>
+<p><span class="math inline">V_{H+1}^t = 0</span>.</p>
+<p>For <span class="math inline">h = H, H-1, \ldots, 1</span>: <span class="math display">
+Q_h^t(s, a) = \operatorname{Truncate}_{[0,\, H-h+1]} \Bigl( \widehat{R}_h^t(s, a) + (\widehat{P}_h^t V_h^t)(s, a) + b_h^t(s, a) \Bigr),
+</span> <span class="math display">
+V_h^t(s) = \langle Q_h^t(s, \cdot),\, \pi_h^t(\cdot \mid s) \rangle_\mathcal{A}.
+</span></p></li>
+<li><p><strong>Update policy by mirror descent update based on <span class="math inline">Q_h^t</span>:</strong> <span class="math display">
+\pi_h^t(\cdot \mid s) \propto \pi_h^{t-1}(\cdot \mid s) \cdot \exp\bigl(\alpha \cdot Q_h^t(s, \cdot)\bigr), \qquad \forall \, h \in [H],\, s \in \mathcal{S}.
+</span></p></li>
+</ul>
+</blockquote>
+<p>Note that here optimism means that</p>
+<p><span class="math display">
+Q_h^t(s, a) \geq R_h(s, a) + (P_h V_{h+1}^t)(s, a).
+</span></p>
+<p>This further implies that</p>
+<p><span class="math display">
+Q_h^t(s, a) \geq Q_h^{\pi^{t-1}}(s, a), \qquad \forall \, (s, a) \in \mathcal{S} \times \mathcal{A},\quad \forall \, h \in [H].
+</span></p>
+<p>That is, we only construct UCBs for <span class="math inline">\{Q_h^{\pi^t}\}</span>. In contrast, UCB-VI constructs UCBs for <span class="math inline">Q_h^*</span>.</p>
+<p><strong>Regret of OPPO.</strong> The regret decomposes as</p>
+<p><span class="math display">
+\begin{aligned}
+\operatorname{Regret}(\text{OPPO}) &amp;= \underbrace{\text{Policy optimization error}}_{\text{error of SPI}} + \underbrace{\text{Statistical error}}_{\text{exploration}} \\
+&amp;= \mathcal{O}\bigl(H^2 \sqrt{\log|\mathcal{A}| \cdot T}\bigr) + \widetilde{\mathcal{O}}\bigl(H^2 \sqrt{|\mathcal{S}|^2 |\mathcal{A}| \cdot T}\bigr) = \widetilde{\mathcal{O}}\bigl(H^2 \sqrt{|\mathcal{S}| \cdot |\mathcal{A}| \cdot T}\bigr).
+\end{aligned}
+</span></p>
+<p>The statistical error is the same as UCB-VI.</p>
+</section>
+</section>
+<section id="sec-thompson-sampling-rl" class="level3" data-number="6.8.3">
+<h3 data-number="6.8.3" class="anchored" data-anchor-id="sec-thompson-sampling-rl"><span class="header-section-number">6.8.3</span> Thompson Sampling in RL</h3>
+<p>Thompson Sampling provides an elegant alternative to UCB-based exploration in the MDP setting. Instead of constructing explicit confidence bonuses, we inject randomness that is calibrated to the estimation uncertainty.</p>
+<p>It is very easy to implement Thompson Sampling in RL:</p>
+<ul>
+<li><strong>Replace</strong> the bonus <span class="math inline">b_h^t(s,a) \propto \sqrt{\frac{1}{n^t(h,s,a)}}</span> <strong>by a Gaussian noise</strong> <span class="math inline">\mathcal{N}\bigl(0,\, C \cdot \frac{1}{n^t(h,s,a)}\bigr)</span>.</li>
+<li><strong>Add noise</strong> to the model estimator <span class="math inline">\{\widehat{R}^t, \widehat{P}^t\}</span> or the value function estimator <span class="math inline">\{\widehat{Q}^t\}</span>. Then solve the randomized problem.</li>
+</ul>
+<section id="sec-vi-ts" class="level4" data-number="6.8.3.1">
+<h4 data-number="6.8.3.1" class="anchored" data-anchor-id="sec-vi-ts"><span class="header-section-number">6.8.3.1</span> Value Iteration + Thompson Sampling</h4>
+<blockquote class="blockquote">
+<ul>
+<li>Before the <span class="math inline">t</span>-th episode, compute <span class="math inline">\{\widehat{R}^t, \widehat{P}^t, n^t\}</span>.</li>
+<li><span class="math inline">V_{H+1}^t = 0</span>.</li>
+<li>Sample a random <span class="math inline">Q</span>-function: <span class="math display">
+\widetilde{Q}_h^t(s, a) = \widehat{R}_h^t(s, a) + (\widehat{P}_h^t V_{h+1}^t)(s, a),
+</span> <span class="math display">
+Q_h^t(s, a) \sim \mathcal{N}\Bigl(\widetilde{Q}_h^t(s, a),\, \frac{c}{n^t(h, s, a)}\Bigr),
+</span> <span class="math display">
+V_h^t(s) = \max_a \, Q_h^t(s, a).
+</span></li>
+<li>Execute <span class="math inline">\pi^t \leftarrow \operatorname{greedy}(Q^t)</span>.</li>
+</ul>
+</blockquote>
+</section>
+</section>
+</section>
+<section id="sec-theory-ucb-vi" class="level2" data-number="6.9">
+<h2 data-number="6.9" class="anchored" data-anchor-id="sec-theory-ucb-vi"><span class="header-section-number">6.9</span> Theory of UCB-VI</h2>
+<p>We now sketch the regret analysis for UCB-VI. Similar to the analysis of UCB in the bandit setting, the proof is based on three steps.</p>
+<section id="sec-ucb-vi-proof-sketch" class="level3" data-number="6.9.1">
+<h3 data-number="6.9.1" class="anchored" data-anchor-id="sec-ucb-vi-proof-sketch"><span class="header-section-number">6.9.1</span> Regret Analysis for UCB-VI</h3>
+<p><strong>Step 1: Performance difference decomposition.</strong> Use the performance difference lemma to decompose <span class="math inline">J(\pi^*) - J(\pi^t)</span> into three terms:</p>
+<ol type="1">
+<li>Bellman error on the trajectory of <span class="math inline">\pi^*</span>.</li>
+<li>Policy optimization error.</li>
+<li>Bellman error on the trajectory of <span class="math inline">\pi^t</span>.</li>
+</ol>
+<p>We have used this decomposition when analyzing offline RL. The decomposition of <span class="math inline">J(\pi^*) - J(\pi^t)</span> relies on the performance difference lemma (version 3):</p>
+<p><span class="math display">
+J(\pi^*) - J(\pi^t) = \underbrace{\mathbb{E}_{s_1 \sim \mu}\bigl[V_1^*(s_1) - V_1^t(s_1)\bigr]}_{(\text{I})} + \underbrace{\mathbb{E}_{s_1 \sim \mu}\bigl[V_1^t - V_1^{\pi^t}(s_1)\bigr]}_{(\text{II})}.
+</span></p>
+<p>By PDL (version 3),</p>
+<p><span class="math display">
+(\text{I}) = \sum_{h=1}^{H} \mathbb{E}_{s \sim d_h^{\pi^*}} \bigl[ \langle Q_h^t(s, \cdot),\, \pi_h^*(\cdot \mid s) - \pi_h^t(\cdot \mid s) \rangle_\mathcal{A} \bigr] + \sum_{h=1}^{H} \mathbb{E}_{(s,a) \sim d_h^{\pi^*}} \bigl[ e_h^t(s, a) \bigr],
+</span></p>
+<p><span class="math display">
+(\text{II}) = -\sum_{h=1}^{H} \mathbb{E}_{(s,a) \sim d_h^{\pi^t}} \bigl[ e_h^t(s, a) \bigr],
+</span></p>
+<p>where <span class="math inline">d_h^{\pi} \in \Delta(\mathcal{S} \times \mathcal{A})</span> and <span class="math inline">d_h^{\pi} \in \Delta(\mathcal{S})</span> are the visitation measures induced by <span class="math inline">\pi</span>, and</p>
+<p><span class="math display">
+e_h^t(s, a) = \bigl(R_h(s, a) + (P_h V_{h+1}^t)(s, a)\bigr) - Q_h^t(s, a).
+</span></p>
+<p>Thus we have shown that</p>
+<p><span class="math display">
+J(\pi^*) - J(\pi^t) = \underbrace{\mathbb{E}_{(s,a) \sim d_h^{\pi^*}} \bigl[ e_h^t(s, a) \bigr]}_{\text{(1)}} + \underbrace{\mathbb{E}_{s \sim d_h^{\pi^*}} \bigl[ \langle Q_h^t,\, \pi^* - \pi^t \rangle_\mathcal{A} \bigr]}_{\text{(2)}} - \underbrace{\mathbb{E}_{(s,a) \sim d_h^{\pi^t}} \bigl[ e_h^t(s, a) \bigr]}_{\text{(3)}}.
+</span></p>
+<p><strong>Step 2: Use optimism (UCB) to argue that (1) <span class="math inline">\leq 0</span>.</strong> By the construction of the bonus function,</p>
+<p><span class="math display">
+\Bigl| \bigl(\widehat{R}_h^t(s,a) + (\widehat{P}_h^t V)(s,a)\bigr) - \bigl(R_h(s,a) + (P_h V)(s,a)\bigr) \Bigr| \leq b_h^t(s, a)
+</span></p>
+<p>for all <span class="math inline">V: \mathcal{S} \to [0, H]</span>. As a result,</p>
+<p><span class="math display">
+0 \leq \bigl(\widehat{R}_h^t + \widehat{P}_h^t V_{h+1}^t + b_h^t\bigr) - \bigl(R_h + P_h V_{h+1}^t\bigr) \leq 2 \cdot b_h^t.
+</span></p>
+<p>Moreover, since we truncate <span class="math inline">Q_h^t</span> to <span class="math inline">[0, H-h]</span>, we have</p>
+<p><span class="math display">
+(\text{UCB}) \qquad 0 \leq -e_h^t = Q_h^t - (R_h + P_h V_{h+1}^t) \leq 2 \cdot \min\{b_h^t,\, H\}.
+</span></p>
+<p>Since <span class="math inline">e_h^t \leq 0</span>, this implies (1) <span class="math inline">\leq 0</span>.</p>
+<p>Besides, <span class="math inline">\pi^t = \operatorname{greedy}(Q^t)</span>, so (2) <span class="math inline">\leq 0</span>.</p>
+<p>Therefore, we have the following: with probability at least <span class="math inline">1 - \delta</span>,</p>
+<p><span class="math display">
+J(\pi^*) - J(\pi^t) \leq \mathbb{E}_{s_1 \sim \mu}\bigl[V_1^t(s_1) - V_1^{\pi^t}(s_1)\bigr] = \sum_{h=1}^{H} \mathbb{E}_{(s,a) \sim d_h^{\pi^t}} \bigl[ -e_h^t(s, a) \bigr].
+</span></p>
+<p><strong>Step 3: Bound (3) by the sum of bonus terms on data.</strong> In the last step, we want to relate</p>
+<p><span class="math display">
+\mathbb{E}_{(s,a) \sim d_h^{\pi^t}} \bigl[ -e_h^t(s, a) \bigr] \quad \text{to} \quad b_h^t(s_h^t, a_h^t) \quad \text{(bonus on data)}.
+</span></p>
+<p>Since we execute <span class="math inline">\pi^t</span> in the <span class="math inline">t</span>-th iteration, <span class="math inline">(s_h^t, a_h^t) \sim d_h^{\pi^t}</span>. Thus</p>
+<p><span class="math display">
+\mathbb{E}_{(s,a) \sim d_h^{\pi^t}} \bigl[ -e_h^t(s, a) \bigr] \quad \text{and} \quad -e_h^t(s_h^t, a_h^t)
+</span></p>
+<p>differ only by a mean-zero term. This term is actually a <strong>martingale-difference term</strong>.</p>
+<p>Besides, <span class="math inline">-e_h^t(s_h^t, a_h^t) \leq 2 \cdot \min\{H,\, b_h^t(s_h^t, a_h^t)\}</span>.</p>
+<p>In fact, we can show that, with probability at least <span class="math inline">1 - \delta/2</span>,</p>
+<p><span class="math display">
+\sum_{t=1}^{T} \sum_{h=1}^{H} \mathbb{E}_{(s,a) \sim d_h^{\pi^t}} \bigl[ -e_h^t(s, a) \bigr] \leq 2 \cdot \sum_{t=1}^{T} \sum_{h=1}^{H} \min\bigl\{H,\, b_h^t(s_h^t, a_h^t)\bigr\} + C \cdot H \sqrt{\log(TH/\delta) \cdot T}.
+</span></p>
+<p><strong>Bounding the sum of bonuses.</strong> Finally, we need to handle <span class="math inline">\sum_{t=1}^{T} \sum_{h=1}^{H} \min\{H,\, b_h^t(s_h^t, a_h^t)\}</span>. Since</p>
+<p><span class="math display">
+b_h^t(s, a) = C \cdot H\sqrt{S} \cdot \sqrt{\frac{\log(|\mathcal{S}||\mathcal{A}|HT/\delta)}{n^t(h, s, a)}},
+</span></p>
+<p>we apply Cauchy–Schwarz:</p>
+<p><span class="math display">
+\sum_{t=1}^{T} \sum_{h=1}^{H} \min\bigl\{H,\, b_h^t(s_h^t, a_h^t)\bigr\} \leq H\sqrt{S} \cdot \sqrt{\log(|\mathcal{S}||\mathcal{A}|T/\delta)} \cdot \sum_{t=1}^{T} \sum_{h=1}^{H} \frac{1}{\sqrt{n^t(h, s_h^t, a_h^t)}}.
+</span></p>
+<p>Using a counting argument similar to the bandit case,</p>
+<p><span class="math display">
+\lesssim H\sqrt{S} \cdot \sqrt{\log(|\mathcal{S}||\mathcal{A}|HT/\delta)} \cdot \sqrt{|\mathcal{S}||\mathcal{A}|HT \cdot \sum_{(h,s,a)} \Bigl(\sum_{i=1}^{n^T(h,s,a)} \frac{1}{i}\Bigr)}
+</span></p>
+<p><span class="math display">
+\lesssim H^2 |\mathcal{S}| \sqrt{|\mathcal{A}|T} \cdot \bigl(\log T + \sqrt{\log(|\mathcal{S}||\mathcal{A}|H/\delta)}\bigr) \lesssim \log T.
+</span></p>
+<p>Therefore, with probability at least <span class="math inline">1 - \delta</span>,</p>
+<p><span id="eq-ucb-vi-regret-final"><span class="math display">
+\operatorname{Regret}(T) = \widetilde{\mathcal{O}}\bigl(H^2 \cdot |\mathcal{S}| \cdot \sqrt{|\mathcal{A}|T}\bigr).
+\tag{6.20}</span></span></p>
+<p>This completes the regret analysis. <span class="math inline">\blacksquare</span></p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Remark: Tightness in <span class="math inline">|\mathcal{S}|</span>
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This regret is not optimal in <span class="math inline">|\mathcal{S}|</span>. See Chapter 7.4 of [AJKS] for an analysis achieving an upper bound of <span class="math inline">\widetilde{\mathcal{O}}\bigl(H^2 \sqrt{|\mathcal{S}| \cdot |\mathcal{A}| \cdot T} + H^3 |\mathcal{S}|^2 |\mathcal{A}|\bigr)</span>. The rate <span class="math inline">H^2 \sqrt{|\mathcal{S}||\mathcal{A}|T}</span> is tight in <span class="math inline">|\mathcal{S}|</span> but not in <span class="math inline">H</span>.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-exploration-deep-rl" class="level2" data-number="6.10">
+<h2 data-number="6.10" class="anchored" data-anchor-id="sec-exploration-deep-rl"><span class="header-section-number">6.10</span> Exploration in Deep RL</h2>
+<p>In the tabular setting, exploration bonuses based on visitation counts <span class="math inline">1/\sqrt{n^t(h,s,a)}</span> are natural and well-understood. However, in deep RL, where the state space <span class="math inline">\mathcal{S}</span> can be enormous or continuous (e.g., images), exact visitation counts are infeasible. We now discuss practical exploration strategies used in deep RL.</p>
+<div id="fig-deep-rl-exploration" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-deep-rl-exploration-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/deep-rl-exploration-methods.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-5" title="Figure&nbsp;6.5: Three families of deep RL exploration methods. Epsilon-greedy is simple but undirected. Count-based methods (pseudo-count) direct exploration toward novel states. Prediction-error methods (RND) use a learned novelty signal that scales to high-dimensional observations."><img src="figures/deep-rl-exploration-methods.svg" class="img-fluid figure-img" style="width:95.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-deep-rl-exploration-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6.5: Three families of deep RL exploration methods. Epsilon-greedy is simple but undirected. Count-based methods (pseudo-count) direct exploration toward novel states. Prediction-error methods (RND) use a learned novelty signal that scales to high-dimensional observations.
+</figcaption>
+</figure>
+</div>
+<section id="sec-epsilon-greedy" class="level3" data-number="6.10.1">
+<h3 data-number="6.10.1" class="anchored" data-anchor-id="sec-epsilon-greedy"><span class="header-section-number">6.10.1</span> <span class="math inline">\varepsilon</span>-Greedy Exploration</h3>
+<p><span class="math inline">\varepsilon</span>-greedy is the most common exploration method and the default choice in many deep RL implementations. It was used in the original DQN paper (Mnih et al., 2015) that achieved human-level performance on Atari games.</p>
+<div id="fig-eps-greedy-schedule" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-eps-greedy-schedule-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/epsilon-greedy-schedule.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-6" title="Figure&nbsp;6.6: The epsilon-greedy exploration schedule. The exploration rate starts at 1.0 (pure exploration) and linearly decays to a small value, after which the agent mostly exploits its learned policy."><img src="figures/epsilon-greedy-schedule.svg" class="img-fluid figure-img" style="width:75.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-eps-greedy-schedule-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6.6: The epsilon-greedy exploration schedule. The exploration rate starts at 1.0 (pure exploration) and linearly decays to a small value, after which the agent mostly exploits its learned policy.
+</figcaption>
+</figure>
+</div>
+<p><strong>Discrete <span class="math inline">\mathcal{A}</span>:</strong></p>
+<ul>
+<li>In each step, with probability <span class="math inline">\varepsilon_t</span>, take action <span class="math inline">a_t \sim \operatorname{Unif}(\mathcal{A})</span>.</li>
+<li>Gradually decrease <span class="math inline">\varepsilon_t</span>.</li>
+</ul>
+<p>A typical schedule is:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>epsilon_start <span class="op">=</span> <span class="fl">1.0</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>epsilon_end <span class="op">=</span> <span class="fl">0.01</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>epsilon_decay <span class="op">=</span> <span class="dv">1000</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>epsilon <span class="op">=</span> <span class="bu">max</span>(epsilon_end, epsilon_start <span class="op">-</span> (epsilon_start <span class="op">-</span> epsilon_end) <span class="op">*</span> (step <span class="op">/</span> epsilon_decay))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Continuous <span class="math inline">\mathcal{A}</span>:</strong> For example, <span class="math inline">\mathcal{A} = [a_{\text{low}}, a_{\text{high}}]</span>.</p>
+<ul>
+<li>In each step, add Gaussian noise <span class="math inline">\mathcal{N}(0, \sigma_t^2)</span> to the action <span class="math inline">a_t</span>.</li>
+<li>Clip to <span class="math inline">\mathcal{A}</span>.</li>
+</ul>
+<p>This is the approach used in the <strong>DDPG</strong> algorithm, where <span class="math inline">\mu_\theta(s): \mathcal{S} \to \mathcal{A}</span> is the actor network, and the executed action is</p>
+<p><span class="math display">
+\operatorname{Clip}_{\mathcal{A}}\bigl[\mu_\theta(s_t) + \varepsilon_t\bigr], \qquad \varepsilon_t \sim \mathcal{N}(0, \sigma_t^2).
+</span></p>
+</section>
+<section id="sec-pseudo-count" class="level3" data-number="6.10.2">
+<h3 data-number="6.10.2" class="anchored" data-anchor-id="sec-pseudo-count"><span class="header-section-number">6.10.2</span> Count-Based Exploration (Pseudo-Count)</h3>
+<p>When the state space is large or continuous, we cannot maintain exact visitation counts. The idea of pseudo-count exploration is to use a <strong>density estimator</strong> <span class="math inline">\rho</span> to predict the density of each state <span class="math inline">s</span> given the history.</p>
+<p><strong>Note:</strong> Here <span class="math inline">|\mathcal{S}| = \infty</span>. For example, <span class="math inline">s</span> = image.</p>
+<p>The density <span class="math inline">\rho(s)</span> wants to approximate <span class="math inline">\frac{n^t(s)}{t-1}</span>, the empirical frequency of visits to state <span class="math inline">s</span> before the <span class="math inline">t</span>-th step, for each <span class="math inline">s</span>.</p>
+<p><strong>Update procedure.</strong> Suppose we observe <span class="math inline">s_t = s^*</span> at the <span class="math inline">t</span>-th step. With exact counts, we would set:</p>
+<ul>
+<li><span class="math inline">t \leftarrow t - 1</span>,</li>
+<li><span class="math inline">n^{t+1}(s^*) \leftarrow n^t(s^*) + 1</span>,</li>
+<li><span class="math inline">n^{t+1}(s) \leftarrow n^t(s)</span> for <span class="math inline">s \neq s^*</span>,</li>
+<li><span class="math inline">\rho^{\text{new}} \leftarrow \frac{n^{t+1}}{t+1}</span>.</li>
+</ul>
+<p>With neural networks, we can do the same: after observing <span class="math inline">s_t = s^*</span>, add this data point and update the density model to obtain <span class="math inline">\rho^{\text{new}}</span>.</p>
+<p>A good density model satisfies</p>
+<p><span class="math display">
+\rho^{\text{new}}(s^*) \geq \rho(s^*) \qquad \text{if } s^* \text{ is used to update } \rho^{\text{new}}.
+</span></p>
+<p><strong>Recovering pseudo-counts from densities.</strong> Now we can use <span class="math inline">\rho</span> and <span class="math inline">\rho^{\text{new}}</span> to recover <span class="math inline">n^t(s)</span>. With</p>
+<p><span class="math display">
+\rho(s^*) = \frac{\widehat{n}^t(s^*)}{\widehat{n}_{\text{total}}}, \qquad \rho^{\text{new}}(s^*) = \frac{\widehat{n}^t(s^*) + 1}{\widehat{n}_{\text{total}} + 1},
+</span></p>
+<p>we can solve for <span class="math inline">\widehat{n}^t(s^*)</span>:</p>
+<p><span id="eq-pseudo-count"><span class="math display">
+\widehat{n}^t(s^*) = \frac{\rho(s^*) \cdot \bigl(1 - \rho^{\text{new}}(s^*)\bigr)}{\rho^{\text{new}}(s^*) - \rho(s^*)}.
+\tag{6.21}</span></span></p>
+<p><strong>Derivation.</strong> From the expressions above:</p>
+<p><span class="math display">
+\rho^{\text{new}}(s^*) - \rho(s^*) = \frac{\widehat{n}_{\text{total}} - n^t(s^*)}{\widehat{n}_{\text{total}} (\widehat{n}_{\text{total}} + 1)}, \tag{3}
+</span></p>
+<p><span class="math display">
+1 - \rho^{\text{new}}(s^*) = \frac{\widehat{n}_{\text{total}} - n^t(s^*)}{\widehat{n}_{\text{total}} + 1}, \tag{4}
+</span></p>
+<p><span class="math display">
+\rho(s^*) = \frac{n^t(s^*)}{\widehat{n}_{\text{total}}}. \tag{5}
+</span></p>
+<p>Computing (4) <span class="math inline">\times</span> (5) / (3) yields (<a href="#eq-pseudo-count" class="quarto-xref"><span>6.21</span></a>). <span class="math inline">\blacksquare</span></p>
+<p><strong>Bonus function:</strong> <span class="math inline">1 / \sqrt{\widehat{n}^t(s)}</span>.</p>
+<p>We can also do the same for <span class="math inline">(s, a)</span>, but empirically there seems no strong improvement.</p>
+<section id="sec-pseudo-count-insight" class="level4" data-number="6.10.2.1">
+<h4 data-number="6.10.2.1" class="anchored" data-anchor-id="sec-pseudo-count-insight"><span class="header-section-number">6.10.2.1</span> Key Insight of the Density Function</h4>
+<p>The bonus derived from pseudo-counts takes the form</p>
+<p><span class="math display">
+\text{bonus} = \sqrt{\frac{\rho^{\text{new}}(s^*) - \rho(s^*)}{\rho(s^*) \cdot (1 - \rho^{\text{new}}(s^*))}}.
+</span></p>
+<ul>
+<li>If <span class="math inline">s^*</span> is <strong>novel</strong>, <span class="math inline">\rho^{\text{new}}(s^*) - \rho(s^*)</span> is large, so the bonus is large.</li>
+<li>If <span class="math inline">s^*</span> is <strong>not novel</strong>, <span class="math inline">\rho^{\text{new}}(s^*) - \rho(s^*) \approx 0</span>, so the bonus is approximately zero.</li>
+</ul>
+<p>We don’t need <span class="math inline">\rho</span> to be accurate; we only need <span class="math inline">\rho</span> to tell which state <span class="math inline">s</span> is novel.</p>
+</section>
+<section id="sec-pseudo-count-implementation" class="level4" data-number="6.10.2.2">
+<h4 data-number="6.10.2.2" class="anchored" data-anchor-id="sec-pseudo-count-implementation"><span class="header-section-number">6.10.2.2</span> Implementation of Pseudo-Count</h4>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> compute_pseudocount(density_model, state):</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 1. Get rho(s) - probability before update</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> torch.no_grad():</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>        rho <span class="op">=</span> density_model(state)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. Update model to increase probability of this state</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    density_model.optimizer.zero_grad()</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    prob <span class="op">=</span> density_model(state)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    loss <span class="op">=</span> <span class="op">-</span>torch.log(prob)  <span class="co"># Negative log likelihood</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    loss.backward()</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    density_model.optimizer.step()</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 3. Get rho_new(s) - probability after update</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> torch.no_grad():</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>        rho_prime <span class="op">=</span> density_model(state)</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 4. Compute pseudo-count</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    n_hat <span class="op">=</span> rho <span class="op">*</span> (<span class="dv">1</span> <span class="op">-</span> rho_prime) <span class="op">/</span> (rho_prime <span class="op">-</span> rho <span class="op">+</span> <span class="fl">1e-8</span>)</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">max</span>(<span class="dv">0</span>, n_hat)  <span class="co"># Ensure non-negative</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</section>
+<section id="sec-prediction-error-bonus" class="level3" data-number="6.10.3">
+<h3 data-number="6.10.3" class="anchored" data-anchor-id="sec-prediction-error-bonus"><span class="header-section-number">6.10.3</span> Use Prediction Error as “Novelty” (Bonus)</h3>
+<p>An alternative approach to count-based exploration is to use the prediction error of a learned model as a novelty signal. Given data <span class="math inline">\mathcal{D} = \{(s_i, a_i, r_i, s_{i+1})\}</span> and a target function <span class="math inline">f^*(s, a)</span> we want to fit, we can use</p>
+<p><span class="math display">
+r(s, a) = \bigl[f(s, a) - f^*(s, a)\bigr]^2
+</span></p>
+<p>as a bonus function. In regions with many data points, the prediction error is low (low novelty). In regions with few data points, the prediction error is high (high novelty).</p>
+<p><strong>Choice of <span class="math inline">f^*</span>:</strong></p>
+<ol type="1">
+<li><strong>Next state <span class="math inline">s'</span></strong> — this leads to the <strong>Intrinsic Curiosity Module (ICM)</strong>.</li>
+<li><strong>A random network <span class="math inline">f_0(s, a)</span></strong> — this leads to <strong>Random Network Distillation (RND)</strong>.</li>
+</ol>
+<p><strong>ICM (Curiosity-driven Exploration by Self-supervised Prediction).</strong> Proposed by Pathak et al.&nbsp;(2017), the Intrinsic Curiosity Module learns a forward dynamics model in a learned feature space. The agent receives an intrinsic reward proportional to the prediction error:</p>
+<p><span class="math display">
+r^{\mathrm{int}}_t = \|\widehat{\phi}(s_{t+1}; s_t, a_t) - \phi(s_{t+1})\|^2,
+</span></p>
+<p>where <span class="math inline">\phi</span> is a learned feature encoder and <span class="math inline">\widehat{\phi}</span> is a forward model predicting the next state’s features. By working in a learned feature space (rather than raw pixels), ICM avoids being distracted by irrelevant visual noise (e.g., a TV showing random images in the background).</p>
+<p><strong>RND (Exploration by Random Network Distillation).</strong> Proposed by Burda et al.&nbsp;(2019), RND uses a simpler and more scalable approach. It maintains two networks:</p>
+<ul>
+<li>A <strong>fixed, randomly initialized</strong> target network <span class="math inline">f_{\mathrm{target}}(s)</span>,</li>
+<li>A <strong>trained</strong> predictor network <span class="math inline">f_{\mathrm{pred}}(s)</span>.</li>
+</ul>
+<p>The intrinsic reward is the prediction error:</p>
+<p><span class="math display">
+r^{\mathrm{int}}_t = \|f_{\mathrm{pred}}(s_t) - f_{\mathrm{target}}(s_t)\|^2.
+</span></p>
+<p>Since <span class="math inline">f_{\mathrm{pred}}</span> is trained on visited states, the prediction error is small for frequently visited states and large for novel ones. RND achieved state-of-the-art results on hard-exploration Atari games like Montezuma’s Revenge, which require the agent to explore many rooms without receiving any extrinsic reward for long periods.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Remark: Intrinsic vs.&nbsp;Extrinsic Reward
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>In practice, the total reward used for training combines extrinsic and intrinsic components:</p>
+<p><span class="math display">
+r_t = r^{\mathrm{ext}}_t + \beta \cdot r^{\mathrm{int}}_t,
+</span></p>
+<p>where <span class="math inline">\beta &gt; 0</span> controls the exploration intensity. A common practice is to decay <span class="math inline">\beta</span> over training, shifting from exploration to exploitation.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-chapter-summary" class="level2" data-number="6.11">
+<h2 data-number="6.11" class="anchored" data-anchor-id="sec-chapter-summary"><span class="header-section-number">6.11</span> Chapter Summary</h2>
+<p>This chapter studied <strong>exploration</strong> — the problem of actively collecting informative data while simultaneously learning a good policy. Starting from multi-armed bandits, we developed three exploration strategies and then extended them to full MDPs.</p>
+<section id="summary-of-exploration-algorithms" class="level3" data-number="6.11.1">
+<h3 data-number="6.11.1" class="anchored" data-anchor-id="summary-of-exploration-algorithms"><span class="header-section-number">6.11.1</span> Summary of Exploration Algorithms</h3>
+<div id="tbl-ch6-summary" class="striped hover quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-ch6-summary-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;6.1: Summary of exploration algorithms.
+</figcaption>
+<div aria-describedby="tbl-ch6-summary-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="table-striped table-hover caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Algorithm</th>
+<th style="text-align: left;">Strategy</th>
+<th style="text-align: left;">Regret</th>
+<th style="text-align: left;">Key Idea</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><strong><span class="math inline">\varepsilon</span>-Greedy</strong></td>
+<td style="text-align: left;">Random exploration</td>
+<td style="text-align: left;"><span class="math inline">O(T^{2/3})</span></td>
+<td style="text-align: left;">Explore uniformly at random with probability <span class="math inline">\varepsilon_t</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>UCB</strong></td>
+<td style="text-align: left;">Optimism</td>
+<td style="text-align: left;"><span class="math inline">O(\sqrt{KT \log T})</span></td>
+<td style="text-align: left;">Select <span class="math inline">\operatorname{argmax}_a \widehat{R}(a) + b(a)</span>; optimistic under uncertainty</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Thompson Sampling</strong></td>
+<td style="text-align: left;">Posterior sampling</td>
+<td style="text-align: left;"><span class="math inline">O(\sqrt{KT \log T})</span></td>
+<td style="text-align: left;">Sample from posterior, act on sample; Bayesian exploration</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>UCB-VI</strong></td>
+<td style="text-align: left;">Optimism in MDPs</td>
+<td style="text-align: left;"><span class="math inline">\widetilde{O}(\sqrt{H^3 |\mathcal{S}||\mathcal{A}| T})</span></td>
+<td style="text-align: left;">Bonus-augmented value iteration for episodic MDPs</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>LSVI-UCB</strong></td>
+<td style="text-align: left;">Optimism + linear FA</td>
+<td style="text-align: left;"><span class="math inline">\widetilde{O}(\sqrt{d^3 H^3 T})</span></td>
+<td style="text-align: left;">UCB-VI with linear function approximation</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>OPPO</strong></td>
+<td style="text-align: left;">Optimism + policy opt.</td>
+<td style="text-align: left;"><span class="math inline">\widetilde{O}(\sqrt{d^2 H^3 T})</span></td>
+<td style="text-align: left;">Optimistic NPG with linear function approximation</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+</section>
+<section id="hierarchy-of-exploration-problems" class="level3" data-number="6.11.2">
+<h3 data-number="6.11.2" class="anchored" data-anchor-id="hierarchy-of-exploration-problems"><span class="header-section-number">6.11.2</span> Hierarchy of Exploration Problems</h3>
+<div id="fig-exploration-hierarchy" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-exploration-hierarchy-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/exploration-hierarchy.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-7" title="Figure&nbsp;6.7: The hierarchy of exploration problems, from simplest (multi-armed bandit) to most complex (MDP with function approximation). Each level adds a new challenge: state dependence, temporal dynamics, or high-dimensional representations."><img src="figures/exploration-hierarchy.svg" class="img-fluid figure-img" style="width:80.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-exploration-hierarchy-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6.7: The hierarchy of exploration problems, from simplest (multi-armed bandit) to most complex (MDP with function approximation). Each level adds a new challenge: state dependence, temporal dynamics, or high-dimensional representations.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="key-concepts" class="level3" data-number="6.11.3">
+<h3 data-number="6.11.3" class="anchored" data-anchor-id="key-concepts"><span class="header-section-number">6.11.3</span> Key Concepts</h3>
+<ul>
+<li><strong>Exploration–exploitation tradeoff:</strong> exploiting the current best estimate may miss better alternatives; exploring uncertain options incurs short-term cost but gathers information.</li>
+<li><strong>Optimism in the face of uncertainty (OFU):</strong> add an exploration bonus <span class="math inline">b(a) = O(1/\sqrt{n(a)})</span> so that uncertain arms/states are preferred. Optimism ensures regret is bounded even in the worst case.</li>
+<li><strong>Coverage from exploration:</strong> UCB-style algorithms naturally achieve coverage because the bonus drives the agent to visit underexplored regions of <span class="math inline">\mathcal{S} \times \mathcal{A}</span>.</li>
+<li><strong>From bandits to MDPs:</strong> the same optimism principle extends from bandits (UCB) to tabular MDPs (UCB-VI) to linear MDPs (LSVI-UCB, OPPO).</li>
+</ul>
+</section>
+<section id="sec-ch6-references" class="level3" data-number="6.11.4">
+<h3 data-number="6.11.4" class="anchored" data-anchor-id="sec-ch6-references"><span class="header-section-number">6.11.4</span> References</h3>
+<ul>
+<li>P. Auer, N. Cesa-Bianchi, and P. Fischer, “Finite-time analysis of the multiarmed bandit problem,” <em>Machine Learning</em>, vol.&nbsp;47, pp.&nbsp;235–256, 2002.</li>
+<li>W. R. Thompson, “On the likelihood that one unknown probability exceeds another in view of the evidence of two samples,” <em>Biometrika</em>, vol.&nbsp;25, pp.&nbsp;285–294, 1933.</li>
+<li>M. G. Azar, I. Osband, and R. Munos, “Minimax regret bounds for reinforcement learning,” <em>ICML</em>, 2017.</li>
+<li>C. Jin, Z. Allen-Zhu, S. Bubeck, and M. I. Jordan, “Is Q-learning provably efficient?” <em>NeurIPS</em>, 2018.</li>
+<li>C. Jin, Z. Yang, Z. Wang, and M. I. Jordan, “Provably efficient reinforcement learning with linear function approximation,” <em>COLT</em>, 2020.</li>
+<li>Q. Cai, Z. Yang, C. Jin, and Z. Wang, “Provably efficient exploration in policy optimization,” <em>ICML</em>, 2020.</li>
+<li>M. Bellemare, S. Srinivasan, G. Ostrovski, T. Schaul, D. Saxton, and R. Munos, “Unifying count-based exploration and intrinsic motivation,” <em>NeurIPS</em>, 2016.</li>
+<li>D. Pathak, P. Agrawal, A. A. Efros, and T. Darrell, “Curiosity-driven exploration by self-supervised prediction,” <em>ICML</em>, 2017.</li>
+<li>Y. Burda, H. Edwards, A. Storkey, and O. Klimov, “Exploration by random network distillation,” <em>ICLR</em>, 2019.</li>
+</ul>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Looking Ahead
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>In the next chapter we will study <strong>deep reinforcement learning methods</strong> — the practical algorithms that combine the theoretical ideas from this lecture (exploration, value estimation, policy optimization) with neural network function approximation. We will cover DQN, DDPG, TD3, SAC, A2C, and PPO, and see how engineering innovations like experience replay, target networks, and clipped objectives are essential to making RL work at scale.</p>
+</div>
+</div>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../lectures/05-certainty-equivalence.html" class="pagination-link" aria-label="Certainty Equivalence">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Certainty Equivalence</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../lectures/07-value-based-deep-rl.html" class="pagination-link" aria-label="Deep RL I: Value-Based Methods">
+        <span class="nav-page-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Deep RL I: Value-Based Methods</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<script>
+// Plotly Warmtone theming helpers — shared across all lectures
+// Reads CSS custom properties set by _warmtone.scss (light/dark aware)
+const plotlyConfig = {responsive: true, displayModeBar: false};
+const figFont = '"Source Serif 4", Georgia, "Times New Roman", serif';
+const figFontHeading = '"Crimson Pro", Georgia, serif';
+
+function css(v) {
+  return getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+}
+
+function legendStyle() {
+  return {
+    font: {family: figFont, size: 13, color: css('--fig-text')},
+    bgcolor: css('--fig-bg') + 'dd',
+    bordercolor: css('--fig-grid'),
+    borderwidth: 1,
+  };
+}
+
+function themeLayout(extra) {
+  return Object.assign({
+    paper_bgcolor: css('--fig-bg'),
+    plot_bgcolor: css('--fig-plot-bg'),
+    font: {family: figFont, color: css('--fig-text'), size: 14},
+  }, extra || {});
+}
+
+function themeAxis(title, extra) {
+  return Object.assign({
+    title: {text: title, font: {family: figFont, size: 14}},
+    gridcolor: css('--fig-grid'),
+    zerolinecolor: css('--fig-grid'),
+    linecolor: css('--fig-axis'),
+    tickfont: {family: figFont, size: 12, color: css('--fig-axis')},
+  }, extra || {});
+}
+
+// Plotly color sequences matching the Warmtone palette
+const warmtonePalette = [
+  '#7b97ad', '#b8995e', '#ad8480', '#7a9a7e', '#907ea0',
+  '#6f9996', '#8a6e5e', '#b56b6b', '#8fa3b8', '#a09488'
+];
+</script>
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
+
+
+
+
+</body></html>

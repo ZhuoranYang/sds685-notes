@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 380" font-family="Georgia, 'Times New Roman', serif">
+  <defs>
+    <marker id="arrow-pg" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#b8995e"/>
+    </marker>
+    <radialGradient id="contour-center" cx="60%" cy="35%" r="55%">
+      <stop offset="0%" stop-color="#7a9a7e" stop-opacity="0.5"/>
+      <stop offset="40%" stop-color="#7a9a7e" stop-opacity="0.25"/>
+      <stop offset="70%" stop-color="#7b97ad" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#f9f6f0" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="680" height="380" fill="#f9f6f0" rx="6"/>
+
+  <!-- Title -->
+  <text x="340" y="26" text-anchor="middle" font-size="14" font-weight="bold" fill="#3d3530">Policy Gradient Landscape</text>
+
+  <!-- Contour plot area -->
+  <rect x="80" y="50" width="440" height="300" rx="4" fill="#f9f6f0" stroke="#3d3530" stroke-width="0.8"/>
+
+  <!-- Contour background gradient -->
+  <rect x="80" y="50" width="440" height="300" rx="4" fill="url(#contour-center)"/>
+
+  <!-- Contour lines (concentric ellipses around peak) -->
+  <!-- Peak at approximately (370, 155) -->
+  <ellipse cx="370" cy="155" rx="180" ry="120" fill="none" stroke="#7b97ad" stroke-width="0.6" stroke-opacity="0.4"/>
+  <ellipse cx="370" cy="155" rx="150" ry="100" fill="none" stroke="#7b97ad" stroke-width="0.7" stroke-opacity="0.5"/>
+  <ellipse cx="370" cy="155" rx="120" ry="80" fill="none" stroke="#7b97ad" stroke-width="0.8" stroke-opacity="0.5"/>
+  <ellipse cx="370" cy="155" rx="90" ry="60" fill="none" stroke="#7b97ad" stroke-width="0.9" stroke-opacity="0.6"/>
+  <ellipse cx="370" cy="155" rx="60" ry="40" fill="none" stroke="#7a9a7e" stroke-width="1" stroke-opacity="0.7"/>
+  <ellipse cx="370" cy="155" rx="35" ry="22" fill="none" stroke="#7a9a7e" stroke-width="1.2" stroke-opacity="0.8"/>
+  <ellipse cx="370" cy="155" rx="14" ry="9" fill="none" stroke="#7a9a7e" stroke-width="1.5"/>
+
+  <!-- Labels on contour lines -->
+  <text x="192" y="78" font-size="8" fill="#7b97ad">J = 0.2</text>
+  <text x="222" y="100" font-size="8" fill="#7b97ad">J = 0.4</text>
+  <text x="255" y="118" font-size="8" fill="#7b97ad">J = 0.6</text>
+  <text x="285" y="133" font-size="9" fill="#7a9a7e">J = 0.8</text>
+  <text x="315" y="146" font-size="9" fill="#7a9a7e">J = 0.9</text>
+
+  <!-- Peak marker -->
+  <circle cx="370" cy="155" r="4" fill="#7a9a7e" stroke="#ffffff" stroke-width="1"/>
+  <text x="385" y="148" font-size="10" fill="#7a9a7e" font-weight="bold">J* (optimal)</text>
+
+  <!-- Current w point -->
+  <circle cx="220" cy="230" r="6" fill="#b8995e" stroke="#ffffff" stroke-width="1.5"/>
+  <text x="210" y="254" font-size="11" fill="#b8995e" font-weight="bold">current w</text>
+
+  <!-- Gradient arrow from current point toward peak -->
+  <line x1="226" y1="226" x2="278" y2="200" stroke="#b8995e" stroke-width="2.5" marker-end="url(#arrow-pg)"/>
+  <text x="268" y="226" font-size="10" fill="#b8995e" font-style="italic">gradient direction</text>
+
+  <!-- Trajectory of optimization (dotted path) -->
+  <path d="M220,230 Q260,210 290,195 Q320,180 345,165 Q358,158 370,155"
+        fill="none" stroke="#b8995e" stroke-width="1" stroke-dasharray="4,3" stroke-opacity="0.6"/>
+
+  <!-- Previous points on trajectory -->
+  <circle cx="165" cy="260" r="3" fill="#b8995e" fill-opacity="0.3"/>
+  <circle cx="190" cy="248" r="3" fill="#b8995e" fill-opacity="0.5"/>
+
+  <!-- Axes -->
+  <line x1="80" y1="350" x2="520" y2="350" stroke="#3d3530" stroke-width="1"/>
+  <line x1="80" y1="50" x2="80" y2="350" stroke="#3d3530" stroke-width="1"/>
+
+  <!-- Axis labels -->
+  <text x="300" y="370" text-anchor="middle" font-size="12" fill="#3d3530" font-style="italic">w1 (policy parameter)</text>
+  <text x="58" y="200" text-anchor="middle" font-size="12" fill="#3d3530" font-style="italic" transform="rotate(-90, 58, 200)">w2 (policy parameter)</text>
+
+  <!-- Legend box -->
+  <rect x="540" y="60" width="125" height="110" rx="5" fill="#ffffff" stroke="#3d3530" stroke-width="0.8"/>
+  <text x="603" y="78" text-anchor="middle" font-size="10" font-weight="bold" fill="#3d3530">Legend</text>
+  <ellipse cx="558" cy="94" rx="10" ry="7" fill="none" stroke="#7a9a7e" stroke-width="1"/>
+  <text x="608" y="98" text-anchor="middle" font-size="9" fill="#7a9a7e">Contour of J</text>
+  <circle cx="558" cy="114" r="4" fill="#b8995e"/>
+  <text x="608" y="118" text-anchor="middle" font-size="9" fill="#b8995e">Current w</text>
+  <line x1="550" y1="134" x2="566" y2="134" stroke="#b8995e" stroke-width="2" marker-end="url(#arrow-pg)"/>
+  <text x="608" y="138" text-anchor="middle" font-size="9" fill="#b8995e">Gradient</text>
+  <circle cx="558" cy="154" r="3" fill="#7a9a7e"/>
+  <text x="608" y="158" text-anchor="middle" font-size="9" fill="#7a9a7e">Optimum J*</text>
+</svg>

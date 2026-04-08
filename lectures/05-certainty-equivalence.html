@@ -1,0 +1,2063 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.36">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>5&nbsp; Certainty Equivalence – S&amp;DS 685 — Reinforcement Learning and Sequential Decision Making</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../lectures/06-exploration.html" rel="next">
+<link href="../lectures/04-approximate-planning.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-1db14e1c4cc35bfe1d9badc9e4551eed.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-75bfd1a986b306e51d60ba70b78c2b53.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="https://cdn.plot.ly/plotly-2.35.0.min.js" charset="utf-8"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet">
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script><script src="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css">
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../lectures/04-approximate-planning.html">Approximate Methods</a></li><li class="breadcrumb-item"><a href="../lectures/05-certainty-equivalence.html"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Certainty Equivalence</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">S&amp;DS 685 — Reinforcement Learning and Sequential Decision Making</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Welcome</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Foundations</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/01-introduction.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Introduction</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/02-mdp-basics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">MDP Basics</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/03-mdp-planning.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">MDP Planning</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Approximate Methods</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/04-approximate-planning.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Approximate Planning</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/05-certainty-equivalence.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Certainty Equivalence</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Exploration and Learning</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/06-exploration.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Exploration</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/07-value-based-deep-rl.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Deep RL I: Value-Based Methods</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/08-policy-based-deep-rl.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Deep RL II: Policy-Based Methods</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">Applications</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/09-alphago.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">AlphaGo</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/10-rl-for-llms.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">RLHF and Alignment</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/11-rl-verifiable-rewards.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">RL from Verifiable Rewards</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/summary.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Course Summary</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#sec-overview" id="toc-sec-overview" class="nav-link active" data-scroll-target="#sec-overview"><span class="header-section-number">5.1</span> What Will Be Covered</a></li>
+  <li><a href="#sec-recap-planning" id="toc-sec-recap-planning" class="nav-link" data-scroll-target="#sec-recap-planning"><span class="header-section-number">5.2</span> Recap: MDP Planning Methods</a></li>
+  <li><a href="#sec-recap-pdl" id="toc-sec-recap-pdl" class="nav-link" data-scroll-target="#sec-recap-pdl"><span class="header-section-number">5.3</span> Recap: Performance Difference Lemma</a></li>
+  <li><a href="#sec-stat-estimation" id="toc-sec-stat-estimation" class="nav-link" data-scroll-target="#sec-stat-estimation"><span class="header-section-number">5.4</span> Statistical Estimation in RL</a>
+  <ul class="collapse">
+  <li><a href="#sec-why-sample-complexity" id="toc-sec-why-sample-complexity" class="nav-link" data-scroll-target="#sec-why-sample-complexity"><span class="header-section-number">5.4.1</span> Why Focus on Sample Complexity?</a></li>
+  <li><a href="#sec-core-estimation" id="toc-sec-core-estimation" class="nav-link" data-scroll-target="#sec-core-estimation"><span class="header-section-number">5.4.2</span> The Core Estimation Problem</a></li>
+  <li><a href="#sec-aside-regression" id="toc-sec-aside-regression" class="nav-link" data-scroll-target="#sec-aside-regression"><span class="header-section-number">5.4.3</span> Aside: Statistical Estimation via Regression</a></li>
+  </ul></li>
+  <li><a href="#sec-four-elements" id="toc-sec-four-elements" class="nav-link" data-scroll-target="#sec-four-elements"><span class="header-section-number">5.5</span> Four Elements of Statistical Estimation in RL</a>
+  <ul class="collapse">
+  <li><a href="#sec-data-distribution" id="toc-sec-data-distribution" class="nav-link" data-scroll-target="#sec-data-distribution"><span class="header-section-number">5.5.1</span> 1. Data Distribution: The MDP</a></li>
+  <li><a href="#sec-data-collection" id="toc-sec-data-collection" class="nav-link" data-scroll-target="#sec-data-collection"><span class="header-section-number">5.5.2</span> 2. Data Collection Process</a></li>
+  <li><a href="#sec-hypothesis-class" id="toc-sec-hypothesis-class" class="nav-link" data-scroll-target="#sec-hypothesis-class"><span class="header-section-number">5.5.3</span> 3. Hypothesis Class</a></li>
+  <li><a href="#sec-loss-functions" id="toc-sec-loss-functions" class="nav-link" data-scroll-target="#sec-loss-functions"><span class="header-section-number">5.5.4</span> 4. Loss Functions</a></li>
+  <li><a href="#sec-ls-policy-eval" id="toc-sec-ls-policy-eval" class="nav-link" data-scroll-target="#sec-ls-policy-eval"><span class="header-section-number">5.5.5</span> Least-Squares Estimation for Policy Evaluation</a></li>
+  <li><a href="#sec-fitted-q" id="toc-sec-fitted-q" class="nav-link" data-scroll-target="#sec-fitted-q"><span class="header-section-number">5.5.6</span> Fitted Q-Iteration (Least-Squares Value Iteration)</a></li>
+  <li><a href="#sec-combinations" id="toc-sec-combinations" class="nav-link" data-scroll-target="#sec-combinations"><span class="header-section-number">5.5.7</span> Combinations of Settings</a></li>
+  </ul></li>
+  <li><a href="#sec-certainty-equivalence" id="toc-sec-certainty-equivalence" class="nav-link" data-scroll-target="#sec-certainty-equivalence"><span class="header-section-number">5.6</span> Why Errors of Learning and Planning Can Be Separated</a>
+  <ul class="collapse">
+  <li><a href="#sec-error-separation" id="toc-sec-error-separation" class="nav-link" data-scroll-target="#sec-error-separation"><span class="header-section-number">5.6.1</span> Separation of Estimation and Policy Optimization Errors</a></li>
+  </ul></li>
+  <li><a href="#sec-pdl-v2" id="toc-sec-pdl-v2" class="nav-link" data-scroll-target="#sec-pdl-v2"><span class="header-section-number">5.7</span> Relating Statistical Error to Model Estimation Error — PDL (V2)</a>
+  <ul class="collapse">
+  <li><a href="#sec-pdl-v2-statement" id="toc-sec-pdl-v2-statement" class="nav-link" data-scroll-target="#sec-pdl-v2-statement"><span class="header-section-number">5.7.1</span> Performance Difference Lemma (Version 2)</a></li>
+  <li><a href="#sec-pdl-v2-proof" id="toc-sec-pdl-v2-proof" class="nav-link" data-scroll-target="#sec-pdl-v2-proof"><span class="header-section-number">5.7.2</span> Proof of Performance Difference Lemma (Version 2)</a></li>
+  <li><a href="#sec-bounding-stat-error" id="toc-sec-bounding-stat-error" class="nav-link" data-scroll-target="#sec-bounding-stat-error"><span class="header-section-number">5.7.3</span> Bounding the Statistical Error</a></li>
+  <li><a href="#sec-final-model-based-bound" id="toc-sec-final-model-based-bound" class="nav-link" data-scroll-target="#sec-final-model-based-bound"><span class="header-section-number">5.7.4</span> Final Bound for Model-Based RL</a></li>
+  </ul></li>
+  <li><a href="#sec-model-based-q" id="toc-sec-model-based-q" class="nav-link" data-scroll-target="#sec-model-based-q"><span class="header-section-number">5.8</span> Error of Model-Based RL for Estimating <span class="math inline">Q</span>-Functions</a>
+  <ul class="collapse">
+  <li><a href="#sec-bounding-q-error" id="toc-sec-bounding-q-error" class="nav-link" data-scroll-target="#sec-bounding-q-error"><span class="header-section-number">5.8.1</span> Bounding <span class="math inline">|Q^*(s, a) - \widetilde{Q}(s, a)|</span></a></li>
+  </ul></li>
+  <li><a href="#sec-when-model-error-small" id="toc-sec-when-model-error-small" class="nav-link" data-scroll-target="#sec-when-model-error-small"><span class="header-section-number">5.9</span> When Is <span class="math inline">D(M, \widehat{M})</span> Small?</a>
+  <ul class="collapse">
+  <li><a href="#sec-first-sample-complexity" id="toc-sec-first-sample-complexity" class="nav-link" data-scroll-target="#sec-first-sample-complexity"><span class="header-section-number">5.9.1</span> First Sample Complexity Result</a></li>
+  </ul></li>
+  <li><a href="#sec-generative-model" id="toc-sec-generative-model" class="nav-link" data-scroll-target="#sec-generative-model"><span class="header-section-number">5.10</span> Generative Model</a>
+  <ul class="collapse">
+  <li><a href="#sec-naive-empirical" id="toc-sec-naive-empirical" class="nav-link" data-scroll-target="#sec-naive-empirical"><span class="header-section-number">5.10.1</span> Naive Approach: Empirical Means</a></li>
+  </ul></li>
+  <li><a href="#sec-sample-complexity-model-based" id="toc-sec-sample-complexity-model-based" class="nav-link" data-scroll-target="#sec-sample-complexity-model-based"><span class="header-section-number">5.11</span> Sample Complexity of the Model-Based Approach</a></li>
+  <li><a href="#sec-concentration-errors" id="toc-sec-concentration-errors" class="nav-link" data-scroll-target="#sec-concentration-errors"><span class="header-section-number">5.12</span> Bounding the Concentration Errors <span class="math inline">\varepsilon_R</span> and <span class="math inline">\varepsilon_P</span></a>
+  <ul class="collapse">
+  <li><a href="#sec-hoeffding" id="toc-sec-hoeffding" class="nav-link" data-scroll-target="#sec-hoeffding"><span class="header-section-number">5.12.1</span> Hoeffding’s Inequality</a></li>
+  <li><a href="#sec-bound-eps-r" id="toc-sec-bound-eps-r" class="nav-link" data-scroll-target="#sec-bound-eps-r"><span class="header-section-number">5.12.2</span> Bounding <span class="math inline">\varepsilon_R</span>: Reward Estimation Error</a></li>
+  <li><a href="#sec-bound-eps-p" id="toc-sec-bound-eps-p" class="nav-link" data-scroll-target="#sec-bound-eps-p"><span class="header-section-number">5.12.3</span> Bounding <span class="math inline">\varepsilon_P</span>: Transition Estimation Error</a></li>
+  <li><a href="#sec-combine-sample-complexity" id="toc-sec-combine-sample-complexity" class="nav-link" data-scroll-target="#sec-combine-sample-complexity"><span class="header-section-number">5.12.4</span> Combining Everything</a></li>
+  </ul></li>
+  <li><a href="#sec-statistical-value-based" id="toc-sec-statistical-value-based" class="nav-link" data-scroll-target="#sec-statistical-value-based"><span class="header-section-number">5.13</span> Statistical Analysis of Value-Based RL</a>
+  <ul class="collapse">
+  <li><a href="#sec-lsvi" id="toc-sec-lsvi" class="nav-link" data-scroll-target="#sec-lsvi"><span class="header-section-number">5.13.1</span> Fitted <span class="math inline">Q</span>-Iteration (Least-Squares Value Iteration, LSVI)</a></li>
+  <li><a href="#sec-lsvi-error" id="toc-sec-lsvi-error" class="nav-link" data-scroll-target="#sec-lsvi-error"><span class="header-section-number">5.13.2</span> Error Analysis of LSVI</a></li>
+  </ul></li>
+  <li><a href="#sec-error-decomposition-general" id="toc-sec-error-decomposition-general" class="nav-link" data-scroll-target="#sec-error-decomposition-general"><span class="header-section-number">5.14</span> Error Decomposition in the General Setting</a>
+  <ul class="collapse">
+  <li><a href="#sec-recap" id="toc-sec-recap" class="nav-link" data-scroll-target="#sec-recap"><span class="header-section-number">5.14.1</span> What We Have Studied So Far</a></li>
+  <li><a href="#sec-general-policy-opt" id="toc-sec-general-policy-opt" class="nav-link" data-scroll-target="#sec-general-policy-opt"><span class="header-section-number">5.14.2</span> General Setting: Policy Optimization + Statistical Error</a></li>
+  </ul></li>
+  <li><a href="#sec-pdl-v3" id="toc-sec-pdl-v3" class="nav-link" data-scroll-target="#sec-pdl-v3"><span class="header-section-number">5.15</span> Performance-Difference Lemma (Version 3)</a>
+  <ul class="collapse">
+  <li><a href="#sec-pdl-v3-properties" id="toc-sec-pdl-v3-properties" class="nav-link" data-scroll-target="#sec-pdl-v3-properties"><span class="header-section-number">5.15.1</span> Properties of PDL-V3</a></li>
+  <li><a href="#sec-pdl-v3-interpretation" id="toc-sec-pdl-v3-interpretation" class="nav-link" data-scroll-target="#sec-pdl-v3-interpretation"><span class="header-section-number">5.15.2</span> Interpretation via PDL-V3</a></li>
+  <li><a href="#sec-proof-pdl-v3" id="toc-sec-proof-pdl-v3" class="nav-link" data-scroll-target="#sec-proof-pdl-v3"><span class="header-section-number">5.15.3</span> Proof of PDL-V3</a></li>
+  </ul></li>
+  <li><a href="#sec-approx-spi" id="toc-sec-approx-spi" class="nav-link" data-scroll-target="#sec-approx-spi"><span class="header-section-number">5.16</span> Error Analysis of Approximate Soft-Policy Iteration</a>
+  <ul class="collapse">
+  <li><a href="#sec-regret-decomp" id="toc-sec-regret-decomp" class="nav-link" data-scroll-target="#sec-regret-decomp"><span class="header-section-number">5.16.1</span> Regret Decomposition</a></li>
+  <li><a href="#sec-analyze-bc" id="toc-sec-analyze-bc" class="nav-link" data-scroll-target="#sec-analyze-bc"><span class="header-section-number">5.16.2</span> Analyzing (b) and (c): Offline Setting</a></li>
+  <li><a href="#sec-analyze-a" id="toc-sec-analyze-a" class="nav-link" data-scroll-target="#sec-analyze-a"><span class="header-section-number">5.16.3</span> Analyzing (a): Policy Optimization Error</a></li>
+  <li><a href="#sec-final-regret" id="toc-sec-final-regret" class="nav-link" data-scroll-target="#sec-final-regret"><span class="header-section-number">5.16.4</span> Final Regret Bound</a></li>
+  </ul></li>
+  <li><a href="#sec-chapter-summary" id="toc-sec-chapter-summary" class="nav-link" data-scroll-target="#sec-chapter-summary"><span class="header-section-number">5.17</span> Chapter Summary</a>
+  <ul class="collapse">
+  <li><a href="#summary-of-results" id="toc-summary-of-results" class="nav-link" data-scroll-target="#summary-of-results"><span class="header-section-number">5.17.1</span> Summary of Results</a></li>
+  <li><a href="#key-concepts" id="toc-key-concepts" class="nav-link" data-scroll-target="#key-concepts"><span class="header-section-number">5.17.2</span> Key Concepts</a></li>
+  <li><a href="#logic-flow" id="toc-logic-flow" class="nav-link" data-scroll-target="#logic-flow"><span class="header-section-number">5.17.3</span> Logic Flow</a></li>
+  <li><a href="#sample-complexity-roadmap" id="toc-sample-complexity-roadmap" class="nav-link" data-scroll-target="#sample-complexity-roadmap"><span class="header-section-number">5.17.4</span> Sample Complexity Roadmap</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../lectures/04-approximate-planning.html">Approximate Methods</a></li><li class="breadcrumb-item"><a href="../lectures/05-certainty-equivalence.html"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Certainty Equivalence</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Certainty Equivalence</span></h1>
+<p class="subtitle lead">Model-based RL, sample complexity, and the generative model</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>In previous lectures we studied how to find a near-optimal policy of an MDP when the model is known. That is, we only considered the “planning problem,” and the question we asked was one of <strong>computational complexity</strong>: how many iterations do we need to find an <span class="math inline">\varepsilon</span>-optimal policy?</p>
+<p>Starting from this lecture, we enter the domain of <strong>reinforcement learning</strong>, where we no longer assume any knowledge of the model. Instead, we must learn <span class="math inline">\pi^*</span> from data. In this setting we can study both sample complexity and computational complexity, but we will mainly focus on <strong>sample complexity</strong>. The central question becomes:</p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>The Central Question
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><em>How many data points do we need to find an <span class="math inline">\varepsilon</span>-optimal policy <span class="math inline">\widehat{\pi}</span>, i.e., <span class="math inline">\widehat{\pi}</span> such that <span class="math inline">J(\pi^*) - J(\widehat{\pi}) \leq \varepsilon</span>?</em></p>
+</div>
+</div>
+<p>A key conceptual insight — and the main theme of this lecture — is that the error of a learned policy can often be decomposed into two independent pieces: an <strong>estimation error</strong> (how well we learn the model or value function from data) and a <strong>planning error</strong> (how well we optimize given the learned quantities). This separation is called <strong>certainty equivalence</strong>, and it allows us to reduce RL to a combination of statistical estimation and planning, both of which we already know how to analyze.</p>
+<section id="sec-overview" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="sec-overview"><span class="header-section-number">5.1</span> What Will Be Covered</h2>
+<ol type="1">
+<li><strong>Settings of RL</strong> — Solving MDPs from data: data distributions, data collection processes, hypothesis classes, and loss functions.</li>
+<li><strong>Certainty equivalence</strong> — Decomposing the error of a learned policy as a sum of policy optimization error and estimation error, via three concrete instantiations:
+<ul>
+<li>Model-based planning</li>
+<li>Model-free least-squares value iteration</li>
+<li>Approximate soft policy iteration</li>
+</ul></li>
+</ol>
+</section>
+<section id="sec-recap-planning" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="sec-recap-planning"><span class="header-section-number">5.2</span> Recap: MDP Planning Methods</h2>
+<p>Before entering the RL setting, let us briefly recall the two families of planning methods we studied in earlier lectures.</p>
+<p><strong>Value-based methods</strong> directly solve the Bellman equation. The prototypical algorithm is value iteration, and the main analysis tool is that the Bellman optimality operator <span class="math inline">T</span> is a <span class="math inline">\gamma</span>-contraction in <span class="math inline">\|\cdot\|_\infty</span>.</p>
+<p><strong>Policy-based methods</strong> optimize <span class="math inline">J(\pi) = \mathbb{E}\bigl[\sum_{t \geq 0} \gamma^t r_t\bigr]</span> as a function of <span class="math inline">\pi</span>. Algorithms such as actor-critic, natural policy gradient (NPG), and soft policy iteration need to estimate <span class="math inline">Q^\pi</span> as a descent direction (except for REINFORCE, which uses the score function instead). Estimating <span class="math inline">Q^\pi</span> itself amounts to solving the Bellman evaluation equation, and the analysis again relies on the fact that <span class="math inline">T^\pi</span> is a <span class="math inline">\gamma</span>-contraction.</p>
+<p>In both families the common analytical tools are:</p>
+<ul>
+<li><strong><span class="math inline">\gamma</span>-contraction</strong> of Bellman operators.</li>
+<li><strong>Performance difference lemma</strong> (PDL), which relates the gap <span class="math inline">J(\pi') - J(\pi)</span> to the advantage function.</li>
+</ul>
+</section>
+<section id="sec-recap-pdl" class="level2" data-number="5.3">
+<h2 data-number="5.3" class="anchored" data-anchor-id="sec-recap-pdl"><span class="header-section-number">5.3</span> Recap: Performance Difference Lemma</h2>
+<p>The performance difference lemma is a fundamental identity that will be used extensively in this lecture. We recall it here for reference.</p>
+<p>Let <span class="math inline">\mu</span> be the distribution of the initial state. Define <span class="math inline">J(\pi) = \mathbb{E}_{s \sim \mu}\bigl[V^\pi(s)\bigr]</span>. For any two policies <span class="math inline">\pi</span> and <span class="math inline">\pi'</span>, we have</p>
+<p><span id="eq-pdl-v1-inner"><span class="math display">
+J(\pi') - J(\pi) = \mathbb{E}_{s \sim d_\mu^{\pi'}}\Bigl[\bigl\langle Q^\pi(s, \cdot),\; \pi'(\cdot \mid s) - \pi(\cdot \mid s)\bigr\rangle_{\mathcal{A}}\Bigr],
+\tag{5.1}</span></span></p>
+<p>which can equivalently be written as</p>
+<p><span id="eq-pdl-v1-advantage"><span class="math display">
+J(\pi') - J(\pi) = \mathbb{E}_{s \sim d_\mu^{\pi'}}\Bigl[\sum_{a \in \mathcal{A}} Q^\pi(s, a) \cdot \bigl(\pi'(a \mid s) - \pi(a \mid s)\bigr)\Bigr] = \mathbb{E}_{(s, a) \sim d_\mu^{\pi'}}\bigl[A^\pi(s, a)\bigr],
+\tag{5.2}</span></span></p>
+<p>where the <strong>advantage function</strong> is <span class="math inline">A^\pi(s, a) = Q^\pi(s, a) - V^\pi(s)</span>, and the <strong>visitation measures</strong> are</p>
+<p><span id="eq-visitation"><span class="math display">
+d_\mu^\pi(s) = \sum_{t=0}^{\infty} \gamma^t \, \mathbb{P}_\mu^\pi(s_t = s), \qquad d_\mu^\pi(s, a) = \sum_{t=0}^{\infty} \gamma^t \, \mathbb{P}_\mu^\pi(s_t = s,\, a_t = a),
+\tag{5.3}</span></span></p>
+<p>for all policies <span class="math inline">\pi</span>.</p>
+</section>
+<section id="sec-stat-estimation" class="level2" data-number="5.4">
+<h2 data-number="5.4" class="anchored" data-anchor-id="sec-stat-estimation"><span class="header-section-number">5.4</span> Statistical Estimation in RL</h2>
+<section id="sec-why-sample-complexity" class="level3" data-number="5.4.1">
+<h3 data-number="5.4.1" class="anchored" data-anchor-id="sec-why-sample-complexity"><span class="header-section-number">5.4.1</span> Why Focus on Sample Complexity?</h3>
+<p>In RL, because the model is unknown, we face two subproblems:</p>
+<ul>
+<li><strong>Learning</strong> (estimate the true model or value function <span class="math inline">Q^*</span>) — a <strong>statistical estimation</strong> problem.</li>
+<li><strong>Planning</strong> (find the optimal policy given the estimated model) — a <strong>policy optimization</strong> problem.</li>
+</ul>
+<p>A remarkable feature of many RL algorithms is that the errors from these two components can be <strong>separated</strong>. This is precisely the certainty equivalence principle we will develop in this lecture.</p>
+</section>
+<section id="sec-core-estimation" class="level3" data-number="5.4.2">
+<h3 data-number="5.4.2" class="anchored" data-anchor-id="sec-core-estimation"><span class="header-section-number">5.4.2</span> The Core Estimation Problem</h3>
+<p>A common subproblem solved by both value-based and policy-based approaches is <strong>learning value functions</strong> (<span class="math inline">Q^*</span> or <span class="math inline">Q^\pi</span>). This is equivalent to solving the fixed point of Bellman equations from data.</p>
+<p>The Bellman equations are:</p>
+<p><span id="eq-bellman-opt"><span class="math display">
+Q^*(s, a) = R(s, a) + \mathbb{E}_{s' \sim P(\cdot \mid s, a)}\Bigl[\max_{a'} Q^*(s', a')\Bigr],
+\tag{5.4}</span></span></p>
+<p><span id="eq-bellman-eval"><span class="math display">
+Q^\pi(s, a) = R(s, a) + \mathbb{E}_{s' \sim P(\cdot \mid s, a)}\Bigl[\bigl\langle Q^\pi(s', \cdot),\; \pi(\cdot \mid s')\bigr\rangle_{\mathcal{A}}\Bigr].
+\tag{5.5}</span></span></p>
+<p>Estimating <span class="math inline">Q^*</span> or <span class="math inline">Q^\pi</span> is a statistical estimation problem.</p>
+</section>
+<section id="sec-aside-regression" class="level3" data-number="5.4.3">
+<h3 data-number="5.4.3" class="anchored" data-anchor-id="sec-aside-regression"><span class="header-section-number">5.4.3</span> Aside: Statistical Estimation via Regression</h3>
+<p>Regression is the most common statistical estimation problem and provides a useful analogy. In any estimation problem we need to specify four ingredients:</p>
+<ol type="1">
+<li><strong>Model (data distribution).</strong> For instance, <span class="math inline">y = f^*(x) + \varepsilon</span> where <span class="math inline">\varepsilon \sim \mathcal{N}(0, \sigma^2)</span>, so that <span class="math inline">y \sim \mathcal{N}(f^*(x), \sigma^2)</span>.</li>
+<li><strong>Data collection process.</strong> Sample i.i.d.&nbsp;<span class="math inline">\{x_i\}_{i=1}^N</span> with <span class="math inline">x_i \sim \mu \in \mathcal{P}(\mathcal{X})</span> and <span class="math inline">y_i \sim \mathcal{N}(f^*(x_i), \sigma^2)</span>.</li>
+<li><strong>Hypothesis class.</strong> For example, fit <span class="math inline">f^*</span> within the class of two-layer neural networks.</li>
+<li><strong>Loss function.</strong> For example, the least-squares loss: <span class="math display">
+L(W, v) = \frac{1}{2N} \sum_{i=1}^{N} \bigl[y_i - v^\top \sigma(W x_i)\bigr]^2.
+</span></li>
+</ol>
+<p>We will now identify these same four elements in the RL setting.</p>
+</section>
+</section>
+<section id="sec-four-elements" class="level2" data-number="5.5">
+<h2 data-number="5.5" class="anchored" data-anchor-id="sec-four-elements"><span class="header-section-number">5.5</span> Four Elements of Statistical Estimation in RL</h2>
+<p>Estimating value functions is a statistical problem. Like other statistical problems, we need to specify four aspects.</p>
+<section id="sec-data-distribution" class="level3" data-number="5.5.1">
+<h3 data-number="5.5.1" class="anchored" data-anchor-id="sec-data-distribution"><span class="header-section-number">5.5.1</span> 1. Data Distribution: The MDP</h3>
+<p>The data distribution is specified by the <strong>MDP</strong> (discounted or episodic).</p>
+<p>In a discounted MDP, given an initial state <span class="math inline">s_0</span> and any policy <span class="math inline">\pi</span>, the joint distribution of the trajectory <span class="math inline">\{(s_t, a_t, r_t) : t \geq 0\}</span> is fully specified by the MDP.</p>
+</section>
+<section id="sec-data-collection" class="level3" data-number="5.5.2">
+<h3 data-number="5.5.2" class="anchored" data-anchor-id="sec-data-collection"><span class="header-section-number">5.5.2</span> 2. Data Collection Process</h3>
+<p>Each data point is a <strong>transition tuple</strong> of the form <span class="math inline">(s_t, a_t, r_t, s_{t+1})</span>, sometimes written <span class="math inline">(s, a, r, s')</span>. There are three main data collection paradigms:</p>
+<div id="def-generative-model" class="theorem definition">
+<p><span class="theorem-title"><strong>Definition 5.1 (Generative Model)</strong></span> A <strong>generative model</strong> provides full control over data collection. For any state-action pair <span class="math inline">(s, a) \in \mathcal{S} \times \mathcal{A}</span>, the learner can query the model and observe a reward <span class="math inline">r</span> and next state <span class="math inline">s' \sim P(\cdot \mid s, a)</span>.</p>
+</div>
+<div id="def-online-rl" class="theorem definition">
+<p><span class="theorem-title"><strong>Definition 5.2 (Online RL)</strong></span> In the <strong>online RL</strong> setting, the learner controls the data collection process by specifying a sequence of policies <span class="math inline">\pi^{(1)}, \pi^{(2)}, \ldots, \pi^{(N)}</span>. Each policy <span class="math inline">\pi^{(i)}</span> can depend on data collected by previous policies <span class="math inline">\pi^{(1)}, \ldots, \pi^{(i-1)}</span>.</p>
+</div>
+<div id="def-offline-rl" class="theorem definition">
+<p><span class="theorem-title"><strong>Definition 5.3 (Offline RL)</strong></span> In the <strong>offline RL</strong> (batch) setting, the learner has no control over data collection. The dataset consists of transition tuples collected a priori, possibly by unknown or adaptive policies. For example, the dataset might have been collected by an online RL agent. A typical dataset consists of <span class="math inline">N</span> trajectories of <span class="math inline">T</span> steps: <span class="math display">
+\text{Dataset} = \Bigl\{s_1^{(i)}, a_1^{(i)}, r_1^{(i)}, s_2^{(i)}, \ldots, s_T^{(i)}, a_T^{(i)}, r_T^{(i)}, s_{T+1}^{(i)}\Bigr\}_{i=1}^{N},
+</span> where trajectory <span class="math inline">i</span> is collected by policy <span class="math inline">\pi^{(i)}</span>, <span class="math inline">i \in [N]</span>.</p>
+</div>
+</section>
+<section id="sec-hypothesis-class" class="level3" data-number="5.5.3">
+<h3 data-number="5.5.3" class="anchored" data-anchor-id="sec-hypothesis-class"><span class="header-section-number">5.5.3</span> 3. Hypothesis Class</h3>
+<p>The hypothesis class specifies the functional assumption used to represent the model or value function. From the Bellman equations, we see two estimation approaches:</p>
+<ul>
+<li><strong>Model-based:</strong> Estimate <span class="math inline">P</span> and <span class="math inline">R</span> first, then solve the Bellman equation on the estimated model.</li>
+<li><strong>Model-free:</strong> Directly solve the Bellman equation from data, bypassing explicit model estimation.</li>
+</ul>
+<p>We can freely use various function classes to represent the MDP model or <span class="math inline">Q</span>-function:</p>
+<ul>
+<li><strong>Tabular:</strong> <span class="math inline">\mathcal{S}</span> and <span class="math inline">\mathcal{A}</span> are both finite (transition kernel is stored as a table).</li>
+<li><strong>Linear:</strong> e.g., <span class="math inline">Q(s, a) = \phi(s, a)^\top \theta^*</span> and <span class="math inline">P(s' \mid s, a) = \phi(s, a)^\top \psi(s')</span>.</li>
+<li><strong>Kernel:</strong> infinite-dimensional linear model.</li>
+<li><strong>Neural network.</strong></li>
+</ul>
+<p>When <span class="math inline">|\mathcal{S}|</span> is very large, the tabular approach becomes impractical and we must use <strong>function approximation</strong>.</p>
+</section>
+<section id="sec-loss-functions" class="level3" data-number="5.5.4">
+<h3 data-number="5.5.4" class="anchored" data-anchor-id="sec-loss-functions"><span class="header-section-number">5.5.4</span> 4. Loss Functions</h3>
+<p>We now discuss the loss functions used by model-based and model-free methods.</p>
+<section id="sec-model-based-loss" class="level4" data-number="5.5.4.1">
+<h4 data-number="5.5.4.1" class="anchored" data-anchor-id="sec-model-based-loss"><span class="header-section-number">5.5.4.1</span> Model-Based Loss Functions</h4>
+<p>With transition data <span class="math inline">(s, a, r, s')</span>, estimating <span class="math inline">R</span> and <span class="math inline">P</span> reduces to standard supervised learning. The key identities are:</p>
+<p><span id="eq-model-identities"><span class="math display">
+\mathbb{E}[r \mid s, a] = R(s, a), \qquad \mathbb{E}\bigl[\mathbb{1}\{s' = s_0\} \mid s, a\bigr] = P(s_0 \mid s, a).
+\tag{5.6}</span></span></p>
+<ul>
+<li><p><strong>Estimate <span class="math inline">R</span>:</strong> Use a least-squares loss over a parametric family <span class="math inline">\{R_\theta, P_\theta\}_{\theta \in \Theta}</span>: <span id="eq-loss-R"><span class="math display">
+L_R(\theta) = \sum_{(s, a, r, s') \in \mathcal{D}} \bigl(r - R_\theta(s, a)\bigr)^2.
+\tag{5.7}</span></span></p></li>
+<li><p><strong>Estimate <span class="math inline">P</span>:</strong> Use a maximum likelihood loss: <span id="eq-loss-P"><span class="math display">
+L_P(\theta) = \sum_{(s, a, r, s') \in \mathcal{D}} -\log P_\theta(s' \mid s, a).
+\tag{5.8}</span></span></p></li>
+</ul>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Remark: Alternatives to MLE
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>MLE is not the only way to estimate <span class="math inline">P</span>. Any method that estimates a conditional distribution works. For instance, when <span class="math inline">|\mathcal{S}|</span> and <span class="math inline">|\mathcal{A}|</span> are finite, we can use the <strong>count-based estimator</strong>:</p>
+<p><span id="eq-count-estimator"><span class="math display">
+\widehat{P}(s' \mid s, a) = \frac{\#\text{transitions } (s, a) \to s'}{\#\text{visits to } (s, a)} = \frac{\sum_t \mathbb{1}\{(s_t, a_t, s_{t+1}) = (s, a, s')\}}{\sum_t \mathbb{1}\{(s_t, a_t) = (s, a)\}}.
+\tag{5.9}</span></span></p>
+</div>
+</div>
+</section>
+<section id="sec-model-free-loss" class="level4" data-number="5.5.4.2">
+<h4 data-number="5.5.4.2" class="anchored" data-anchor-id="sec-model-free-loss"><span class="header-section-number">5.5.4.2</span> Model-Free Loss Functions</h4>
+<p>Model-free methods are based on two main types of loss functions.</p>
+<p><strong>(i) Mean-Squared Bellman Error (MSBE).</strong> For estimating <span class="math inline">Q^*</span>:</p>
+<p><span id="eq-msbe-optimal"><span class="math display">
+L(Q) = \sum_{(s, a, r, s') \in \mathcal{D}} \Bigl[Q(s, a) - r - \max_{a'} Q(s', a')\Bigr]^2.
+\tag{5.10}</span></span></p>
+<p>For estimating <span class="math inline">Q^\pi</span>:</p>
+<p><span id="eq-msbe-policy"><span class="math display">
+L(Q) = \sum_{(s, a, r, s') \in \mathcal{D}} \Bigl[Q(s, a) - r - \sum_{a' \in \mathcal{A}} \pi(a' \mid s') \cdot Q(s', a')\Bigr]^2.
+\tag{5.11}</span></span></p>
+<p>The rationale is that the ideal loss is the squared residual of the Bellman equation:</p>
+<p><span id="eq-bellman-residual-ideal"><span class="math display">
+L(Q) = \mathbb{E}_{(s, a) \sim d}\Bigl\{\bigl[Q(s, a) - (\mathcal{T}Q)(s, a)\bigr]^2\Bigr\},
+\tag{5.12}</span></span></p>
+<p>where <span class="math inline">\mathcal{T}Q</span> denotes <span class="math inline">TQ</span> or <span class="math inline">T^\pi Q</span>, and <span class="math inline">d</span> is a sampling distribution. Note that <span class="math inline">TQ</span> and <span class="math inline">T^\pi Q</span> involve the expectation <span class="math inline">\mathbb{E}_{s' \sim P(\cdot \mid s, a)}</span>. The MSBE replaces this population expectation by a single sample.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Remark: MSBE Is Not Unbiased
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>A subtle but important caveat is that the MSBE is a <strong>biased</strong> estimator of the Bellman residual. To see why, consider the per-sample loss for estimating <span class="math inline">Q^*</span>:</p>
+<p><span class="math display">
+\ell(Q;\, s, a) = \bigl(Q(s, a) - r - \max_{a'} Q(s', a')\bigr)^2.
+</span></p>
+<p>Taking the expectation over <span class="math inline">(r, s')</span> given <span class="math inline">(s, a)</span>:</p>
+<p><span class="math display">
+\begin{aligned}
+\mathbb{E}\bigl[\ell(Q;\, s, a)\bigr] &amp;= \mathbb{E}\Bigl[\bigl(Q(s, a) - (TQ)(s, a) + (TQ)(s, a) - r - \max_{a'} Q(s', a')\bigr)^2\Bigr] \\
+&amp;= \bigl(Q(s, a) - (TQ)(s, a)\bigr)^2 + \mathrm{Var}\bigl(r + \max_{a'} Q(s', a')\bigr).
+\end{aligned}
+</span></p>
+<p>Therefore:</p>
+<p><span class="math display">
+\text{MSBE}(Q) = \bigl(\text{Bellman Residual}(Q)\bigr)^2 + \text{Variance}\bigl(\text{estimator of } TQ\bigr).
+</span></p>
+<p>Minimizing MSBE <span class="math inline">\neq</span> minimizing the Bellman residual. This means we need to be careful when using MSBE. Classical algorithms that use MSBE include <strong>Q-learning</strong> and <strong>temporal difference learning (TD(0))</strong>.</p>
+</div>
+</div>
+<p><strong>(ii) Mean-Squared Loss (<span class="math inline">\ell_2</span>-error).</strong> An alternative loss is:</p>
+<p><span id="eq-mse-loss"><span class="math display">
+L(Q) = \sum_{(s, a, r, s') \in \mathcal{D}} \bigl(Y - Q(s, a)\bigr)^2,
+\tag{5.13}</span></span></p>
+<p>where <span class="math inline">Y</span> is a <strong>response variable</strong> constructed from data. This loss can be used for estimating both <span class="math inline">Q^*</span> and <span class="math inline">Q^\pi</span>. It reduces the problem of solving the Bellman equation to a (sequence of) supervised learning problems, and can thus be easily combined with deep learning. The least-squares loss is commonly used in <strong>deep RL</strong>.</p>
+</section>
+</section>
+<section id="sec-ls-policy-eval" class="level3" data-number="5.5.5">
+<h3 data-number="5.5.5" class="anchored" data-anchor-id="sec-ls-policy-eval"><span class="header-section-number">5.5.5</span> Least-Squares Estimation for Policy Evaluation</h3>
+<div id="exm-ls-policy-eval" class="theorem example">
+<p><span class="theorem-title"><strong>Example 5.1 (Least-Squares Policy Evaluation)</strong></span> To estimate <span class="math inline">Q^\pi</span>, we can sample <span class="math inline">(s, a) \sim \mu \in \mathcal{P}(\mathcal{S} \times \mathcal{A})</span>. For each <span class="math inline">(s, a)</span>, collect a trajectory following <span class="math inline">\pi</span>, starting from <span class="math inline">(s, a)</span>:</p>
+<p><span class="math display">
+(s_0, a_0) = (s, a), \quad s_{t+1} \sim P(\cdot \mid s_t, a_t), \quad a_{t+1} \sim \pi(\cdot \mid s_{t+1}), \quad 0 \leq t \leq T.
+</span></p>
+<p>Define the response variable as the truncated return:</p>
+<p><span class="math display">
+Y = \sum_{t=0}^{T} \gamma^t \cdot r_t.
+</span></p>
+<p>Due to discounting, the bias from truncation vanishes:</p>
+<p><span class="math display">
+\bigl|\mathbb{E}[Y \mid (s_0, a_0) = (s, a)] - Q^\pi(s, a)\bigr| \leq \frac{\gamma^T}{1 - \gamma} \to 0 \quad \text{as } T \to \infty.
+</span></p>
+<p>The loss function is then <span class="math inline">(Y - Q(s, a))^2</span>.</p>
+</div>
+</section>
+<section id="sec-fitted-q" class="level3" data-number="5.5.6">
+<h3 data-number="5.5.6" class="anchored" data-anchor-id="sec-fitted-q"><span class="header-section-number">5.5.6</span> Fitted Q-Iteration (Least-Squares Value Iteration)</h3>
+<div id="exm-fitted-q" class="theorem example">
+<p><span class="theorem-title"><strong>Example 5.2 (Fitted Q-Iteration)</strong></span> Recall value iteration: <span class="math inline">Q^{(k+1)} \leftarrow TQ^{(k)}</span> (or <span class="math inline">Q^{(k+1)} \leftarrow T^\pi Q^{(k)}</span> for policy evaluation). We can estimate <span class="math inline">TQ^{(k)}</span> by regression.</p>
+<p>Given a transition tuple <span class="math inline">(s, a, r, s')</span>, define the response variable:</p>
+<p><span id="eq-fqi-target-optimal"><span class="math display">
+Y = r + \max_{a'} Q^{(k)}(s', a') \qquad \text{(for } Q^*\text{)},
+\tag{5.14}</span></span></p>
+<p>or</p>
+<p><span id="eq-fqi-target-policy"><span class="math display">
+Y = r + \mathbb{E}_{a' \sim \pi(\cdot \mid s')}\bigl[Q^{(k)}(s', a')\bigr] \qquad \text{(for } Q^\pi\text{)}.
+\tag{5.15}</span></span></p>
+<p>Note that <span class="math inline">\mathbb{E}[Y \mid s, a] = (TQ^{(k)})(s, a)</span>. The loss function and update rule are:</p>
+<p><span id="eq-fqi-update"><span class="math display">
+L(Q) = \sum_{(s, a, r, s') \in \mathcal{D}} \bigl(Y - Q(s, a)\bigr)^2, \qquad Q^{(k+1)} = \operatorname*{argmin}_{Q \in \mathcal{F}} L(Q),
+\tag{5.16}</span></span></p>
+<p>where <span class="math inline">\mathcal{F}</span> is the hypothesis class.</p>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Remark: Deep Q-Network (DQN)
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>As we will see later, fitted Q-iteration gives rise to a popular deep RL algorithm: the <strong>Deep Q-Network (DQN)</strong>. In DQN:</p>
+<ul>
+<li><span class="math inline">\mathcal{F}</span> = neural networks (NN).</li>
+<li><span class="math inline">\mathcal{D}</span> = i.i.d.&nbsp;samples from a memory storage (replay buffer), which stores transitions collected by an online process.</li>
+<li><span class="math inline">\min_{Q \in \mathcal{F}} L(Q)</span> is approximately solved by minibatch SGD.</li>
+</ul>
+</div>
+</div>
+</section>
+<section id="sec-combinations" class="level3" data-number="5.5.7">
+<h3 data-number="5.5.7" class="anchored" data-anchor-id="sec-combinations"><span class="header-section-number">5.5.7</span> Combinations of Settings</h3>
+<p>We can consider all possible combinations of data collection processes and hypothesis classes:</p>
+<div id="tbl-rl-settings" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-rl-settings-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;5.1: Settings of reinforcement learning
+</figcaption>
+<div aria-describedby="tbl-rl-settings-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Tabular</strong></th>
+<th><strong>Function Approximation</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Generative model</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td><strong>Offline RL</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><strong>Online RL</strong></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>Each cell represents a distinct problem setting with its own algorithmic and statistical challenges.</p>
+</section>
+</section>
+<section id="sec-certainty-equivalence" class="level2" data-number="5.6">
+<h2 data-number="5.6" class="anchored" data-anchor-id="sec-certainty-equivalence"><span class="header-section-number">5.6</span> Why Errors of Learning and Planning Can Be Separated</h2>
+<p>We now arrive at the central theme of this lecture: <strong>certainty equivalence</strong> in model-based RL. The key insight is that the suboptimality of a learned policy decomposes cleanly into a statistical (estimation) error and a planning (optimization) error.</p>
+<div id="fig-ce-pipeline" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ce-pipeline-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/certainty-equivalence-pipeline.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Figure&nbsp;5.1: The certainty equivalence pipeline. Data is used to estimate a model, then planning is performed to output a policy. The suboptimality decomposes into statistical estimation error and planning error."><img src="figures/certainty-equivalence-pipeline.svg" class="img-fluid figure-img" style="width:95.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ce-pipeline-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.1: The certainty equivalence pipeline. Data is used to estimate a model, then planning is performed to output a policy. The suboptimality decomposes into statistical estimation error and planning error.
+</figcaption>
+</figure>
+</div>
+<section id="sec-error-separation" class="level3" data-number="5.6.1">
+<h3 data-number="5.6.1" class="anchored" data-anchor-id="sec-error-separation"><span class="header-section-number">5.6.1</span> Separation of Estimation and Policy Optimization Errors</h3>
+<p>Consider model-based RL. Let <span class="math inline">M^*</span> be the true model and let <span class="math inline">\widehat{M}</span> be an estimated model. Let <span class="math inline">\pi^*</span> be the optimal policy on <span class="math inline">M^*</span>:</p>
+<p><span class="math display">
+\pi^* = \operatorname*{argmax}_\pi \; J(\pi, M^*),
+</span></p>
+<p>where <span class="math inline">J(\pi, M) = \mathbb{E}_{s \sim \mu}\bigl[V_M^\pi(s)\bigr]</span> and <span class="math inline">V_M^\pi</span> is the value function of <span class="math inline">\pi</span> on MDP model <span class="math inline">M</span>.</p>
+<p>Let <span class="math inline">\widetilde{\pi}</span> be the optimal policy on <span class="math inline">\widehat{M}</span>, i.e., <span class="math inline">\widetilde{\pi} = \operatorname{argmax}_\pi \; J(\pi, \widehat{M})</span>. Moreover, let <span class="math inline">\widehat{\pi}</span> be a policy learned on <span class="math inline">\widehat{M}</span>, which may differ from <span class="math inline">\widetilde{\pi}</span> (for example, if the planning algorithm has not fully converged).</p>
+<div id="thm-error-decomposition" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 5.1 (Error Decomposition (Certainty Equivalence))</strong></span> The suboptimality of <span class="math inline">\widehat{\pi}</span> satisfies:</p>
+<p><span id="eq-error-decomposition"><span class="math display">
+\begin{aligned}
+\text{Suboptimality}(\widehat{\pi}) &amp;= J(\pi^*, M^*) - J(\widehat{\pi}, M^*) \\
+&amp;= \underbrace{J(\pi^*, M^*) - J(\pi^*, \widehat{M})}_{\text{(1) model estimation error}} + \underbrace{J(\pi^*, \widehat{M}) - J(\widetilde{\pi}, \widehat{M})}_{\text{(2)} \leq 0} \\
+&amp;\quad + \underbrace{J(\widetilde{\pi}, \widehat{M}) - J(\widehat{\pi}, \widehat{M})}_{\text{(3) policy optimization error}} + \underbrace{J(\widehat{\pi}, \widehat{M}) - J(\widehat{\pi}, M^*)}_{\text{(4) model estimation error}}.
+\end{aligned}
+\tag{5.17}</span></span></p>
+<p>Here term (2) <span class="math inline">\leq 0</span> because <span class="math inline">\widetilde{\pi}</span> is optimal for <span class="math inline">\widehat{M}</span>. Terms (1) and (4) are model estimation errors because they measure the difference between evaluating a policy on <span class="math inline">M^*</span> versus <span class="math inline">\widehat{M}</span>. Term (3) is the policy optimization error.</p>
+<p>Bounding the right-hand side yields:</p>
+<p><span id="eq-error-bound"><span class="math display">
+\text{Suboptimality}(\widehat{\pi}) \leq \underbrace{2 \sup_\pi \bigl|J(\pi, M^*) - J(\pi, \widehat{M})\bigr|}_{\text{statistical error}} + \underbrace{J(\widetilde{\pi}, \widehat{M}) - J(\widehat{\pi}, \widehat{M})}_{\text{policy optimization error} \;\geq\; 0}.
+\tag{5.18}</span></span></p>
+</div>
+<p>For model-based RL, if <span class="math inline">\widehat{\pi}</span> is the exact optimal policy on <span class="math inline">\widehat{M}</span> (i.e., <span class="math inline">\widehat{\pi} = \widetilde{\pi}</span>), then the policy optimization error vanishes, and we only need to control the <strong>statistical error</strong>. We already know how to analyze the planning error from earlier lectures, so the new challenge is purely statistical.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Remark
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The question now becomes: <strong>when will the statistical error <span class="math inline">\sup_\pi |J(\pi, M^*) - J(\pi, \widehat{M})|</span> be small?</strong> We need to relate it to the model estimation error, i.e., to the accuracy of <span class="math inline">\widehat{R}</span> and <span class="math inline">\widehat{P}</span>.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-pdl-v2" class="level2" data-number="5.7">
+<h2 data-number="5.7" class="anchored" data-anchor-id="sec-pdl-v2"><span class="header-section-number">5.7</span> Relating Statistical Error to Model Estimation Error — PDL (V2)</h2>
+<p>To analyze the statistical error <span class="math inline">|J(\pi, M) - J(\pi, \widehat{M})|</span>, we want to relate it to the difference between <span class="math inline">M</span> and <span class="math inline">\widehat{M}</span>, that is, to some norm of <span class="math inline">(R - \widehat{R})</span> and <span class="math inline">(P - \widehat{P})</span>. To this end, we introduce a second version of the performance difference lemma that compares the <strong>same policy on two different MDPs</strong>.</p>
+<section id="sec-pdl-v2-statement" class="level3" data-number="5.7.1">
+<h3 data-number="5.7.1" class="anchored" data-anchor-id="sec-pdl-v2-statement"><span class="header-section-number">5.7.1</span> Performance Difference Lemma (Version 2)</h3>
+<div id="lem-pdl-v2" class="theorem lemma">
+<p><span class="theorem-title"><strong>Lemma 5.1 (Performance Difference Lemma — Version 2)</strong></span> Let <span class="math inline">M = (\mathcal{S}, \mathcal{A}, R, P, \mu, \gamma)</span> and <span class="math inline">\widehat{M} = (\mathcal{S}, \mathcal{A}, \widehat{R}, \widehat{P}, \mu, \gamma)</span> be two MDPs with different reward functions and transition kernels but the same state-action spaces, initial distribution, and discount factor. Let <span class="math inline">\pi</span> be any policy. We let <span class="math inline">V_M^\pi</span>, <span class="math inline">Q_M^\pi</span> be the value functions of <span class="math inline">\pi</span> on <span class="math inline">M</span>, and define <span class="math inline">V_{\widehat{M}}^\pi</span>, <span class="math inline">Q_{\widehat{M}}^\pi</span> similarly. Then:</p>
+<p><span id="eq-pdl-v2"><span class="math display">
+J(\pi, \widehat{M}) - J(\pi, M) = \mathbb{E}_{(s, a) \sim d_{\widehat{M}}^\pi}\Bigl[\bigl(\widehat{R}(s, a) - R(s, a)\bigr) + \gamma\bigl((\widehat{P} V_M^\pi)(s, a) - (P V_M^\pi)(s, a)\bigr)\Bigr],
+\tag{5.19}</span></span></p>
+<p>where <span class="math inline">d_{\widehat{M}}^\pi(s, a) = \sum_{t=0}^{\infty} \gamma^t \, \mathbb{P}_{\widehat{M}}^\pi(s_t = s,\, a_t = a)</span> is the visitation measure of <span class="math inline">\pi</span> on <span class="math inline">\widehat{M}</span>. Here we omit <span class="math inline">\mu</span> from the notation because <span class="math inline">\widehat{M}</span> and <span class="math inline">M</span> share the same initial distribution.</p>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Remark: Comparison with PDL Version 1
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Recall version 1 of the performance difference lemma:</p>
+<p><span class="math display">
+J(\widetilde{\pi}) - J(\pi) = \mathbb{E}_{d_{\widehat{M}}^{\widetilde{\pi}}}\Bigl[\bigl\langle Q^\pi(s, \cdot),\; \widetilde{\pi}(\cdot \mid s) - \pi(\cdot \mid s)\bigr\rangle_{\mathcal{A}}\Bigr].
+</span></p>
+<p>In version 1, the expectation is with respect to the visitation measure of <span class="math inline">\widetilde{\pi}</span>, and the lemma compares <strong>two different policies on the same MDP</strong>. In version 2, the lemma compares the <strong>same policy on two different MDPs</strong>, and the expectation is with respect to the visitation measure on <span class="math inline">\widehat{M}</span>.</p>
+</div>
+</div>
+</section>
+<section id="sec-pdl-v2-proof" class="level3" data-number="5.7.2">
+<h3 data-number="5.7.2" class="anchored" data-anchor-id="sec-pdl-v2-proof"><span class="header-section-number">5.7.2</span> Proof of Performance Difference Lemma (Version 2)</h3>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>We prove this by direct calculation. Starting from the definition:</p>
+<p><span id="eq-pdl-v2-start"><span class="math display">
+J(\pi, \widehat{M}) - J(\pi, M) = \mathbb{E}_\mu\bigl[V_{\widehat{M}}^\pi(s) - V_M^\pi(s)\bigr].
+\tag{5.20}</span></span></p>
+<p>By the tower property, writing <span class="math inline">V^\pi(s) = \mathbb{E}_{a \sim \pi(\cdot \mid s)}[Q^\pi(s, a)]</span>:</p>
+<p><span class="math display">
+J(\pi, \widehat{M}) - J(\pi, M) = \mathbb{E}_{s \sim \mu,\, a \sim \pi(\cdot \mid s)}\bigl[Q_{\widehat{M}}^\pi(s, a) - Q_M^\pi(s, a)\bigr]. \tag{1}
+</span></p>
+<p>By the Bellman equations on each MDP:</p>
+<p><span class="math display">
+Q_M^\pi(s, a) = R(s, a) + \gamma\, (P V_M^\pi)(s, a), \tag{2}
+</span></p>
+<p><span class="math display">
+Q_{\widehat{M}}^\pi(s, a) = \widehat{R}(s, a) + \gamma\, (\widehat{P} V_{\widehat{M}}^\pi)(s, a). \tag{3}
+</span></p>
+<p>Combining (2) and (3):</p>
+<p><span class="math display">
+\begin{aligned}
+Q_{\widehat{M}}^\pi(s, a) - Q_M^\pi(s, a) &amp;= \bigl(\widehat{R}(s, a) - R(s, a)\bigr) + \gamma\bigl((\widehat{P} V_{\widehat{M}}^\pi)(s, a) - (P V_M^\pi)(s, a)\bigr) \\
+&amp;= \bigl(\widehat{R}(s, a) - R(s, a)\bigr) + \gamma\bigl((\widehat{P} V_{\widehat{M}}^\pi)(s, a) - (\widehat{P} V_M^\pi)(s, a)\bigr) \\
+&amp;\quad + \gamma\bigl((\widehat{P} V_M^\pi)(s, a) - (P V_M^\pi)(s, a)\bigr). \tag{4}
+\end{aligned}
+</span></p>
+<p>Substituting (4) into (1) and applying a recursion argument:</p>
+<p><span class="math display">
+\begin{aligned}
+J(\pi, \widehat{M}) - J(\pi, M) &amp;= \mathbb{E}_{\substack{s_0 \sim \mu \\ a_0 \sim \pi(\cdot \mid s_0)}}\Bigl[\bigl(\widehat{R}(s_0, a_0) - R(s_0, a_0)\bigr) + \gamma\bigl((\widehat{P} V_M^\pi)(s_0, a_0) - (P V_M^\pi)(s_0, a_0)\bigr)\Bigr] \\
+&amp;\quad + \gamma\, \mathbb{E}_{\substack{s_0 \sim \mu \\ a_0 \sim \pi(\cdot \mid s_0)}}\Bigl[\mathbb{E}_{s_1 \sim \widehat{P}(\cdot \mid s_0, a_0)}\bigl[V_{\widehat{M}}^\pi(s_1) - V_M^\pi(s_1)\bigr]\Bigr].
+\end{aligned}
+</span></p>
+<p>The last term has the same structure as the original expression <span class="math inline">J(\pi, \widehat{M}) - J(\pi, M)</span>, but with <span class="math inline">\mu</span> replaced by the distribution <span class="math inline">\widehat{\mu}</span> over <span class="math inline">s_1</span> induced by <span class="math inline">\widehat{P}</span>. Unrolling this recursion over all time steps, we obtain:</p>
+<p><span class="math display">
+J(\pi, \widehat{M}) - J(\pi, M) = \mathbb{E}_{(s, a) \sim d_{\widehat{M}}^\pi}\Bigl[\bigl(\widehat{R} - R\bigr)(s, a) + \gamma\bigl((\widehat{P} - P) V_M^\pi\bigr)(s, a)\Bigr].
+</span></p>
+<p>This completes the proof. <span class="math inline">\blacksquare</span></p>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Remark: Finite-Horizon Version
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>We also have a similar lemma for the finite-horizon (episodic) setting. Consider two episodic MDPs <span class="math inline">M = (\mathcal{S}, \mathcal{A}, R, P, \mu, H)</span> and <span class="math inline">\widehat{M} = (\mathcal{S}, \mathcal{A}, \widehat{R}, \widehat{P}, \mu, H)</span>, where <span class="math inline">R = \{R_h\}_{h \in [H]}</span> and <span class="math inline">P = \{P_h\}_{h \in [H]}</span>. Let <span class="math inline">d_{M,h}^\pi(s, a) = \mathbb{P}_M^\pi(s_h = s,\, a_h = a)</span> be the visitation measure at step <span class="math inline">h</span>, and let <span class="math inline">Q_{M,h}^\pi</span>, <span class="math inline">V_{M,h}^\pi</span> be the value functions of <span class="math inline">\pi</span> on <span class="math inline">M</span> at step <span class="math inline">h</span>. Then:</p>
+<p><span class="math display">
+J(\pi, \widehat{M}) - J(\pi, M) = \sum_{h=1}^{H} \mathbb{E}_{(s, a) \sim d_{\widehat{M},h}^\pi}\Bigl[\bigl(\widehat{R}_h(s, a) - R_h(s, a)\bigr) + \bigl((\widehat{P}_h V_{M,h+1}^\pi)(s, a) - (P_h V_{M,h+1}^\pi)(s, a)\bigr)\Bigr].
+</span></p>
+</div>
+</div>
+</section>
+<section id="sec-bounding-stat-error" class="level3" data-number="5.7.3">
+<h3 data-number="5.7.3" class="anchored" data-anchor-id="sec-bounding-stat-error"><span class="header-section-number">5.7.3</span> Bounding the Statistical Error</h3>
+<p>Using PDL-V2, we can now bound the statistical error in terms of model estimation accuracy. Note that for any <span class="math inline">(s, a) \in \mathcal{S} \times \mathcal{A}</span>:</p>
+<p><span id="eq-R-bound"><span class="math display">
+\bigl|\widehat{R}(s, a) - R(s, a)\bigr| \leq \sup_{s, a} \bigl|\widehat{R}(s, a) - R(s, a)\bigr| = \|\widehat{R} - R\|_\infty,
+\tag{5.21}</span></span></p>
+<p><span id="eq-P-bound"><span class="math display">
+\bigl|(\widehat{P} V_M^\pi)(s, a) - (P V_M^\pi)(s, a)\bigr| \leq \bigl\{\sup_{s, a} \|\widehat{P}(\cdot \mid s, a) - P(\cdot \mid s, a)\|_1\bigr\} \cdot \|V_M^\pi\|_\infty.
+\tag{5.22}</span></span></p>
+<p>When <span class="math inline">\|R\|_\infty \leq 1</span>, we know that <span class="math inline">\|V_M^\pi\|_\infty \leq \frac{1}{1 - \gamma}</span>.</p>
+<div id="def-model-estimation-error" class="theorem definition">
+<p><span class="theorem-title"><strong>Definition 5.4 (Model Estimation Error)</strong></span> We define the <strong>model estimation error</strong> of <span class="math inline">\widehat{M}</span> as:</p>
+<p><span id="eq-model-error-def"><span class="math display">
+D(\widehat{M}, M) = \max\Bigl\{\|\widehat{R} - R\|_\infty,\; \sup_{(s, a) \in \mathcal{S} \times \mathcal{A}} \|\widehat{P}(\cdot \mid s, a) - P(\cdot \mid s, a)\|_1\Bigr\}.
+\tag{5.23}</span></span></p>
+</div>
+<p>Applying PDL-V2 with the bounds above and using the facts that (i) <span class="math inline">|V_M^\pi(s)| \leq \frac{1}{1 - \gamma}</span> for all <span class="math inline">s \in \mathcal{S}</span>, and (ii) <span class="math inline">\sum_{s, a} d_{\widehat{M}}^\pi(s, a) = \frac{1}{1 - \gamma}</span> for all <span class="math inline">\pi</span>, we obtain:</p>
+<div id="thm-stat-error-bound" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 5.2 (Statistical Error Bound)</strong></span> For any policy <span class="math inline">\pi</span>:</p>
+<p><span id="eq-stat-error-bound"><span class="math display">
+\bigl|J(\pi, \widehat{M}) - J(\pi, M)\bigr| \leq \left(\frac{1}{1 - \gamma}\right)^2 \cdot D(\widehat{M}, M).
+\tag{5.24}</span></span></p>
+</div>
+</section>
+<section id="sec-final-model-based-bound" class="level3" data-number="5.7.4">
+<h3 data-number="5.7.4" class="anchored" data-anchor-id="sec-final-model-based-bound"><span class="header-section-number">5.7.4</span> Final Bound for Model-Based RL</h3>
+<p>Combining the error decomposition (<a href="#eq-error-bound" class="quarto-xref"><span>5.18</span></a>) with the statistical error bound (<a href="#eq-stat-error-bound" class="quarto-xref"><span>5.24</span></a>), we obtain the following guarantee for model-based RL. Suppose we first estimate <span class="math inline">M</span> using <span class="math inline">\widehat{M}</span>, then solve a planning problem on <span class="math inline">\widehat{M}</span> to get <span class="math inline">\widehat{\pi}</span>:</p>
+<p><span id="eq-final-model-based"><span class="math display">
+J(\pi^*, M) - J(\widehat{\pi}, M) \leq 2 \cdot \left(\frac{1}{1 - \gamma}\right)^2 \cdot D(\widehat{M}, M) + \bigl[J(\widetilde{\pi}, \widehat{M}) - J(\widehat{\pi}, \widehat{M})\bigr].
+\tag{5.25}</span></span></p>
+<p>The first term is the statistical error controlled by model accuracy, and the second term is the planning error that can be made small using value iteration or policy optimization on <span class="math inline">\widehat{M}</span>.</p>
+</section>
+</section>
+<section id="sec-model-based-q" class="level2" data-number="5.8">
+<h2 data-number="5.8" class="anchored" data-anchor-id="sec-model-based-q"><span class="header-section-number">5.8</span> Error of Model-Based RL for Estimating <span class="math inline">Q</span>-Functions</h2>
+<p>Another important implication of PDL-V2 is that we can establish an upper bound on the accuracy of model-based RL for <strong>estimating <span class="math inline">Q</span>-functions</strong> directly.</p>
+<p>Suppose we have an estimated model <span class="math inline">\widehat{M}</span>.</p>
+<ul>
+<li><p><strong>Estimate <span class="math inline">Q^*</span>:</strong> Solve the Bellman optimality equation on <span class="math inline">\widehat{M}</span>: <span class="math display">
+\widetilde{Q} = \widehat{R} + \widehat{P}\bigl(\max_{a'} \widetilde{Q}(\cdot, a')\bigr).
+</span> Here <span class="math inline">\widetilde{Q}</span> is the optimal value function on <span class="math inline">\widehat{M}</span>, i.e., <span class="math inline">\widetilde{Q} = Q_{\widehat{M}}^*</span>.</p></li>
+<li><p><strong>Estimate <span class="math inline">Q^\pi</span>:</strong> Solve the Bellman evaluation equation on <span class="math inline">\widehat{M}</span>: <span class="math display">
+\widetilde{Q}^\pi(s, a) = \widehat{R}(s, a) + (\widehat{P}\, \widetilde{V}^\pi)(s, a), \qquad \widetilde{V}^\pi(s) = \bigl\langle \widetilde{Q}^\pi(s, \cdot),\; \pi(\cdot \mid s)\bigr\rangle_{\mathcal{A}}.
+</span></p></li>
+</ul>
+<p>We now bound <span class="math inline">\|Q^* - \widetilde{Q}\|_\infty</span>. Bounding <span class="math inline">\|\widetilde{Q}^\pi - Q^\pi\|_\infty</span> is similar.</p>
+<section id="sec-bounding-q-error" class="level3" data-number="5.8.1">
+<h3 data-number="5.8.1" class="anchored" data-anchor-id="sec-bounding-q-error"><span class="header-section-number">5.8.1</span> Bounding <span class="math inline">|Q^*(s, a) - \widetilde{Q}(s, a)|</span></h3>
+<div id="thm-model-based-q-bound" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 5.3 (Model-Based <span class="math inline">Q</span>-Function Estimation Error)</strong></span> Let <span class="math inline">\widetilde{\pi}</span> be the optimal policy on <span class="math inline">\widehat{M}</span>, so that <span class="math inline">\widetilde{Q} = Q_{\widehat{M}}^{\widetilde{\pi}}</span>. Then:</p>
+<p><span id="eq-q-error-bound"><span class="math display">
+\|Q^* - \widetilde{Q}\|_\infty \leq \left(\frac{1}{1 - \gamma}\right)^2 \cdot D(\widehat{M}, M).
+\tag{5.26}</span></span></p>
+</div>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>For any <span class="math inline">(s, a) \in \mathcal{S} \times \mathcal{A}</span>, we bound both directions.</p>
+<p><strong>Upper bound on <span class="math inline">Q^*(s, a) - \widetilde{Q}(s, a)</span>.</strong> We decompose:</p>
+<p><span class="math display">
+Q^*(s, a) - \widetilde{Q}(s, a) = \bigl(Q^*(s, a) - Q_{\widehat{M}}^{\pi^*}(s, a)\bigr) + \bigl(Q_{\widehat{M}}^{\pi^*}(s, a) - \widetilde{Q}(s, a)\bigr).
+</span></p>
+<p>The second term satisfies <span class="math inline">Q_{\widehat{M}}^{\pi^*}(s, a) - \widetilde{Q}(s, a) = Q_{\widehat{M}}^{\pi^*}(s, a) - Q_{\widehat{M}}^{\widetilde{\pi}}(s, a) \leq 0</span> because <span class="math inline">\widetilde{\pi}</span> is optimal on <span class="math inline">\widehat{M}</span>. Therefore:</p>
+<p><span class="math display">
+Q^*(s, a) - \widetilde{Q}(s, a) \leq Q^*(s, a) - Q_{\widehat{M}}^{\pi^*}(s, a). \tag{A}
+</span></p>
+<p>This compares the same policy <span class="math inline">\pi^*</span> on two different environments.</p>
+<p><strong>Lower bound on <span class="math inline">Q^*(s, a) - \widetilde{Q}(s, a)</span>.</strong> Similarly:</p>
+<p><span class="math display">
+\widetilde{Q}(s, a) - Q^*(s, a) = \bigl(\widetilde{Q}(s, a) - Q_M^{\widetilde{\pi}}(s, a)\bigr) + \bigl(Q_M^{\widetilde{\pi}}(s, a) - Q^*(s, a)\bigr).
+</span></p>
+<p>The second term satisfies <span class="math inline">Q_M^{\widetilde{\pi}}(s, a) - Q^*(s, a) \leq 0</span> because <span class="math inline">\pi^*</span> is optimal on <span class="math inline">M</span>. Therefore:</p>
+<p><span class="math display">
+\widetilde{Q}(s, a) - Q^*(s, a) \leq \widetilde{Q}(s, a) - Q_M^{\widetilde{\pi}}(s, a). \tag{B}
+</span></p>
+<p><strong>Bounding term (A).</strong> For any fixed <span class="math inline">(s^*, a^*) \in \mathcal{S} \times \mathcal{A}</span>, we apply PDL-V2 with initial distribution <span class="math inline">\delta(s^*, a^*)</span> (i.e., set <span class="math inline">(s_0, a_0) = (s^*, a^*)</span>):</p>
+<p><span class="math display">
+Q^*(s^*, a^*) - Q_{\widehat{M}}^{\pi^*}(s^*, a^*) = -\mathbb{E}_{d_{\widehat{M},(s^*,a^*)}^{\pi^*}}\Bigl[\bigl(\widehat{R} - R\bigr)(s, a) + \gamma\bigl((\widehat{P} V_M^{\pi^*})(s, a) - (P V_M^{\pi^*})(s, a)\bigr)\Bigr],
+</span></p>
+<p>where <span class="math inline">V_M^{\pi^*} = V^*</span> is a fixed function. Taking absolute values and applying the bounds on <span class="math inline">\|\widehat{R} - R\|_\infty</span> and <span class="math inline">\|\widehat{P}(\cdot \mid s, a) - P(\cdot \mid s, a)\|_1</span>:</p>
+<p><span class="math display">
+\bigl|Q^*(s^*, a^*) - Q_{\widehat{M}}^{\pi^*}(s^*, a^*)\bigr| \leq \frac{1}{1 - \gamma} \cdot \Bigl(\|\widehat{R} - R\|_\infty + \sup_{s, a} \bigl|(P(\cdot \mid s, a) - \widehat{P}(\cdot \mid s, a))^\top V^*\bigr|\Bigr) \leq \left(\frac{1}{1 - \gamma}\right)^2 \cdot D(\widehat{M}, M).
+</span></p>
+<p><strong>Bounding term (B).</strong> Similarly:</p>
+<p><span class="math display">
+\widetilde{Q}(s^*, a^*) - Q_M^{\widetilde{\pi}}(s^*, a^*) = \mathbb{E}_{d_{\widehat{M},(s^*,a^*)}^{\widetilde{\pi}}}\Bigl[\bigl(\widehat{R} - R\bigr)(s, a) + \gamma\bigl((\widehat{P} V_M^{\widetilde{\pi}})(s, a) - (P V_M^{\widetilde{\pi}})(s, a)\bigr)\Bigr].
+</span></p>
+<p>By the same reasoning:</p>
+<p><span class="math display">
+\bigl|\widetilde{Q}(s^*, a^*) - Q_M^{\widetilde{\pi}}(s^*, a^*)\bigr| \leq \frac{1}{1 - \gamma} \cdot \Bigl\{\|\widehat{R} - R\|_\infty + \sup_{s, a} \|\widehat{P}(\cdot \mid s, a) - P(\cdot \mid s, a)\|_1 \cdot \|V_M^{\widetilde{\pi}}\|_\infty\Bigr\} \leq \left(\frac{1}{1 - \gamma}\right)^2 \cdot D(\widehat{M}, M).
+</span></p>
+<p><strong>Combining (A) and (B):</strong> Since both <span class="math inline">Q^*(s, a) - \widetilde{Q}(s, a)</span> and <span class="math inline">\widetilde{Q}(s, a) - Q^*(s, a)</span> are bounded by <span class="math inline">\bigl(\frac{1}{1-\gamma}\bigr)^2 \cdot D(\widehat{M}, M)</span>, we conclude:</p>
+<p><span class="math display">
+\|Q^* - \widetilde{Q}\|_\infty \leq \left(\frac{1}{1 - \gamma}\right)^2 \cdot D(\widehat{M}, M).
+</span></p>
+<p>This completes the proof. <span class="math inline">\blacksquare</span></p>
+</div>
+<p>This result is powerful: it tells us that if we can estimate the model well (i.e., make <span class="math inline">D(\widehat{M}, M)</span> small), then solving the Bellman equation on the estimated model automatically yields a good approximation to the true optimal <span class="math inline">Q</span>-function. The error amplification factor of <span class="math inline">(1-\gamma)^{-2}</span> reflects the long-horizon nature of the problem — errors in the model compound over the effective horizon <span class="math inline">1/(1-\gamma)</span>.</p>
+</section>
+</section>
+<section id="sec-when-model-error-small" class="level2" data-number="5.9">
+<h2 data-number="5.9" class="anchored" data-anchor-id="sec-when-model-error-small"><span class="header-section-number">5.9</span> When Is <span class="math inline">D(M, \widehat{M})</span> Small?</h2>
+<p>The previous section showed that the suboptimality of the certainty-equivalence policy scales with the model estimation error <span class="math inline">D(\widehat{M}, M)</span>. A natural follow-up question is: under what conditions on the dataset can we guarantee that this error is small? The answer revolves around the notion of <strong>coverage</strong>.</p>
+<section id="sec-first-sample-complexity" class="level3" data-number="5.9.1">
+<h3 data-number="5.9.1" class="anchored" data-anchor-id="sec-first-sample-complexity"><span class="header-section-number">5.9.1</span> First Sample Complexity Result</h3>
+<p>To make sure <span class="math inline">D(\widehat{M}, M)</span> is small, the dataset should have <strong>sufficient coverage</strong> over <span class="math inline">\mathcal{S} \times \mathcal{A}</span>.</p>
+<ul>
+<li>In the <strong>tabular case</strong>, we need to observe each <span class="math inline">(s, a)</span> for many times to estimate <span class="math inline">R(s, a)</span> and <span class="math inline">P(\cdot \mid s, a)</span> accurately.</li>
+<li>When <span class="math inline">|\mathcal{S}|</span> is very large and we assume the environment can be captured by some <strong>parametric functions</strong>, then we need to observe “all the directions the state-action pairs are embedded into.” For example, when <span class="math inline">R</span> is a linear function <span class="math inline">R(s,a) = \phi(s,a)^\top \theta</span>, then we need to observe every direction of the vector space spanned by <span class="math inline">\{\phi(s,a) : (s,a) \in \mathcal{S} \times \mathcal{A}\}</span>. This is sufficient for estimating <span class="math inline">\theta</span> accurately.</li>
+</ul>
+<p>A key insight is that</p>
+<blockquote class="blockquote">
+<p>Small estimation error <strong>necessitates</strong> data with coverage.</p>
+</blockquote>
+<p>This is a foundational idea. In the online setting, building a good dataset requires the agent to <strong>explore</strong> <span class="math inline">\mathcal{S} \times \mathcal{A}</span>. This leads to the <strong>exploration–exploitation tradeoff</strong>. We will revisit this concept in the next part.</p>
+<p>In the following, we focus on the <strong>generative model</strong> setting and establish a concrete bound on <span class="math inline">D(\widehat{M}, M)</span> under the tabular setting.</p>
+</section>
+</section>
+<section id="sec-generative-model" class="level2" data-number="5.10">
+<h2 data-number="5.10" class="anchored" data-anchor-id="sec-generative-model"><span class="header-section-number">5.10</span> Generative Model</h2>
+<p>The generative model is the simplest data-collection mechanism in RL theory. It provides on-demand access to reward and transition samples for any state-action pair, bypassing the exploration challenge entirely. This makes it a clean starting point for understanding sample complexity.</p>
+<div id="def-generative-model-oracle" class="theorem definition">
+<p><span class="theorem-title"><strong>Definition 5.5 (Generative Model)</strong></span> A <strong>generative model</strong> of an MDP is an oracle that satisfies the following input-output relationship:</p>
+<ul>
+<li><strong>Discounted setting:</strong> For any input <span class="math inline">(s, a) \in \mathcal{S} \times \mathcal{A}</span>, it outputs <span class="math inline">r \in [0,1]</span> and <span class="math inline">\widetilde{s} \in \mathcal{S}</span> satisfying <span class="math display">
+\mathbb{E}[r] = R(s, a), \qquad \mathbb{P}(\widetilde{s} = s') = P(s' \mid s, a).
+</span></li>
+<li><strong>Episodic setting:</strong> For any input <span class="math inline">(h, s, a) \in [H] \times \mathcal{S} \times \mathcal{A}</span>, it outputs <span class="math inline">r \in [0,1]</span> and <span class="math inline">\widetilde{s} \in \mathcal{S}</span> satisfying <span class="math display">
+\mathbb{E}[r] = R_h(s, a), \qquad \mathbb{P}(\widetilde{s} = s') = P_h(s' \mid s, a).
+</span></li>
+</ul>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>How to Collect a Good Dataset with Coverage?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The generative model provides the most direct answer: simply query every state-action pair repeatedly. This guarantees uniform coverage by construction.</p>
+</div>
+</div>
+<section id="sec-naive-empirical" class="level3" data-number="5.10.1">
+<h3 data-number="5.10.1" class="anchored" data-anchor-id="sec-naive-empirical"><span class="header-section-number">5.10.1</span> Naive Approach: Empirical Means</h3>
+<p>Consider the naive approach where we query each <span class="math inline">(s, a) \in \mathcal{S} \times \mathcal{A}</span> for <span class="math inline">N</span> times and build an estimated model using <strong>empirical means</strong>:</p>
+<p><span id="eq-empirical-estimates"><span class="math display">
+\widehat{R}(s, a) = \frac{1}{N} \sum_{i=1}^{N} r_i, \qquad \widehat{P}(s' \mid s, a) = \frac{1}{N} \sum_{i=1}^{N} \mathbb{1}\{\widetilde{s}_i = s'\},
+\tag{5.27}</span></span></p>
+<p>where <span class="math inline">(r_i, \widetilde{s}_i)</span> is the output of the generative model after the <span class="math inline">i</span>-th query of <span class="math inline">(s, a) \in \mathcal{S} \times \mathcal{A}</span>.</p>
+<p>We define <span class="math inline">\widehat{M} = (\mathcal{S}, \mathcal{A}, \widehat{R}, \widehat{P}, \mu, \gamma)</span>, where <span class="math inline">\mu</span> is the distribution of the initial state.</p>
+<p><strong>Our goal:</strong> Bound the model estimation error</p>
+<p><span id="eq-model-error-recall"><span class="math display">
+D(\widehat{M}, M) = \max\!\Bigl\{\|\widehat{R} - R\|_\infty, \;\sup_{(s,a)} \bigl\|\widehat{P}(\cdot \mid s, a) - P(\cdot \mid s, a)\bigr\|_1\Bigr\}.
+\tag{5.28}</span></span></p>
+<p>Let <span class="math inline">\widehat{\pi}</span> be the optimal policy of <span class="math inline">\widehat{M}</span>. We know that</p>
+<p><span class="math display">
+\mathrm{Subopt}(\widehat{\pi}) \;\leq\; Q \cdot \Bigl(\frac{1}{1 - \gamma}\Bigr)^2 \cdot D(\widehat{M}, M).
+</span></p>
+</section>
+</section>
+<section id="sec-sample-complexity-model-based" class="level2" data-number="5.11">
+<h2 data-number="5.11" class="anchored" data-anchor-id="sec-sample-complexity-model-based"><span class="header-section-number">5.11</span> Sample Complexity of the Model-Based Approach</h2>
+<div class="callout callout-style-simple callout-note">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p><strong>Key Question:</strong> To make sure <span class="math inline">\mathrm{Subopt}(\widehat{\pi}) \leq \varepsilon</span>, how large should <span class="math inline">N</span> be?</p>
+</div>
+</div>
+</div>
+<p>We now turn to the main theoretical question: how many generative-model queries are needed for the certainty-equivalence policy to be <span class="math inline">\varepsilon</span>-optimal?</p>
+<p>Recall that we build an estimated model by:</p>
+<ol type="a">
+<li>Making <span class="math inline">N</span> queries to the generative model for all <span class="math inline">(s, a) \in \mathcal{S} \times \mathcal{A}</span>.</li>
+<li>Constructing <span class="math inline">\widehat{R}</span> and <span class="math inline">\widehat{P}</span> using empirical averages.</li>
+</ol>
+<p>The <strong>sample complexity</strong> is <span class="math inline">N \cdot |\mathcal{S} \times \mathcal{A}|</span>.</p>
+<p><strong>Question:</strong> How good is <span class="math inline">\widehat{\pi} = \operatorname*{argmax}_\pi J(\pi, \widehat{M})</span>?</p>
+<p>To simplify the notation, let us define <span class="math inline">\varepsilon_R, \varepsilon_P &gt; 0</span> such that</p>
+<p><span id="eq-model-error-event"><span class="math display">
+\mathbb{P}\!\Biggl(\sup_{(s,a) \in \mathcal{S} \times \mathcal{A}} \bigl|\widehat{R}(s, a) - R(s, a)\bigr| \leq \varepsilon_R, \;\; \sup_{(s,a) \in \mathcal{S} \times \mathcal{A}} \bigl\|\widehat{P}(\cdot \mid s, a) - P(\cdot \mid s, a)\bigr\|_1 \leq \varepsilon_P\Biggr) \;\geq\; 1 - \delta.
+\tag{5.29}</span></span></p>
+<p>Here the randomness comes from the generative model, and <span class="math inline">\delta &gt; 0</span>.</p>
+<p>That is, with high probability,</p>
+<p><span class="math display">
+\|\widehat{R} - R\|_\infty \leq \varepsilon_R, \qquad \sup_{(s,a) \in \mathcal{S} \times \mathcal{A}} \bigl\|\widehat{P}(\cdot \mid s, a) - P(\cdot \mid s, a)\bigr\|_1 \leq \varepsilon_P.
+</span></p>
+<p>We will use <strong>concentration inequalities</strong> to bound <span class="math inline">\varepsilon_R</span> and <span class="math inline">\varepsilon_P</span>.</p>
+</section>
+<section id="sec-concentration-errors" class="level2" data-number="5.12">
+<h2 data-number="5.12" class="anchored" data-anchor-id="sec-concentration-errors"><span class="header-section-number">5.12</span> Bounding the Concentration Errors <span class="math inline">\varepsilon_R</span> and <span class="math inline">\varepsilon_P</span></h2>
+<p>To bound <span class="math inline">\|\widehat{R} - R\|_\infty</span> and <span class="math inline">\sup_{s,a}\bigl\{\|\widehat{P}(\cdot \mid s, a) - P(\cdot \mid s, a)\|_1\bigr\}</span>, we use the standard approach:</p>
+<p><span class="math display">
+\textbf{Hoeffding's inequality} \;+\; \textbf{Uniform concentration (union bound).}
+</span></p>
+<section id="sec-hoeffding" class="level3" data-number="5.12.1">
+<h3 data-number="5.12.1" class="anchored" data-anchor-id="sec-hoeffding"><span class="header-section-number">5.12.1</span> Hoeffding’s Inequality</h3>
+<div id="lem-hoeffding" class="theorem lemma">
+<p><span class="theorem-title"><strong>Lemma 5.2 (Hoeffding’s Inequality)</strong></span> Suppose <span class="math inline">X_1, \ldots, X_n</span> are <span class="math inline">n</span> i.i.d. and bounded random variables. Assume <span class="math inline">X_i \in [a, b]</span> for all <span class="math inline">i \geq 1</span>. Let <span class="math inline">\mu = \mathbb{E}[X_1]</span> be the mean. Then we have</p>
+<p><span class="math display">
+\mathbb{P}\!\Bigl(\frac{1}{n}\sum_{i=1}^{n} X_i - \mu \geq \varepsilon\Bigr) \;\leq\; \exp\!\Bigl(-\frac{2n \varepsilon^2}{(b - a)^2}\Bigr),
+</span></p>
+<p><span class="math display">
+\mathbb{P}\!\Bigl(\frac{1}{n}\sum_{i=1}^{n} X_i - \mu \leq -\varepsilon\Bigr) \;\leq\; \exp\!\Bigl(-\frac{2n \varepsilon^2}{(b - a)^2}\Bigr).
+</span></p>
+</div>
+</section>
+<section id="sec-bound-eps-r" class="level3" data-number="5.12.2">
+<h3 data-number="5.12.2" class="anchored" data-anchor-id="sec-bound-eps-r"><span class="header-section-number">5.12.2</span> Bounding <span class="math inline">\varepsilon_R</span>: Reward Estimation Error</h3>
+<p>For any <span class="math inline">(s, a) \in \mathcal{S} \times \mathcal{A}</span>, when we query the generative model, the rewards <span class="math inline">r</span> and next states <span class="math inline">\widetilde{s}</span> are i.i.d. random variables with</p>
+<p><span class="math display">
+\mathbb{E}[r] = R(s, a), \qquad \mathbb{E}\bigl[\mathbb{1}\{\widetilde{s} = s'\}\bigr] = P(\cdot \mid s, a).
+</span></p>
+<p>Applying Hoeffding’s inequality with <span class="math inline">a = 0</span> and <span class="math inline">b = 1</span>, we have</p>
+<p><span id="eq-hoeffding-reward"><span class="math display">
+\mathbb{P}\!\bigl(|\widehat{R}(s, a) - R(s, a)| \geq t\bigr) \;\leq\; 2 \exp(-2Nt^2).
+\tag{5.30}</span></span></p>
+<p>To link (<a href="#eq-hoeffding-reward" class="quarto-xref"><span>5.30</span></a>) to a bound on <span class="math inline">\|\widehat{R} - R\|_\infty</span>, we take a <strong>union bound</strong> over all <span class="math inline">(s, a) \in \mathcal{S} \times \mathcal{A}</span>:</p>
+<p><span class="math display">
+\begin{aligned}
+\mathbb{P}\!\bigl(\|\widehat{R} - R\|_\infty &gt; t\bigr) &amp;= \mathbb{P}\!\bigl(\exists\, (s, a) \in \mathcal{S} \times \mathcal{A} : |\widehat{R}(s, a) - R(s, a)| &gt; t\bigr) \\
+&amp;\leq \sum_{s, a} \mathbb{P}\!\bigl(|\widehat{R}(s, a) - R(s, a)| &gt; t\bigr) \\
+&amp;\leq 2 |\mathcal{S}| \cdot |\mathcal{A}| \cdot \exp(-2Nt^2).
+\end{aligned}
+</span></p>
+<p>Setting this equal to <span class="math inline">\delta / 2</span>:</p>
+<p><span class="math display">
+2Nt^2 = \log\!\Bigl(\frac{4|\mathcal{S}| \cdot |\mathcal{A}|}{\delta}\Bigr),
+</span></p>
+<p><span class="math display">
+\implies \quad t = C \cdot \sqrt{\frac{\log(|\mathcal{S}| \cdot |\mathcal{A}| / \delta)}{N}},
+</span></p>
+<p>where <span class="math inline">C</span> is a constant.</p>
+<p>Therefore, we prove that we can set</p>
+<p><span id="eq-eps-r-bound"><span class="math display">
+\varepsilon_R = O\!\Biggl(\sqrt{\frac{\log(|\mathcal{S}||\mathcal{A}|/\delta)}{N}}\Biggr), \qquad \text{and} \quad \|\widehat{R} - R\|_\infty \leq \varepsilon_R
+\tag{5.31}</span></span></p>
+<p>with probability at least <span class="math inline">1 - \delta/2</span>.</p>
+</section>
+<section id="sec-bound-eps-p" class="level3" data-number="5.12.3">
+<h3 data-number="5.12.3" class="anchored" data-anchor-id="sec-bound-eps-p"><span class="header-section-number">5.12.3</span> Bounding <span class="math inline">\varepsilon_P</span>: Transition Estimation Error</h3>
+<p>Now we handle <span class="math inline">\sup_{s,a} \|\widehat{P}(\cdot \mid s, a) - P(\cdot \mid s, a)\|_1</span>.</p>
+<p>Note that for any vector <span class="math inline">v</span>, the <span class="math inline">\ell_1</span> norm admits the variational representation</p>
+<p><span class="math display">
+\|v\|_1 = \sup_{u \in \{\pm 1\}^{|\mathcal{S}|}} u^\top v.
+</span></p>
+<p>Thus</p>
+<p><span class="math display">
+\sup_{s,a} \bigl\|\widehat{P}(\cdot \mid s, a) - P(\cdot \mid s, a)\bigr\|_1 = \sup_{\substack{(s,a) \in \mathcal{S} \times \mathcal{A} \\ u \in \{\pm 1\}^{|\mathcal{S}|}}} \bigl\{u^\top\bigl(\widehat{P}(\cdot \mid s, a) - P(\cdot \mid s, a)\bigr)\bigr\}.
+</span></p>
+<p>Here <span class="math inline">u^\top \widehat{P}(\cdot \mid s, a) = \frac{1}{N}\sum_{i=1}^{N}\bigl\{\sum_{s'} u(s') \cdot \mathbb{1}\{\widetilde{s}^i = s'\}\bigr\}</span> is an average of i.i.d. random variables.</p>
+<p>Moreover, <span class="math inline">\sum_{s'} u(s') \cdot \mathbb{1}\{\widetilde{s} = s'\} \in [-1, 1]</span>. By Hoeffding’s inequality,</p>
+<p><span class="math display">
+\mathbb{P}\!\bigl(|u^\top \widehat{P}(\cdot \mid s, a) - u^\top P(\cdot \mid s, a)| &gt; t\bigr) \;\leq\; 2\exp\!\Bigl(-\tfrac{1}{2}Nt^2\Bigr).
+</span></p>
+<p>Thus, taking a union bound over <span class="math inline">(s, a) \in \mathcal{S} \times \mathcal{A}</span> and <span class="math inline">u \in \{\pm 1\}^{|\mathcal{S}|}</span>, we have</p>
+<p><span class="math display">
+\begin{aligned}
+&amp;\mathbb{P}\!\Bigl(\sup_{(s,a) \in \mathcal{S} \times \mathcal{A}} \bigl\|\widehat{P}(\cdot \mid s, a) - P(\cdot \mid s, a)\bigr\|_1 &gt; t\Bigr) \\
+&amp;\quad \leq \sum_{\substack{u \in \{\pm 1\}^{|\mathcal{S}|} \\ (s,a) \in \mathcal{S} \times \mathcal{A}}} \mathbb{P}\!\bigl(|u^\top \widehat{P}(\cdot \mid s, a) - u^\top P(\cdot \mid s, a)| &gt; t\bigr) \\
+&amp;\quad \leq 2^{|\mathcal{S}|} \cdot |\mathcal{S}| \cdot |\mathcal{A}| \cdot 2\exp\!\Bigl(-\tfrac{1}{2}Nt^2\Bigr).
+\end{aligned}
+</span></p>
+<p>Setting this equal to <span class="math inline">\delta / 2</span>:</p>
+<p><span class="math display">
+\exp\!\Bigl(\tfrac{1}{2}Nt^2\Bigr) \leq 2^{|\mathcal{S}|+2} \cdot |\mathcal{S}| \cdot |\mathcal{A}| / \delta,
+</span></p>
+<p><span class="math display">
+\implies \quad t \leq C \cdot \sqrt{\frac{|\mathcal{S}| \log(|\mathcal{S}||\mathcal{A}|/\delta)}{N}}.
+</span></p>
+<p>Thus, we can set</p>
+<p><span id="eq-eps-p-bound"><span class="math display">
+\varepsilon_P = O\!\Biggl(\sqrt{\frac{|\mathcal{S}| \cdot \log(|\mathcal{S}||\mathcal{A}|/\delta)}{N}}\Biggr).
+\tag{5.32}</span></span></p>
+</section>
+<section id="sec-combine-sample-complexity" class="level3" data-number="5.12.4">
+<h3 data-number="5.12.4" class="anchored" data-anchor-id="sec-combine-sample-complexity"><span class="header-section-number">5.12.4</span> Combining Everything</h3>
+<p>Finally, we plug in <span class="math inline">\varepsilon_R</span> and <span class="math inline">\varepsilon_P</span> into the suboptimality bound. Recall that</p>
+<p><span class="math display">
+J(\pi^*, M) - J(\widehat{\pi}, M) \;\leq\; \frac{1}{1 - \gamma}\,\varepsilon_R + \frac{1}{(1 - \gamma)^2}\,\varepsilon_P.
+</span></p>
+<p>We have</p>
+<p><span id="eq-subopt-final"><span class="math display">
+J(\pi^*, M) - J(\widehat{\pi}, M) \;\leq\; C \cdot \frac{1}{(1 - \gamma)^2} \cdot \sqrt{\frac{|\mathcal{S}| \cdot \log(|\mathcal{S}||\mathcal{A}|/\delta)}{N}}, \qquad \text{w.p.} \geq 1 - \delta.
+\tag{5.33}</span></span></p>
+<p>Thus, for <span class="math inline">\widehat{\pi}</span> being <span class="math inline">\varepsilon</span>-optimal, we need</p>
+<p><span class="math display">
+N = O\!\Biggl(\frac{1}{(1 - \gamma)^4} \cdot |\mathcal{S}| \cdot \log(|\mathcal{S}||\mathcal{A}|/\delta) \cdot \frac{1}{\varepsilon^2}\Biggr).
+</span></p>
+<p>The <strong>total sample complexity</strong> is</p>
+<p><span id="eq-total-sample-complexity"><span class="math display">
+|\mathcal{S}| \cdot |\mathcal{A}| \cdot N = \widetilde{O}\!\Biggl(\frac{1}{(1 - \gamma)^4}\,|\mathcal{S}|^2\,|\mathcal{A}|\Biggr).
+\tag{5.34}</span></span></p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Is This Optimal?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>No.&nbsp;The optimal result is <span class="math inline">\widetilde{O}\!\bigl(\frac{1}{(1-\gamma)^3} \cdot |\mathcal{S}||\mathcal{A}|\bigr)</span>. See [Agarwal et al.] for details.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-statistical-value-based" class="level2" data-number="5.13">
+<h2 data-number="5.13" class="anchored" data-anchor-id="sec-statistical-value-based"><span class="header-section-number">5.13</span> Statistical Analysis of Value-Based RL</h2>
+<p>We now shift from the model-based perspective to a direct, model-free analysis. Instead of estimating the MDP and then planning, value-based methods estimate the optimal <span class="math inline">Q</span>-function directly from data using regression. The key question is how statistical errors in regression propagate through the iterative Bellman updates.</p>
+<section id="sec-lsvi" class="level3" data-number="5.13.1">
+<h3 data-number="5.13.1" class="anchored" data-anchor-id="sec-lsvi"><span class="header-section-number">5.13.1</span> Fitted <span class="math inline">Q</span>-Iteration (Least-Squares Value Iteration, LSVI)</h3>
+<p>We have introduced the <strong>fitted <span class="math inline">Q</span>-iteration (LSVI)</strong> algorithm. The core idea is:</p>
+<p><span class="math display">
+\text{LSVI} = \textbf{value iteration updates in functional domain via least-squares regression.}
+</span></p>
+<section id="sec-lsvi-generative" class="level4" data-number="5.13.1.1">
+<h4 data-number="5.13.1.1" class="anchored" data-anchor-id="sec-lsvi-generative"><span class="header-section-number">5.13.1.1</span> LSVI in the Generative Model Setting</h4>
+<ol type="1">
+<li><p><strong>Query</strong> each <span class="math inline">(s, a) \in \mathcal{S} \times \mathcal{A}</span> <span class="math inline">N</span> times to the generative model, build a dataset <span class="math display">
+\mathcal{D} = \Bigl\{\bigl(s, a, \{r_i, s_i'\}_{i=1}^{N}\bigr) \;\Big|\; (s, a) \in \mathcal{S} \times \mathcal{A}\Bigr\}.
+</span> Total number of transition tuples: <span class="math inline">|\mathcal{S} \times \mathcal{A}| \cdot N</span>.</p></li>
+<li><p><strong>Initialize</strong> <span class="math inline">Q^{(0)} =</span> zero function.</p></li>
+<li><p><strong>Update</strong> the <span class="math inline">Q</span>-function by a least-squares regression problem: For each <span class="math inline">(s, a, r_i, s_i')</span> in the dataset, define <span class="math display">
+y_i = r_i + \gamma \max_{a' \in \mathcal{A}} Q^{(k-1)}(s_i', a'),
+</span> and find <span class="math inline">Q^{(k)}</span> by <span class="math display">
+Q^{(k)} = \operatorname*{argmin}_{f \in \mathcal{F}} \sum_{(s,a)} \sum_{i=1}^{N} \bigl(y_i - f(s, a)\bigr)^2,
+</span> where <span class="math inline">\mathcal{F}</span> is the function class.</p></li>
+<li><p><strong>Return</strong> <span class="math inline">\pi = \mathrm{greedy}(Q^{(K)})</span>.</p></li>
+</ol>
+</section>
+<section id="sec-lsvi-offline" class="level4" data-number="5.13.1.2">
+<h4 data-number="5.13.1.2" class="anchored" data-anchor-id="sec-lsvi-offline"><span class="header-section-number">5.13.1.2</span> LSVI under the Offline Setting</h4>
+<p>In the offline setting with sampling distribution <span class="math inline">\rho</span>, the algorithm proceeds as follows.</p>
+<p>Initialize <span class="math inline">Q^{(0)} \in \mathcal{F}</span>.</p>
+<p>For <span class="math inline">k = 1, 2, \ldots, K</span>:</p>
+<ul>
+<li>Collect an offline dataset <span class="math inline">\mathcal{D}^{(k)}</span> consisting of <span class="math inline">N</span> transition tuples: <span class="math display">
+\mathcal{D}^{(k)} = \bigl\{(s_i, a_i, r_i, s_i') : (s_i, a_i) \sim \rho, \; (r_i, s_i') \text{ are reward and next state given } (s_i, a_i)\bigr\}.
+</span></li>
+<li>Define the Bellman target: <span class="math inline">y_i = r_i + \gamma \max_{a'} Q^{(k-1)}(s_i', a')</span>.</li>
+<li>Update <span class="math inline">Q</span>-function: <span class="math display">
+Q^{(k)} = \operatorname*{argmin}_{f \in \mathcal{F}} \sum_{i=1}^{N} \bigl[y_i - f(s_i, a_i)\bigr]^2.
+</span></li>
+<li>Return policy <span class="math inline">\widehat{\pi} = \mathrm{greedy}(\widehat{Q}^{(K)})</span>.</li>
+</ul>
+</section>
+</section>
+<section id="sec-lsvi-error" class="level3" data-number="5.13.2">
+<h3 data-number="5.13.2" class="anchored" data-anchor-id="sec-lsvi-error"><span class="header-section-number">5.13.2</span> Error Analysis of LSVI</h3>
+<p>This version of LSVI can be written as</p>
+<p><span class="math display">
+Q^{(k+1)} \;\leftarrow\; \mathcal{T}\,Q^{(k)} + \mathrm{Err}^{(k+1)},
+</span></p>
+<p>where <span class="math inline">\mathrm{Err}^{(k+1)}</span> is the <strong>regression error</strong>.</p>
+<p>Using the contraction property of the Bellman operator, we have:</p>
+<p><span class="math display">
+\begin{aligned}
+\|Q^* - Q^{(k)}\|_\infty &amp;= \|\mathcal{T}Q^* - Q^{(k)}\|_\infty \\
+&amp;= \bigl\|\mathcal{T}Q^* - \mathcal{T}Q^{(k-1)}\bigr\|_\infty + \bigl\|Q^{(k)} - \mathcal{T}Q^{(k-1)}\bigr\|_\infty \\
+&amp;\leq \gamma \,\|Q^* - Q^{(k-1)}\|_\infty + \|\mathrm{Err}^{(k)}\|_\infty.
+\end{aligned}
+</span></p>
+<p>Unrolling the recursion:</p>
+<p><span id="eq-lsvi-error-recursion"><span class="math display">
+\begin{aligned}
+\|Q^* - Q^{(k)}\|_\infty &amp;\leq \|\mathrm{Err}^{(k)}\|_\infty + \gamma\,\|\mathrm{Err}^{(k-1)}\|_\infty + \cdots + \gamma^{k-1}\|\mathrm{Err}^{(1)}\|_\infty + \gamma^k\,\|Q^* - Q^{(0)}\|_\infty \\
+&amp;\leq \frac{1}{1 - \gamma}\sup_{k' \in [K]}\|\mathrm{Err}^{(k')}\|_\infty + \underbrace{\frac{\gamma^k}{1 - \gamma}}_{\text{error of vanilla VI}}.
+\end{aligned}
+\tag{5.35}</span></span></p>
+<p>Here <span class="math inline">\mathrm{Err}^{(k)} = Q^{(k)} - \mathcal{T}Q^{(k-1)}</span> is the statistical error incurred in each LSVI step. This error is roughly</p>
+<p><span class="math display">
+O\!\Biggl(\sqrt{\frac{\mathrm{Complexity}(\mathcal{F})}{N}}\Biggr),
+</span></p>
+<p>where <span class="math inline">\mathrm{Complexity}(\mathcal{F})</span> is the complexity of the function class. For example:</p>
+<ul>
+<li><strong>Tabular setting:</strong> <span class="math inline">\mathrm{Complexity}(\mathcal{F}) = |\mathcal{S} \times \mathcal{A}|</span>.</li>
+<li><strong>Linear function:</strong> <span class="math inline">\mathrm{Complexity}(\mathcal{F}) = d</span>.</li>
+</ul>
+<p>Thus, when <span class="math inline">N</span> is sufficiently large and <span class="math inline">\mathcal{F}</span> is expressive, each regression error is small.</p>
+<p><span id="eq-lsvi-decomposition"><span class="math display">
+\|Q^{(K)} - Q^*\|_\infty \;\leq\; \underbrace{\frac{1}{1 - \gamma}\sup_{k' \in [K]}\|\mathrm{Err}^{(k')}\|_\infty}_{\text{Regression Error}} + \underbrace{\frac{1}{1 - \gamma} \cdot \gamma^K}_{\text{Planning Error}}.
+\tag{5.36}</span></span></p>
+<p>Note that <span class="math inline">\widehat{\pi} = \mathrm{greedy}(Q^{(K)})</span>. Then</p>
+<p><span id="eq-lsvi-subopt"><span class="math display">
+\bigl|V^*(s) - V^{\widehat{\pi}}(s)\bigr| \;\leq\; \frac{2\,\|Q^{(K)} - Q^*\|_\infty}{1 - \gamma} \;\lesssim\; \Bigl(\frac{1}{1 - \gamma}\Bigr)^2 \cdot \sup_{k' \in [K]}\|\mathrm{Err}^{(k')}\|_\infty,
+\tag{5.37}</span></span></p>
+<p>when <span class="math inline">K</span> is sufficiently large. In the tabular setting, the regression error scales as <span class="math inline">\sqrt{|\mathcal{S}||\mathcal{A}|/N}</span>.</p>
+</section>
+</section>
+<section id="sec-error-decomposition-general" class="level2" data-number="5.14">
+<h2 data-number="5.14" class="anchored" data-anchor-id="sec-error-decomposition-general"><span class="header-section-number">5.14</span> Error Decomposition in the General Setting</h2>
+<section id="sec-recap" class="level3" data-number="5.14.1">
+<h3 data-number="5.14.1" class="anchored" data-anchor-id="sec-recap"><span class="header-section-number">5.14.1</span> What We Have Studied So Far</h3>
+<p>Let us take stock of the two analytical tools developed earlier.</p>
+<ol type="1">
+<li><p>Using <strong>PDL-V2</strong>, we can compare <span class="math inline">V_M^\pi</span> and <span class="math inline">V_{\widehat{M}}^\pi</span> on two MDP environments. Then we can compare <span class="math inline">J(\pi^*, M)</span> and <span class="math inline">J(\widehat{\pi}, \widehat{M})</span>, with <span class="math inline">\widehat{\pi}</span> being the optimal policy on <span class="math inline">\widehat{M}</span>. Moreover, we also studied <span class="math inline">\|\widetilde{Q} - Q^*\|</span>, where <span class="math inline">\widetilde{Q}</span> is the optimal value function on <span class="math inline">\widehat{M}</span>.</p></li>
+<li><p>Using the <strong>contractive property of the Bellman operator</strong>, we establish <span class="math inline">\|Q^{(K)} - Q^*\|</span> for model-free RL.</p></li>
+</ol>
+<p>So far, we essentially always assume planning is perfect, either using the optimal policy of <span class="math inline">\widehat{M}</span> or the greedy policy of <span class="math inline">\widehat{Q}</span>. A natural question arises: what about the general setting with general policy update schemes?</p>
+</section>
+<section id="sec-general-policy-opt" class="level3" data-number="5.14.2">
+<h3 data-number="5.14.2" class="anchored" data-anchor-id="sec-general-policy-opt"><span class="header-section-number">5.14.2</span> General Setting: Policy Optimization + Statistical Error</h3>
+<p>In the general setting, we combine <strong>policy optimization</strong> with <strong>statistical error in policy evaluation</strong>.</p>
+<ul>
+<li>Initialize <span class="math inline">\pi_0</span> arbitrarily.</li>
+<li>For <span class="math inline">k = 0, 1, 2, \ldots</span>:
+<ul>
+<li><strong>Policy evaluation:</strong> Estimate <span class="math inline">Q^{\pi_k}</span> by <span class="math inline">Q_k</span>.</li>
+<li><strong>Policy improvement:</strong> <span class="math inline">\pi_{k+1} = \mathrm{Update}(\pi_k, Q_k)</span>.</li>
+</ul></li>
+</ul>
+<section id="sec-why-care" class="level4" data-number="5.14.2.1">
+<h4 data-number="5.14.2.1" class="anchored" data-anchor-id="sec-why-care"><span class="header-section-number">5.14.2.1</span> Why We Care About This</h4>
+<ul>
+<li>Suppose each policy evaluation step incurs a statistical error <span class="math inline">\mathrm{Err}^{(k)} = Q^{\pi_k} - Q_k</span>. How will these errors <strong>accumulate</strong> during policy updates?</li>
+<li>Are policy optimization algorithms <strong>robust</strong> to errors in the update directions?</li>
+</ul>
+<p><strong>Example algorithm: Soft policy iteration with estimation.</strong></p>
+<ul>
+<li>Initialize <span class="math inline">\pi_0 =</span> uniform policy.</li>
+<li>For <span class="math inline">k = 0, 1, \ldots, K</span>:
+<ol type="1">
+<li>Evaluate <span class="math inline">Q^{\pi_k}</span> approximately using <span class="math inline">Q_k</span>, either by model-free or model-based RL.</li>
+<li>Update the policy via <span class="math display">
+\pi_{k+1}(\cdot \mid s) \;\propto\; \pi_k(\cdot \mid s) \cdot \exp\!\bigl(\alpha \cdot Q_k(s, \cdot)\bigr), \qquad \forall\, s \in \mathcal{S}.
+</span></li>
+</ol></li>
+</ul>
+<p>To study this, we need to compare different policies on different environments. This is the most general version of PDL.</p>
+</section>
+</section>
+</section>
+<section id="sec-pdl-v3" class="level2" data-number="5.15">
+<h2 data-number="5.15" class="anchored" data-anchor-id="sec-pdl-v3"><span class="header-section-number">5.15</span> Performance-Difference Lemma (Version 3)</h2>
+<p>The third version of the PDL is the most powerful: it relates the performance gap between two policies <span class="math inline">\pi</span> and <span class="math inline">\widetilde{\pi}</span> on the same MDP to both an optimization error and a statistical estimation error, measured through an arbitrary approximate <span class="math inline">Q</span>-function.</p>
+<div id="thm-pdl-v3" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 5.4 (Performance-Difference Lemma — Version 3 (Different Policies on Different Environments))</strong></span> Consider an MDP <span class="math inline">M = (\mathcal{S}, \mathcal{A}, R, P, \mu, \gamma)</span> and let <span class="math inline">\pi</span> and <span class="math inline">\widetilde{\pi}</span> be two policies. In addition, let <span class="math inline">\widetilde{Q} : \mathcal{S} \times \mathcal{A} \to \mathbb{R}</span> be a given <span class="math inline">Q</span>-function (estimated <span class="math inline">Q</span>-function). We define a function <span class="math inline">\widetilde{V} : \mathcal{S} \to \mathbb{R}</span> by letting</p>
+<p><span class="math display">
+\widetilde{V}(s) = \bigl\langle \widetilde{Q}(s, \cdot),\, \widetilde{\pi}(\cdot \mid s)\bigr\rangle_{\mathcal{A}}, \qquad \forall\, s \in \mathcal{S}.
+</span></p>
+<p>(Note: <span class="math inline">\widetilde{Q} = R + \gamma P\widetilde{V}</span> generally does <strong>not</strong> hold.)</p>
+<p>Then we have</p>
+<p><span id="eq-pdl-v3"><span class="math display">
+\mathbb{E}_{s \sim \mu}\bigl[V^\pi(s) - \widetilde{V}(s)\bigr] = \mathbb{E}_{s \sim d_\mu^\pi}\Bigl[\bigl\langle \widetilde{Q}(s, \cdot),\, \pi(\cdot \mid s) - \widetilde{\pi}(\cdot \mid s)\bigr\rangle_{\mathcal{A}}\Bigr] + \mathbb{E}_{(s,a) \sim d_\mu^\pi}\bigl[e(s, a)\bigr],
+\tag{5.38}</span></span></p>
+<p>where <span class="math inline">e(s, a) = R(s, a) + (P\widetilde{V})(s, a) - \widetilde{Q}(s, a)</span> is the <strong>temporal-difference error</strong>, <span class="math inline">d_\mu^\pi(s) = \sum_{t \geq 0} \gamma^t \mathbb{P}_\mu^\pi(s_t = s)</span> and <span class="math inline">d_\mu^\pi(s, a) = \sum_{t \geq 0} \gamma^t \mathbb{P}(s_t = s, a_t = a)</span> are the visitation measures induced by <span class="math inline">\pi</span> on MDP <span class="math inline">M</span>.</p>
+</div>
+<section id="sec-pdl-v3-properties" class="level3" data-number="5.15.1">
+<h3 data-number="5.15.1" class="anchored" data-anchor-id="sec-pdl-v3-properties"><span class="header-section-number">5.15.1</span> Properties of PDL-V3</h3>
+<p>We note that this version of PDL is powerful in the sense that it can compare <span class="math inline">\pi</span> and <span class="math inline">\widetilde{\pi}</span> on two different environments. It recovers the previous two versions:</p>
+<ol type="1">
+<li><p><strong>Recover PDL-V1.</strong> Set <span class="math inline">\widetilde{Q} = Q_M^{\widetilde{\pi}}</span> (value function of <span class="math inline">\widetilde{\pi}</span> on MDP <span class="math inline">M</span>). Then <span class="math inline">\widetilde{V} = V_M^{\widetilde{\pi}}</span> and <span class="math inline">e(s,a) = 0</span> for all <span class="math inline">(s,a)</span>.</p></li>
+<li><p><strong>Recover PDL-V2.</strong> Set <span class="math inline">\widetilde{Q} = Q_{\widehat{M}}^\pi</span> (value function of <span class="math inline">\pi</span> on MDP <span class="math inline">\widehat{M}</span>), <span class="math inline">\widetilde{\pi} = \pi</span>. Then <span class="math inline">\widetilde{V} = V_{\widehat{M}}^\pi</span>. By the Bellman equation, <span class="math inline">\widetilde{Q} = \widehat{R} + \gamma \widehat{P}\widetilde{V}</span>. In (<a href="#eq-pdl-v3" class="quarto-xref"><span>5.38</span></a>), the first term <span class="math inline">= 0</span>. <span class="math display">
+e = R + \gamma P\widetilde{V} - \widetilde{Q} = (R - \widehat{R}) + \gamma(P\widetilde{V} - \widehat{P}\widetilde{V}).
+</span> <span class="math display">
+\implies J(\pi, M) - J(\pi, \widehat{M}) = \mathbb{E}_{d_\mu^\pi}\bigl[(R - \widehat{R}) + \gamma \cdot (PV_{\widehat{M}}^\pi - \widehat{P}V_{\widehat{M}}^\pi)\bigr].
+</span></p></li>
+</ol>
+</section>
+<section id="sec-pdl-v3-interpretation" class="level3" data-number="5.15.2">
+<h3 data-number="5.15.2" class="anchored" data-anchor-id="sec-pdl-v3-interpretation"><span class="header-section-number">5.15.2</span> Interpretation via PDL-V3</h3>
+<p>PDL-V3 shows that the difference between <span class="math inline">V^\pi</span> and <span class="math inline">\widetilde{V}</span> decomposes as:</p>
+<p><span class="math display">
+= \underbrace{\mathbb{E}_{s \sim d_\mu^\pi}\bigl[\langle \widetilde{Q}(s, \cdot),\, \pi(\cdot \mid s) - \widetilde{\pi}(\cdot \mid s)\rangle_{\mathcal{A}}\bigr]}_{\text{(I) optimization error}} + \underbrace{\mathbb{E}_{(s,a) \sim d_\mu^\pi}\bigl[e(s, a)\bigr]}_{\text{(II) statistical error}}.
+</span></p>
+<p>Usually, we set <span class="math inline">\widetilde{\pi}</span> as the current policy and <span class="math inline">\widetilde{Q}</span> is the update direction. Thus:</p>
+<ul>
+<li><strong>Term (I)</strong> is the <strong>policy optimization error</strong>.</li>
+<li><strong>Term (II)</strong> is the <strong>TD error</strong> with respect to <span class="math inline">\widetilde{\pi}</span> and the true model <span class="math inline">M</span>. Thus, Term (II) is the <strong>statistical estimation error</strong>.</li>
+</ul>
+<p>Recall the convergence result of soft-policy iteration: we can directly analyze Term (I).</p>
+</section>
+<section id="sec-proof-pdl-v3" class="level3" data-number="5.15.3">
+<h3 data-number="5.15.3" class="anchored" data-anchor-id="sec-proof-pdl-v3"><span class="header-section-number">5.15.3</span> Proof of PDL-V3</h3>
+<p>We want to show:</p>
+<p><span class="math display">
+\mathbb{E}_{s \sim \mu}\bigl[V^\pi(s) - \widetilde{V}(s)\bigr] = \mathbb{E}_{s \sim d_\mu^\pi}\bigl[\langle \widetilde{Q}(s, \cdot),\, \pi(\cdot \mid s) - \widetilde{\pi}(\cdot \mid s)\rangle_{\mathcal{A}}\bigr] + \mathbb{E}_{(s,a) \sim d_\mu^\pi}\bigl[e(s, a)\bigr].
+</span></p>
+<p>We prove it by direct calculation:</p>
+<p><span class="math display">
+\mathbb{E}_{s \sim d_\mu^\pi}\bigl[\langle \widetilde{Q}(s, \cdot),\, \pi(\cdot \mid s)\rangle\bigr] = \mathbb{E}_{(s,a) \sim d_\mu^\pi}\bigl[\widetilde{Q}(s, a)\bigr].
+</span></p>
+<p>Therefore,</p>
+<p><span class="math display">
+\mathbb{E}_{s \sim d_\mu^\pi}\bigl[\langle \widetilde{Q},\, \pi\rangle\bigr] + \mathbb{E}_{(s,a) \sim d_\mu^\pi}\bigl[e(s, a)\bigr]
+</span></p>
+<p><span class="math display">
+= \mathbb{E}_{(s,a) \sim d_\mu^\pi}\bigl[R(s, a) + \gamma(P\widetilde{V})(s, a)\bigr] = \mathbb{E}_{s \sim \mu}\bigl[V^\pi(s)\bigr] + \mathbb{E}_{(s,a) \sim d_\mu^\pi}\bigl[\gamma(P\widetilde{V})(s, a)\bigr].
+</span></p>
+<p>Moreover, <span class="math inline">\langle \widetilde{Q}(s, \cdot),\, \widetilde{\pi}(\cdot \mid s)\rangle = \widetilde{V}(s)</span>.</p>
+<p>Thus, we just need to show</p>
+<p><span class="math display">
+\mathbb{E}_{s \sim d_\mu^\pi}\bigl[\widetilde{V}(s)\bigr] - \mathbb{E}_{(s,a) \sim d_\mu^\pi}\bigl[\gamma(P\widetilde{V})(s, a)\bigr] = \mathbb{E}_\mu\bigl[\widetilde{V}(s)\bigr].
+</span></p>
+<p>This is true because we can write</p>
+<p><span class="math display">
+\mathbb{E}_{(s,a) \sim d_\mu^\pi}\bigl[(P\widetilde{V})(s, a)\bigr] = \sum_{s} \sum_{t=0}^{\infty} \gamma^{t+1} \mathbb{P}_\mu^\pi(s_{t+1} = s) \cdot \widetilde{V}(s) = \sum_{s} \sum_{t=1}^{\infty} \gamma^t \cdot \mathbb{P}(s_t = s) \cdot \widetilde{V}(s),
+</span></p>
+<p><span class="math display">
+\mathbb{E}_{s \sim d_\mu^\pi}\bigl[\widetilde{V}(s)\bigr] = \sum_{s} \sum_{t=0}^{\infty} \gamma^t \cdot \mathbb{P}(s_t = s) \cdot \widetilde{V}(s).
+</span></p>
+<p>The difference is exactly <span class="math inline">\mathbb{E}_\mu[\widetilde{V}(s)]</span>, which completes the proof. <span class="math inline">\blacksquare</span></p>
+</section>
+</section>
+<section id="sec-approx-spi" class="level2" data-number="5.16">
+<h2 data-number="5.16" class="anchored" data-anchor-id="sec-approx-spi"><span class="header-section-number">5.16</span> Error Analysis of Approximate Soft-Policy Iteration</h2>
+<p>Armed with PDL-V3, we can now analyze the full regret of approximate soft-policy iteration, where each policy evaluation step carries statistical error.</p>
+<p>Let <span class="math inline">\pi_0, \ldots, \pi_K</span> be the sequence of policies constructed by the approximate SPI, where</p>
+<p><span class="math display">
+\pi_{k+1}(\cdot \mid s) \;\propto\; \pi_k(\cdot \mid s) \cdot \exp\!\bigl(\alpha \cdot Q_k(s, \cdot)\bigr), \qquad \forall\, s \in \mathcal{S}.
+</span></p>
+<p>Equivalently,</p>
+<p><span id="eq-spi-update"><span class="math display">
+\pi_{k+1}(\cdot \mid s) = \operatorname*{argmax}_{\pi(\cdot \mid s) \in \Delta(\mathcal{A})} \bigl\langle Q_k(s, \cdot),\, \pi(\cdot \mid s)\bigr\rangle_{\mathcal{A}} - \frac{1}{\alpha}\,\mathrm{KL}\bigl(\pi(\cdot \mid s) \,\|\, \pi_k(\cdot \mid s)\bigr).
+\tag{5.39}</span></span></p>
+<p><strong>Performance metric:</strong></p>
+<p><span id="eq-regret-def"><span class="math display">
+\mathrm{Regret} = \sum_{k=0}^{K} \bigl[J(\pi^*, M) - J(\pi_k, M)\bigr].
+\tag{5.40}</span></span></p>
+<section id="sec-regret-decomp" class="level3" data-number="5.16.1">
+<h3 data-number="5.16.1" class="anchored" data-anchor-id="sec-regret-decomp"><span class="header-section-number">5.16.1</span> Regret Decomposition</h3>
+<p>Let <span class="math inline">V_k(s) = \langle Q_k(s, \cdot),\, \pi_k(\cdot \mid s)\rangle_{\mathcal{A}}</span>. We can write</p>
+<p><span class="math display">
+J(\pi^*, M) - J(\pi_k, M) = \mathbb{E}_{s_0 \sim \mu}\bigl[V_M^{\pi^*}(s_0) - V_k(s_0)\bigr] + \mathbb{E}_{s_0 \sim \mu}\bigl[V_k(s_0) - V_M^{\pi_k}(s_0)\bigr].
+</span></p>
+<p>Let us use PDL-V3 on the two terms.</p>
+<p><strong>First term.</strong> Applying PDL-V3 with <span class="math inline">\pi = \pi^*</span>, <span class="math inline">\widetilde{\pi} = \pi_k</span>, <span class="math inline">\widetilde{Q} = Q_k</span>:</p>
+<p><span class="math display">
+\mathbb{E}_{s_0 \sim \mu}\bigl[V_M^{\pi^*}(s_0) - V_k(s_0)\bigr] = \mathbb{E}_{s \sim d_\mu^{\pi^*}}\bigl[\langle Q_k(s, \cdot),\, \pi^*(\cdot \mid s) - \pi_k(\cdot \mid s)\rangle\bigr] + \mathbb{E}_{(s,a) \sim d_\mu^{\pi^*}}\bigl[e_k(s, a)\bigr],
+</span></p>
+<p>where <span class="math inline">d_\mu^{\pi^*}</span> is the visitation measure of <span class="math inline">\pi^*</span> on MDP <span class="math inline">M</span>, and <span class="math inline">e_k(s,a) = R(s,a) + PV_k(s,a) - Q_k(s,a)</span>.</p>
+<p><strong>Second term.</strong> We have</p>
+<p><span class="math display">
+\mathbb{E}_{s_0 \sim \mu}\bigl[V_k(s_0) - V_M^{\pi_k}(s_0)\bigr] = -\mathbb{E}_{s_0 \sim \mu}\bigl[V_M^{\pi_k}(s_0) - V_k(s_0)\bigr] = -\mathbb{E}_{(s,a) \sim d_\mu^{\pi_k}}\bigl[e_k(s, a)\bigr],
+</span></p>
+<p>where <span class="math inline">d_\mu^{\pi_k}</span> is the visitation measure of <span class="math inline">\pi_k</span> on MDP <span class="math inline">M</span>.</p>
+<p>Therefore, we have:</p>
+<p><span id="eq-regret-three-terms"><span class="math display">
+\begin{aligned}
+\mathrm{Regret} &amp;= \underbrace{\mathbb{E}_{s \sim d_\mu^{\pi^*}}\!\Biggl[\sum_{k=0}^{K} \bigl\langle Q_k(s, \cdot),\, \pi^*(\cdot \mid s) - \pi_k(\cdot \mid s)\bigr\rangle\Biggr]}_{\text{(a)}} \\
+&amp;\quad + \underbrace{\sum_{k=0}^{K} \mathbb{E}_{(s,a) \sim d_\mu^{\pi^*}}\bigl[e_k(s, a)\bigr]}_{\text{(b)}} - \underbrace{\sum_{k=0}^{K} \mathbb{E}_{(s,a) \sim d_\mu^{\pi_k}}\bigl[e_k(s, a)\bigr]}_{\text{(c)}}.
+\end{aligned}
+\tag{5.41}</span></span></p>
+<p>Thus, we have decomposed the regret into 3 terms:</p>
+<ul>
+<li><strong>(a)</strong> = <strong>policy optimization error</strong>.</li>
+<li><strong>(b) &amp; (c)</strong> = <strong>statistical estimation errors</strong>. When <span class="math inline">e_k \approx 0</span>, we have <span class="math inline">Q_k \approx Q^{\pi_k}</span>.</li>
+</ul>
+</section>
+<section id="sec-analyze-bc" class="level3" data-number="5.16.2">
+<h3 data-number="5.16.2" class="anchored" data-anchor-id="sec-analyze-bc"><span class="header-section-number">5.16.2</span> Analyzing (b) and (c): Offline Setting</h3>
+<p>Suppose <span class="math inline">Q^{\pi_k}</span> is estimated in the offline setting where <span class="math inline">(s, a, r, s')</span> is sampled by drawing <span class="math inline">(s, a)</span> i.i.d. from <span class="math inline">\rho</span>, and <span class="math inline">s' \sim P(\cdot \mid s, a)</span>. As we have seen before, <span class="math inline">\rho</span> has to be nice in the sense that it <strong>covers</strong> <span class="math inline">\mathcal{S} \times \mathcal{A}</span>.</p>
+<p><strong>Assumption:</strong> <span class="math inline">\rho</span> is nice in the sense that</p>
+<p><span class="math display">
+\sup_{(s,a) \in \mathcal{S} \times \mathcal{A}} \frac{d_\mu^\pi(s,a)}{\rho(s,a)} \;\leq\; C_\rho.
+</span></p>
+<p>Then using the <strong>Cauchy–Schwarz inequality</strong>,</p>
+<p><span class="math display">
+\begin{aligned}
+\Bigl|\mathbb{E}_{(s,a) \sim d_\mu^\pi}\bigl[e_k(s, a)\bigr]\Bigr| &amp;= \Bigl|\mathbb{E}_\rho\!\Bigl[\frac{d_\mu^\pi}{\rho}(s, a) \cdot e_k(s, a)\Bigr]\Bigr| \\
+&amp;\leq \sqrt{\mathbb{E}_\rho\!\Bigl[\Bigl(\frac{d_\mu^\pi(s,a)}{\rho(s,a)}\Bigr)^2\Bigr]} \cdot \sqrt{\mathbb{E}_\rho\bigl[e_k(s,a)^2\bigr]} \\
+&amp;\leq C_\rho \cdot \sqrt{\mathbb{E}_\rho\bigl[e_k(s,a)^2\bigr]} = C_\rho \cdot \|Q_k - \mathcal{T}^{\pi_k} Q_k\|_\rho,
+\end{aligned}
+</span></p>
+<p>where <span class="math inline">\|f\|_\rho = \sqrt{\mathbb{E}_{(s,a) \sim \rho}[f^2(s,a)]}</span> and <span class="math inline">\mathcal{T}^{\pi_k}</span> is the Bellman operator for policy <span class="math inline">\pi_k</span>. The quantity <span class="math inline">\|Q_k - \mathcal{T}^{\pi_k}Q_k\|_\rho</span> is the <strong>mean-squared Bellman error</strong>.</p>
+<p>Thus,</p>
+<p><span id="eq-bc-bound"><span class="math display">
+\text{(b)} + \text{(c)} \;\leq\; 2K \cdot C_\rho \cdot \sup_k \|Q_k - \mathcal{T}^{\pi_k}Q_k\|_\rho.
+\tag{5.42}</span></span></p>
+</section>
+<section id="sec-analyze-a" class="level3" data-number="5.16.3">
+<h3 data-number="5.16.3" class="anchored" data-anchor-id="sec-analyze-a"><span class="header-section-number">5.16.3</span> Analyzing (a): Policy Optimization Error</h3>
+<p>We can study the policy update of <span class="math inline">\{\pi_k(\cdot \mid s)\}_{k \geq 0}</span> for each <span class="math inline">s \in \mathcal{S}</span> separately. Recall that <span class="math inline">\pi_k(\cdot \mid s)</span> is updated using <strong>mirror descent</strong>.</p>
+<p>We have the following theorem:</p>
+<div id="thm-mirror-descent" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 5.5 (Convergence of Mirror Descent)</strong></span> Let <span class="math inline">F : \Delta([d]) \to \mathbb{R}^d</span> be a bounded mapping in the sense that <span class="math inline">\|F(x)\|_\infty \leq G</span> for all <span class="math inline">x</span>. Define</p>
+<p><span class="math display">
+x_0 = \mathrm{unif}([d]), \qquad x_{k+1} \leftarrow \operatorname*{argmax}_{x \in \Delta([d])} \bigl\langle F(x_k),\, x\bigr\rangle - \frac{1}{\alpha}\,\mathrm{KL}(x \,\|\, x_k).
+</span></p>
+<p>Then for any <span class="math inline">x^*</span> we have</p>
+<p><span class="math display">
+\sum_{k=0}^{K} \bigl\langle F(x_k),\, x^* - x_k\bigr\rangle \;\leq\; \frac{1}{\alpha}\,\mathrm{KL}(x^* \,\|\, x^0) + \frac{\alpha}{2}\,\Bigl(\frac{1}{1 - \gamma}\Bigr)^2 \cdot (K + 1)
+</span></p>
+<p><span class="math display">
+\leq \frac{1}{\alpha}\log d + \frac{\alpha}{2}\,G^2 \cdot (K + 1).
+</span></p>
+</div>
+<p>Directly applying this theorem, we have for all <span class="math inline">s \in \mathcal{S}</span>:</p>
+<p><span class="math display">
+\sum_{k=0}^{K} \bigl\langle Q_k(s, \cdot),\, \pi^*(\cdot \mid s) - \pi_k(\cdot \mid s)\bigr\rangle \;\leq\; \frac{1}{\alpha}\log d + \frac{\alpha}{2}\,\Bigl(\frac{1}{1 - \gamma}\Bigr)^2 \cdot (K + 1)
+</span></p>
+<p><span class="math display">
+\leq \frac{1}{1 - \gamma}\sqrt{(K+1) \cdot 2} \;\leq\; \frac{2}{1 - \gamma}\sqrt{K}.
+</span></p>
+<p>Then, taking expectations over <span class="math inline">s \sim d_\mu^{\pi^*}</span>, we have</p>
+<p><span id="eq-term-a-bound"><span class="math display">
+\text{(a)} \;\leq\; 2 \cdot \Bigl(\frac{1}{1 - \gamma}\Bigr)^2 \cdot \sqrt{K}.
+\tag{5.43}</span></span></p>
+</section>
+<section id="sec-final-regret" class="level3" data-number="5.16.4">
+<h3 data-number="5.16.4" class="anchored" data-anchor-id="sec-final-regret"><span class="header-section-number">5.16.4</span> Final Regret Bound</h3>
+<p>Finally, we have:</p>
+<p><span id="eq-final-regret"><span class="math display">
+\sum_{k=0}^{K}\bigl[J(\pi^*) - J(\pi_k)\bigr] \;\leq\; 2 \cdot \Bigl(\frac{1}{1 - \gamma}\Bigr)^2 \cdot \sqrt{K} \;+\; 2K \cdot C_\rho \cdot \sup_k \|Q_k - \mathcal{T}^{\pi_k}Q_k\|_\rho.
+\tag{5.44}</span></span></p>
+<p>This bound cleanly separates the two sources of error: the first term is the policy optimization error (which grows sublinearly in <span class="math inline">K</span> at rate <span class="math inline">\sqrt{K}</span>), and the second term is the cumulative statistical estimation error (which grows linearly in <span class="math inline">K</span> but is controlled by the mean-squared Bellman error of each iterate). Balancing these two terms determines the optimal number of iterations and the required estimation accuracy per step.</p>
+</section>
+</section>
+<section id="sec-chapter-summary" class="level2" data-number="5.17">
+<h2 data-number="5.17" class="anchored" data-anchor-id="sec-chapter-summary"><span class="header-section-number">5.17</span> Chapter Summary</h2>
+<p>This chapter developed the <strong>certainty equivalence</strong> principle: the suboptimality of a learned policy can be decomposed into a statistical estimation error and a planning/optimization error. We applied this principle across three algorithmic paradigms.</p>
+<section id="summary-of-results" class="level3" data-number="5.17.1">
+<h3 data-number="5.17.1" class="anchored" data-anchor-id="summary-of-results"><span class="header-section-number">5.17.1</span> Summary of Results</h3>
+<div id="tbl-ch5-summary" class="striped hover quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-ch5-summary-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;5.2: Summary of the three certainty-equivalence approaches.
+</figcaption>
+<div aria-describedby="tbl-ch5-summary-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="table-striped table-hover caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Approach</th>
+<th style="text-align: left;">Key Idea</th>
+<th style="text-align: left;">Error Bound</th>
+<th style="text-align: left;">PDL Version</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><strong>Model-based CE</strong></td>
+<td style="text-align: left;">Estimate <span class="math inline">\widehat{M}</span>, plan in <span class="math inline">\widehat{M}</span></td>
+<td style="text-align: left;"><span class="math inline">\leq 2 \cdot (1-\gamma)^{-2} \cdot D(\widehat{M}, M) + \text{planning error}</span></td>
+<td style="text-align: left;">V2</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>LSVI (model-free)</strong></td>
+<td style="text-align: left;">Fitted Q-iteration via regression</td>
+<td style="text-align: left;"><span class="math inline">\leq (1-\gamma)^{-2} \cdot \sup_k \|\mathrm{Err}^{(k)}\|_\infty + \gamma^K/(1-\gamma)</span></td>
+<td style="text-align: left;">Contraction</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Approx. SPI</strong></td>
+<td style="text-align: left;">Soft policy iteration + estimation</td>
+<td style="text-align: left;"><span class="math inline">\mathrm{Regret} \leq (1-\gamma)^{-2}\sqrt{K} + K \cdot C_\rho \cdot \sup_k \|e_k\|_\rho</span></td>
+<td style="text-align: left;">V3</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+</section>
+<section id="key-concepts" class="level3" data-number="5.17.2">
+<h3 data-number="5.17.2" class="anchored" data-anchor-id="key-concepts"><span class="header-section-number">5.17.2</span> Key Concepts</h3>
+<ul>
+<li><strong>Certainty equivalence:</strong> treat the estimated model/value function as if it were the truth, then plan accordingly. The estimation and planning errors separate.</li>
+<li><strong>PDL-V2 (Simulation Lemma):</strong> bounds how much a policy’s value changes when evaluated on <span class="math inline">M</span> versus <span class="math inline">\widehat{M}</span>, via the model estimation error <span class="math inline">D(\widehat{M}, M)</span>.</li>
+<li><strong>PDL-V3:</strong> the most general form, decomposing the gap into a policy optimization term and a TD error term.</li>
+<li><strong>Coverage:</strong> small estimation error requires data that covers <span class="math inline">\mathcal{S} \times \mathcal{A}</span>; the generative model achieves this by querying every <span class="math inline">(s,a)</span> pair.</li>
+<li><strong>Sample complexity:</strong> in the tabular generative model setting, <span class="math inline">\widetilde{O}\bigl(|\mathcal{S}|^2 |\mathcal{A}| / (1-\gamma)^4\bigr)</span> samples suffice for an <span class="math inline">\varepsilon</span>-optimal policy.</li>
+</ul>
+</section>
+<section id="logic-flow" class="level3" data-number="5.17.3">
+<h3 data-number="5.17.3" class="anchored" data-anchor-id="logic-flow"><span class="header-section-number">5.17.3</span> Logic Flow</h3>
+<div id="fig-ch5-logic-flow" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ch5-logic-flow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/ch5-logic-flow.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-2" title="Figure&nbsp;5.2: Logic flow of Chapter 5. The certainty equivalence principle separates estimation from planning. Three approaches — model-based, LSVI, and approximate SPI — instantiate this principle using different PDL versions. The sample complexity analysis chains coverage → model error → statistical error → suboptimality."><img src="figures/ch5-logic-flow.svg" class="img-fluid figure-img" style="width:95.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ch5-logic-flow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.2: Logic flow of Chapter 5. The certainty equivalence principle separates estimation from planning. Three approaches — model-based, LSVI, and approximate SPI — instantiate this principle using different PDL versions. The sample complexity analysis chains coverage → model error → statistical error → suboptimality.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="sample-complexity-roadmap" class="level3" data-number="5.17.4">
+<h3 data-number="5.17.4" class="anchored" data-anchor-id="sample-complexity-roadmap"><span class="header-section-number">5.17.4</span> Sample Complexity Roadmap</h3>
+<div id="fig-ch5-roadmap" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ch5-roadmap-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/ch5-sample-complexity-roadmap.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-3" title="Figure&nbsp;5.3: The chain of reasoning for model-based sample complexity: data coverage (via generative model) ensures small model estimation error D(\widehat{M}, M), which PDL-V2 converts to small statistical error, yielding an \varepsilon-optimal policy."><img src="figures/ch5-sample-complexity-roadmap.svg" class="img-fluid figure-img" style="width:80.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ch5-roadmap-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.3: The chain of reasoning for model-based sample complexity: data coverage (via generative model) ensures small model estimation error <span class="math inline">D(\widehat{M}, M)</span>, which PDL-V2 converts to small statistical error, yielding an <span class="math inline">\varepsilon</span>-optimal policy.
+</figcaption>
+</figure>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Looking Ahead
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>In the next chapter we will study <strong>exploration</strong> in online reinforcement learning, where the agent must actively collect data while simultaneously learning a good policy. We will see how the exploration–exploitation tradeoff arises naturally from the coverage requirements identified in this lecture, and develop algorithms — <span class="math inline">\varepsilon</span>-greedy, UCB, and Thompson sampling — that navigate this tradeoff.</p>
+</div>
+</div>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../lectures/04-approximate-planning.html" class="pagination-link" aria-label="Approximate Planning">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Approximate Planning</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../lectures/06-exploration.html" class="pagination-link" aria-label="Exploration">
+        <span class="nav-page-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Exploration</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<script>
+// Plotly Warmtone theming helpers — shared across all lectures
+// Reads CSS custom properties set by _warmtone.scss (light/dark aware)
+const plotlyConfig = {responsive: true, displayModeBar: false};
+const figFont = '"Source Serif 4", Georgia, "Times New Roman", serif';
+const figFontHeading = '"Crimson Pro", Georgia, serif';
+
+function css(v) {
+  return getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+}
+
+function legendStyle() {
+  return {
+    font: {family: figFont, size: 13, color: css('--fig-text')},
+    bgcolor: css('--fig-bg') + 'dd',
+    bordercolor: css('--fig-grid'),
+    borderwidth: 1,
+  };
+}
+
+function themeLayout(extra) {
+  return Object.assign({
+    paper_bgcolor: css('--fig-bg'),
+    plot_bgcolor: css('--fig-plot-bg'),
+    font: {family: figFont, color: css('--fig-text'), size: 14},
+  }, extra || {});
+}
+
+function themeAxis(title, extra) {
+  return Object.assign({
+    title: {text: title, font: {family: figFont, size: 14}},
+    gridcolor: css('--fig-grid'),
+    zerolinecolor: css('--fig-grid'),
+    linecolor: css('--fig-axis'),
+    tickfont: {family: figFont, size: 12, color: css('--fig-axis')},
+  }, extra || {});
+}
+
+// Plotly color sequences matching the Warmtone palette
+const warmtonePalette = [
+  '#7b97ad', '#b8995e', '#ad8480', '#7a9a7e', '#907ea0',
+  '#6f9996', '#8a6e5e', '#b56b6b', '#8fa3b8', '#a09488'
+];
+</script>
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
+
+
+
+
+</body></html>

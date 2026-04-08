@@ -1,0 +1,2387 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.36">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>10&nbsp; RLHF and Alignment – S&amp;DS 685 — Reinforcement Learning and Sequential Decision Making</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../lectures/11-rl-verifiable-rewards.html" rel="next">
+<link href="../lectures/09-alphago.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-1db14e1c4cc35bfe1d9badc9e4551eed.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-75bfd1a986b306e51d60ba70b78c2b53.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="https://cdn.plot.ly/plotly-2.35.0.min.js" charset="utf-8"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet">
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script><script src="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css">
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../lectures/09-alphago.html">Applications</a></li><li class="breadcrumb-item"><a href="../lectures/10-rl-for-llms.html"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">RLHF and Alignment</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">S&amp;DS 685 — Reinforcement Learning and Sequential Decision Making</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Welcome</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Foundations</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/01-introduction.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Introduction</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/02-mdp-basics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">MDP Basics</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/03-mdp-planning.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">MDP Planning</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Approximate Methods</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/04-approximate-planning.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Approximate Planning</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/05-certainty-equivalence.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Certainty Equivalence</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Exploration and Learning</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/06-exploration.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Exploration</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/07-value-based-deep-rl.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Deep RL I: Value-Based Methods</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/08-policy-based-deep-rl.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Deep RL II: Policy-Based Methods</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">Applications</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/09-alphago.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">AlphaGo</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/10-rl-for-llms.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">RLHF and Alignment</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/11-rl-verifiable-rewards.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">RL from Verifiable Rewards</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/summary.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Course Summary</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#sec-overview" id="toc-sec-overview" class="nav-link active" data-scroll-target="#sec-overview"><span class="header-section-number">10.1</span> What Will Be Covered</a></li>
+  <li><a href="#sec-transformer-recap" id="toc-sec-transformer-recap" class="nav-link" data-scroll-target="#sec-transformer-recap"><span class="header-section-number">10.2</span> Transformer Decoder Recap</a>
+  <ul class="collapse">
+  <li><a href="#sec-architecture" id="toc-sec-architecture" class="nav-link" data-scroll-target="#sec-architecture"><span class="header-section-number">10.2.1</span> Architecture</a></li>
+  <li><a href="#sec-generation" id="toc-sec-generation" class="nav-link" data-scroll-target="#sec-generation"><span class="header-section-number">10.2.2</span> Autoregressive Generation</a></li>
+  </ul></li>
+  <li><a href="#sec-pipeline" id="toc-sec-pipeline" class="nav-link" data-scroll-target="#sec-pipeline"><span class="header-section-number">10.3</span> The LLM Training Pipeline</a>
+  <ul class="collapse">
+  <li><a href="#sec-pretraining" id="toc-sec-pretraining" class="nav-link" data-scroll-target="#sec-pretraining"><span class="header-section-number">10.3.1</span> Pretraining</a></li>
+  <li><a href="#sec-sft" id="toc-sec-sft" class="nav-link" data-scroll-target="#sec-sft"><span class="header-section-number">10.3.2</span> Supervised Finetuning (SFT)</a></li>
+  </ul></li>
+  <li><a href="#sec-sft-data-quality" id="toc-sec-sft-data-quality" class="nav-link" data-scroll-target="#sec-sft-data-quality"><span class="header-section-number">10.4</span> SFT Data Quality</a>
+  <ul class="collapse">
+  <li><a href="#sec-lima" id="toc-sec-lima" class="nav-link" data-scroll-target="#sec-lima"><span class="header-section-number">10.4.1</span> The LIMA Finding</a></li>
+  </ul></li>
+  <li><a href="#sec-imitation-to-optimization" id="toc-sec-imitation-to-optimization" class="nav-link" data-scroll-target="#sec-imitation-to-optimization"><span class="header-section-number">10.5</span> From Imitation to Optimization</a>
+  <ul class="collapse">
+  <li><a href="#sec-generation-verification-gap" id="toc-sec-generation-verification-gap" class="nav-link" data-scroll-target="#sec-generation-verification-gap"><span class="header-section-number">10.5.1</span> The Generation–Verification Gap</a></li>
+  </ul></li>
+  <li><a href="#sec-why-rlhf" id="toc-sec-why-rlhf" class="nav-link" data-scroll-target="#sec-why-rlhf"><span class="header-section-number">10.6</span> Why RLHF?</a></li>
+  <li><a href="#sec-instructgpt" id="toc-sec-instructgpt" class="nav-link" data-scroll-target="#sec-instructgpt"><span class="header-section-number">10.7</span> The InstructGPT Pipeline</a></li>
+  <li><a href="#sec-rlhf-data-collection" id="toc-sec-rlhf-data-collection" class="nav-link" data-scroll-target="#sec-rlhf-data-collection"><span class="header-section-number">10.8</span> RLHF Data Collection</a>
+  <ul class="collapse">
+  <li><a href="#sec-pairwise-feedback" id="toc-sec-pairwise-feedback" class="nav-link" data-scroll-target="#sec-pairwise-feedback"><span class="header-section-number">10.8.1</span> Pairwise Preference Feedback</a></li>
+  <li><a href="#sec-lm-feedback" id="toc-sec-lm-feedback" class="nav-link" data-scroll-target="#sec-lm-feedback"><span class="header-section-number">10.8.2</span> LM-Generated Feedback</a></li>
+  <li><a href="#sec-constitutional-ai" id="toc-sec-constitutional-ai" class="nav-link" data-scroll-target="#sec-constitutional-ai"><span class="header-section-number">10.8.3</span> Constitutional AI</a></li>
+  <li><a href="#sec-orm-prm-preview" id="toc-sec-orm-prm-preview" class="nav-link" data-scroll-target="#sec-orm-prm-preview"><span class="header-section-number">10.8.4</span> Outcome vs.&nbsp;Process Reward Models</a></li>
+  </ul></li>
+  <li><a href="#sec-reward-model" id="toc-sec-reward-model" class="nav-link" data-scroll-target="#sec-reward-model"><span class="header-section-number">10.9</span> Step 1: Data Collection and Reward Model</a>
+  <ul class="collapse">
+  <li><a href="#sec-preference-data" id="toc-sec-preference-data" class="nav-link" data-scroll-target="#sec-preference-data"><span class="header-section-number">10.9.1</span> Preference Data</a></li>
+  <li><a href="#sec-bradley-terry" id="toc-sec-bradley-terry" class="nav-link" data-scroll-target="#sec-bradley-terry"><span class="header-section-number">10.9.2</span> The Bradley–Terry Model</a></li>
+  <li><a href="#sec-contextual-bandit" id="toc-sec-contextual-bandit" class="nav-link" data-scroll-target="#sec-contextual-bandit"><span class="header-section-number">10.9.3</span> Contextual Bandit Interpretation</a></li>
+  <li><a href="#sec-reward-estimation" id="toc-sec-reward-estimation" class="nav-link" data-scroll-target="#sec-reward-estimation"><span class="header-section-number">10.9.4</span> Estimating the Reward Model</a></li>
+  </ul></li>
+  <li><a href="#sec-ppo" id="toc-sec-ppo" class="nav-link" data-scroll-target="#sec-ppo"><span class="header-section-number">10.10</span> Step 2: RL Finetuning via PPO</a>
+  <ul class="collapse">
+  <li><a href="#sec-policy-objective" id="toc-sec-policy-objective" class="nav-link" data-scroll-target="#sec-policy-objective"><span class="header-section-number">10.10.1</span> Policy Optimization Problem</a></li>
+  <li><a href="#sec-mdp-formulation" id="toc-sec-mdp-formulation" class="nav-link" data-scroll-target="#sec-mdp-formulation"><span class="header-section-number">10.10.2</span> MDP Formulation</a></li>
+  <li><a href="#sec-actor-critic" id="toc-sec-actor-critic" class="nav-link" data-scroll-target="#sec-actor-critic"><span class="header-section-number">10.10.3</span> Actor-Critic for PPO</a></li>
+  </ul></li>
+  <li><a href="#sec-ppo-challenges" id="toc-sec-ppo-challenges" class="nav-link" data-scroll-target="#sec-ppo-challenges"><span class="header-section-number">10.11</span> PPO: Practical Challenges</a></li>
+  <li><a href="#sec-dpo" id="toc-sec-dpo" class="nav-link" data-scroll-target="#sec-dpo"><span class="header-section-number">10.12</span> Direct Preference Optimization (DPO)</a>
+  <ul class="collapse">
+  <li><a href="#sec-dpo-idea" id="toc-sec-dpo-idea" class="nav-link" data-scroll-target="#sec-dpo-idea"><span class="header-section-number">10.12.1</span> Key Idea</a></li>
+  <li><a href="#sec-dpo-reparameterization" id="toc-sec-dpo-reparameterization" class="nav-link" data-scroll-target="#sec-dpo-reparameterization"><span class="header-section-number">10.12.2</span> Reward Reparameterization</a></li>
+  <li><a href="#sec-dpo-loss" id="toc-sec-dpo-loss" class="nav-link" data-scroll-target="#sec-dpo-loss"><span class="header-section-number">10.12.3</span> The DPO Loss</a></li>
+  </ul></li>
+  <li><a href="#sec-side-effects" id="toc-sec-side-effects" class="nav-link" data-scroll-target="#sec-side-effects"><span class="header-section-number">10.13</span> Side Effects of RLHF</a>
+  <ul class="collapse">
+  <li><a href="#sec-length-effects" id="toc-sec-length-effects" class="nav-link" data-scroll-target="#sec-length-effects"><span class="header-section-number">10.13.1</span> Length Effects</a></li>
+  <li><a href="#sec-annotator-bias" id="toc-sec-annotator-bias" class="nav-link" data-scroll-target="#sec-annotator-bias"><span class="header-section-number">10.13.2</span> Annotator Bias and Style</a></li>
+  <li><a href="#sec-reward-hacking" id="toc-sec-reward-hacking" class="nav-link" data-scroll-target="#sec-reward-hacking"><span class="header-section-number">10.13.3</span> Reward Hacking</a></li>
+  <li><a href="#sec-open-questions" id="toc-sec-open-questions" class="nav-link" data-scroll-target="#sec-open-questions"><span class="header-section-number">10.13.4</span> Open Questions</a></li>
+  </ul></li>
+  <li><a href="#sec-summary" id="toc-sec-summary" class="nav-link" data-scroll-target="#sec-summary"><span class="header-section-number">10.14</span> Summary: From SFT to DPO</a></li>
+  <li><a href="#sec-references" id="toc-sec-references" class="nav-link" data-scroll-target="#sec-references"><span class="header-section-number">10.15</span> References</a></li>
+  <li><a href="#sec-appendix-transformers" id="toc-sec-appendix-transformers" class="nav-link" data-scroll-target="#sec-appendix-transformers"><span class="header-section-number">10.16</span> Appendix: Transformer Architectures</a>
+  <ul class="collapse">
+  <li><a href="#sec-app-overview" id="toc-sec-app-overview" class="nav-link" data-scroll-target="#sec-app-overview"><span class="header-section-number">10.16.1</span> What Will Be Covered</a></li>
+  <li><a href="#sec-motivations" id="toc-sec-motivations" class="nav-link" data-scroll-target="#sec-motivations"><span class="header-section-number">10.16.2</span> Motivations</a></li>
+  <li><a href="#sec-three-types" id="toc-sec-three-types" class="nav-link" data-scroll-target="#sec-three-types"><span class="header-section-number">10.16.3</span> Three Types of Transformer-Based Language Models</a></li>
+  <li><a href="#sec-architectures" id="toc-sec-architectures" class="nav-link" data-scroll-target="#sec-architectures"><span class="header-section-number">10.16.4</span> Architectures of Transformers</a></li>
+  <li><a href="#sec-revisit-models" id="toc-sec-revisit-models" class="nav-link" data-scroll-target="#sec-revisit-models"><span class="header-section-number">10.16.5</span> Revisiting Encoder-Only and Decoder-Only Models</a></li>
+  <li><a href="#sec-exercises" id="toc-sec-exercises" class="nav-link" data-scroll-target="#sec-exercises"><span class="header-section-number">10.16.6</span> Exercises</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../lectures/09-alphago.html">Applications</a></li><li class="breadcrumb-item"><a href="../lectures/10-rl-for-llms.html"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">RLHF and Alignment</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">RLHF and Alignment</span></h1>
+<p class="subtitle lead">From supervised finetuning to preference optimization</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>The most consequential application of reinforcement learning in recent years is not a game or a robot — it is the alignment of large language models (LLMs) with human preferences. Every modern conversational AI system, from ChatGPT to Claude to Gemini, uses RL-based post-training to transform a raw language model into a helpful, harmless, and honest assistant. This lecture develops the theory and algorithms behind this pipeline: from pretraining and supervised finetuning through reward modeling, PPO-based alignment, and Direct Preference Optimization (DPO).</p>
+<p>The central insight is that training an LLM can be naturally decomposed into two phases. <strong>Pretraining</strong> teaches the model to predict text (behavior cloning from the internet). <strong>Post-training</strong> uses RL to optimize the model’s behavior according to human judgments of quality — a problem that maps directly onto the MDP and policy optimization frameworks developed earlier in this course. We also examine the side effects of RLHF — length bias, annotator bias, and reward hacking — which motivate the move to verifiable rewards in the next chapter.</p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>The Central Question
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><em>How can we align a pretrained language model with human preferences using reinforcement learning, and what are the trade-offs of different preference optimization algorithms?</em></p>
+</div>
+</div>
+<section id="sec-overview" class="level2" data-number="10.1">
+<h2 data-number="10.1" class="anchored" data-anchor-id="sec-overview"><span class="header-section-number">10.1</span> What Will Be Covered</h2>
+<ul>
+<li><strong>Transformer decoder recap:</strong> The architecture of a decoder-only LLM — self-attention, multi-head attention, and autoregressive generation.</li>
+<li><strong>LLM training pipeline:</strong> Pretraining (next-token prediction) and supervised finetuning (SFT) as imitation learning, with rigorous loss functions.</li>
+<li><strong>SFT data quality:</strong> What makes good finetuning data, the LIMA finding, and the superficial alignment hypothesis.</li>
+<li><strong>From imitation to optimization:</strong> Why imitating demonstrations is not enough, and the generation–verification gap that makes scalar feedback so powerful.</li>
+<li><strong>Why RLHF?</strong> The gap between predicting text and producing helpful responses, and why RL is needed to close it.</li>
+<li><strong>RLHF data collection:</strong> Pairwise feedback, LM-generated feedback, Constitutional AI, and outcome vs.&nbsp;process reward models.</li>
+<li><strong>The InstructGPT pipeline:</strong> Data collection, reward model training, and PPO optimization.</li>
+<li><strong>Reward modeling:</strong> The Bradley–Terry model for learning human preferences.</li>
+<li><strong>Contextual bandit interpretation:</strong> Human labeling as entropy-regularized reward maximization, and the connection to maximum-entropy inverse RL.</li>
+<li><strong>PPO for LLMs:</strong> The MDP formulation of text generation, actor-critic architecture, and the KL-regularized policy optimization objective.</li>
+<li><strong>PPO practical challenges:</strong> The four-model burden, memory costs, and training instability.</li>
+<li><strong>Direct Preference Optimization (DPO):</strong> Bypassing the reward model by reparameterizing the reward in terms of the policy.</li>
+<li><strong>Side effects of RLHF:</strong> Length bias, annotator bias, reward hacking, and open questions.</li>
+</ul>
+</section>
+<section id="sec-transformer-recap" class="level2" data-number="10.2">
+<h2 data-number="10.2" class="anchored" data-anchor-id="sec-transformer-recap"><span class="header-section-number">10.2</span> Transformer Decoder Recap</h2>
+<p>Before developing the RL pipeline, we briefly review the transformer decoder architecture that underlies all modern LLMs. A decoder-only LLM is a <strong>conditional probability machine</strong>: given a sequence of tokens <span class="math inline">z_{1:t}</span>, it outputs a distribution over the next token:</p>
+<p><span class="math display">
+\mathbb{P}_{\text{LLM}}(z_{t+1} = \cdot \mid \text{prompt} = z_{1:t}).
+</span></p>
+<section id="sec-architecture" class="level3" data-number="10.2.1">
+<h3 data-number="10.2.1" class="anchored" data-anchor-id="sec-architecture"><span class="header-section-number">10.2.1</span> Architecture</h3>
+<p>The transformer decoder processes an input token sequence through the following components:</p>
+<ol type="1">
+<li><p><strong>Token and position embedding:</strong> Each discrete token <span class="math inline">z_t</span> is mapped to a continuous vector <span class="math inline">x_t = W_E z_t + \text{pe}_t \in \mathbb{R}^d</span>, where <span class="math inline">W_E \in \mathbb{R}^{d \times V}</span> is the embedding matrix (<span class="math inline">V</span> = vocabulary size) and <span class="math inline">\text{pe}_t</span> is a positional embedding.</p></li>
+<li><p><strong>Softmax self-attention:</strong> Given input vectors <span class="math inline">z_1, \ldots, z_L \in \mathbb{R}^d</span>, each position <span class="math inline">\ell</span> computes:</p></li>
+</ol>
+<p><span class="math display">
+v_\ell = V z_\ell, \quad k_\ell = K z_\ell, \quad q_\ell = Q z_\ell, \qquad V, K, Q \in \mathbb{R}^{D \times d},
+</span></p>
+<p>and the attention output is a weighted average of values:</p>
+<p><span id="eq-self-attention"><span class="math display">
+p_\ell(j) = \frac{\exp(\langle q_\ell, k_j \rangle / \sqrt{d})}{\sum_{i=1}^{L} \exp(\langle q_\ell, k_i \rangle / \sqrt{d})}, \qquad \bar{z}_\ell = \sum_{j=1}^{L} p_\ell(j) \cdot v_j.
+\tag{10.1}</span></span></p>
+<p>In a decoder, <strong>causal masking</strong> restricts attention so that position <span class="math inline">\ell</span> can only attend to positions <span class="math inline">j \leq \ell</span>. This ensures that during generation, the model never peeks at future tokens — the prediction of <span class="math inline">w_{\ell+1}</span> depends only on the tokens seen so far, exactly matching the autoregressive factorization <span class="math inline">P(w_{\ell+1} \mid w_1, \ldots, w_\ell)</span>.</p>
+<ol start="3" type="1">
+<li><strong>Multi-head self-attention:</strong> <span class="math inline">H</span> parallel attention heads <span class="math inline">\{V^{(h)}, K^{(h)}, Q^{(h)}\}_{h \in [H]}</span> operate on different subspaces. Their outputs are combined via output matrices <span class="math inline">O^{(h)} \in \mathbb{R}^{d' \times d}</span>:</li>
+</ol>
+<p><span id="eq-multi-head"><span class="math display">
+\bar{z}_\ell = \sum_{h=1}^{H} O^{(h)} \bar{z}_\ell^{(h)}, \qquad \bar{z}_\ell^{(h)} = \sum_{j=1}^{L} p_\ell^{(h)}(j) \cdot v_j^{(h)}.
+\tag{10.2}</span></span></p>
+<ol start="4" type="1">
+<li><p><strong>Feedforward layer + residual connection:</strong> A two-layer MLP adds nonlinearity, and residual connections ease gradient flow: <span class="math inline">x \mapsto x + \text{MLP}(\text{Attention}(x))</span>.</p></li>
+<li><p><strong>Layer normalization:</strong> Normalizes each feature vector to stabilize training.</p></li>
+<li><p><strong>Softmax output:</strong> The final feature vector is mapped to logits over the vocabulary via an unembedding matrix <span class="math inline">W_U \in \mathbb{R}^{V \times d}</span>, then converted to probabilities via softmax.</p></li>
+</ol>
+</section>
+<section id="sec-generation" class="level3" data-number="10.2.2">
+<h3 data-number="10.2.2" class="anchored" data-anchor-id="sec-generation"><span class="header-section-number">10.2.2</span> Autoregressive Generation</h3>
+<p>An LLM generates text one token at a time. Starting from an initial prompt <span class="math inline">\text{pt} = \{z_1, \ldots, z_K\}</span>:</p>
+<ol type="1">
+<li>Sample <span class="math inline">z_{t+1} \sim \mathbb{P}_{\text{LLM}}(\cdot \mid z_{1:t})</span>.</li>
+<li>Append <span class="math inline">z_{t+1}</span> to the sequence.</li>
+<li>Repeat until <span class="math inline">z_{t+1} = \text{[EOS]}</span> (end of sequence).</li>
+</ol>
+<p>The probability over the full generated sequence factorizes autoregressively:</p>
+<p><span id="eq-autoregressive"><span class="math display">
+\mathbb{P}_{\text{LLM}}(z_{K+1:T} \mid z_{1:K}) = \prod_{t=K}^{T-1} \mathbb{P}_{\text{LLM}}(z_{t+1} \mid z_{1:t}).
+\tag{10.3}</span></span></p>
+<div class="callout callout-style-simple callout-note">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p><strong>Temperature scaling:</strong> The sampling distribution can be sharpened or flattened by dividing the logits by a temperature parameter <span class="math inline">\tau &gt; 0</span> before softmax: <span class="math inline">\text{prob} = \text{Softmax}(\text{logits} / \tau)</span>. Setting <span class="math inline">\tau \to 0</span> recovers greedy decoding (<span class="math inline">z_{t+1} = \arg\max_z [\text{logit}]_z</span>).</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-pipeline" class="level2" data-number="10.3">
+<h2 data-number="10.3" class="anchored" data-anchor-id="sec-pipeline"><span class="header-section-number">10.3</span> The LLM Training Pipeline</h2>
+<section id="sec-pretraining" class="level3" data-number="10.3.1">
+<h3 data-number="10.3.1" class="anchored" data-anchor-id="sec-pretraining"><span class="header-section-number">10.3.1</span> Pretraining</h3>
+<p><strong>Pretraining</strong> trains the LLM on a massive corpus of text (books, websites, code) using <strong>next-token prediction</strong>. Given a document <span class="math inline">\{z_1, z_2, \ldots, z_{T+1}\}</span>, the loss is:</p>
+<p><span id="eq-pretraining-loss"><span class="math display">
+L(\theta) = -\sum_{t=1}^{T} \log \mathbb{P}_\theta(z_{t+1} \mid z_{1:t}).
+\tag{10.4}</span></span></p>
+<p>This is maximum likelihood estimation (MLE), or equivalently, <strong>behavior cloning</strong> from the data distribution — the model imitates the patterns in the training corpus without any notion of task performance.</p>
+<p>Concretely, for each position <span class="math inline">t</span>, the transformer computes a logit vector <span class="math inline">f_{\text{NN}}(z_{1:t}) \in \mathbb{R}^V</span> (one entry per vocabulary token), and the loss at position <span class="math inline">t</span> is the cross-entropy between the softmax of this logit vector and the one-hot encoding of the true next token <span class="math inline">z_{t+1}</span>:</p>
+<p><span id="eq-pretraining-loss-explicit"><span class="math display">
+-\log \mathbb{P}_\theta(z_{t+1} \mid z_{1:t}) = -[f_{\text{NN}}(z_{1:t})]_{z_{t+1}} + \log \sum_{z \in \text{Vocab}} \exp\bigl([f_{\text{NN}}(z_{1:t})]_z\bigr).
+\tag{10.5}</span></span></p>
+</section>
+<section id="sec-sft" class="level3" data-number="10.3.2">
+<h3 data-number="10.3.2" class="anchored" data-anchor-id="sec-sft"><span class="header-section-number">10.3.2</span> Supervised Finetuning (SFT)</h3>
+<p>After pretraining, the model can generate fluent text but does not reliably follow instructions. <strong>Supervised finetuning</strong> further trains the model on a curated dataset of (question, answer) pairs <span class="math inline">\{(q_i, a_i)\}_{i \in [N]}</span>:</p>
+<p><span id="eq-sft-loss"><span class="math display">
+L(\theta) = -\sum_{i=1}^{N} \log \mathbb{P}_\theta(a_i \mid q_i).
+\tag{10.6}</span></span></p>
+<p>This is again imitation learning: the model learns to imitate the demonstration answers. For SFT on classification tasks (e.g., spam detection), the prediction head is modified: the original linear output layer (<span class="math inline">d \to V</span>) is replaced with a task-specific head (<span class="math inline">d \to C</span>, where <span class="math inline">C</span> is the number of classes). The bottom layers of the pretrained model serve as a <strong>feature extractor</strong> and can be frozen or finetuned.</p>
+<div class="callout callout-style-simple callout-note">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>Both pretraining and SFT are forms of <strong>imitation learning</strong> (behavior cloning). The key difference is the data source: pretraining uses raw internet text, while SFT uses curated instruction–response pairs. Neither stage involves reinforcement learning.</p>
+</div>
+</div>
+</div>
+<div id="fig-llm-training-pipeline" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-llm-training-pipeline-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/llm-training-pipeline.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Figure&nbsp;10.1: The LLM training pipeline proceeds through three stages: pretraining on internet text (behavior cloning), supervised finetuning on curated instruction–response pairs (imitation learning), and RLHF using human preferences (optimization). Each stage builds on the previous one to produce an aligned model."><img src="figures/llm-training-pipeline.svg" class="img-fluid figure-img" style="width:80.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-llm-training-pipeline-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10.1: The LLM training pipeline proceeds through three stages: pretraining on internet text (behavior cloning), supervised finetuning on curated instruction–response pairs (imitation learning), and RLHF using human preferences (optimization). Each stage builds on the previous one to produce an aligned model.
+</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="sec-sft-data-quality" class="level2" data-number="10.4">
+<h2 data-number="10.4" class="anchored" data-anchor-id="sec-sft-data-quality"><span class="header-section-number">10.4</span> SFT Data Quality</h2>
+<p>The quality and composition of the SFT dataset has an outsized impact on the resulting model. Several large-scale instruction-tuning datasets have been developed:</p>
+<ul>
+<li><strong>FLAN</strong> (Wei et al., 2022): Instruction tuning at scale — thousands of NLP tasks reformulated as instruction–response pairs, demonstrating that diverse instructions improve zero-shot generalization.</li>
+<li><strong>Alpaca</strong> (Taori et al., 2023): 52,000 instruction–response pairs generated by GPT-3.5, showing that synthetic data from a strong model can cheaply produce a capable instruction follower.</li>
+<li><strong>OpenAssistant</strong> (Köpf et al., 2023): A crowdsourced, multi-turn conversation dataset with human quality ratings.</li>
+<li><strong>ShareGPT</strong>: User-shared conversations with ChatGPT, providing naturalistic instruction–response pairs from real usage.</li>
+</ul>
+<section id="sec-lima" class="level3" data-number="10.4.1">
+<h3 data-number="10.4.1" class="anchored" data-anchor-id="sec-lima"><span class="header-section-number">10.4.1</span> The LIMA Finding</h3>
+<p>A striking result from Zhou et al.&nbsp;(2023) challenges the assumption that more SFT data is always better. <strong>LIMA</strong> (Less Is More for Alignment) finetunes a 65B-parameter LLaMA model on only <strong>1,000 carefully curated examples</strong> and achieves performance comparable to models trained on orders of magnitude more data. Human evaluators preferred LIMA’s outputs over those of Alpaca (52K examples) in the majority of comparisons.</p>
+<p>This suggests a <strong>superficial alignment hypothesis</strong>: SFT primarily teaches the model <em>format and style</em> — how to structure a response, when to use bullet points, how to be concise — rather than new knowledge. The factual knowledge and reasoning capabilities come overwhelmingly from pretraining. A small number of high-quality examples suffices to “unlock” these capabilities in the instruction-following format.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Hallucination Risk
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>If the SFT dataset contains facts not present in the pretraining data, the model learns to confidently generate information it has no basis for — this is a major source of <strong>hallucination</strong>. The safest SFT data elicits knowledge the model already has, rather than teaching new facts. An emerging practice called <strong>midtraining</strong> — continued pretraining on curated, domain-specific text before SFT — aims to expand the model’s knowledge base before the alignment stage.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-imitation-to-optimization" class="level2" data-number="10.5">
+<h2 data-number="10.5" class="anchored" data-anchor-id="sec-imitation-to-optimization"><span class="header-section-number">10.5</span> From Imitation to Optimization</h2>
+<p>SFT and RLHF solve fundamentally different problems. Understanding the distinction is key to appreciating why RL is necessary.</p>
+<p><strong>SFT is imitation.</strong> The objective is to match the data distribution:</p>
+<p><span id="eq-sft-as-imitation"><span class="math display">
+\min_\pi \; \text{KL}\bigl(\widehat{p}(\cdot \mid x) \,\|\, \pi(\cdot \mid x)\bigr),
+\tag{10.7}</span></span></p>
+<p>where <span class="math inline">\widehat{p}</span> is the empirical distribution of demonstration responses. The model learns to produce outputs that <em>look like</em> the training data. This is behavior cloning, subject to the same fundamental limitation as in robotics (Chapter 1): the model can only be as good as the demonstrations it imitates.</p>
+<p><strong>RLHF is optimization.</strong> The objective is to maximize a quality measure:</p>
+<p><span id="eq-rlhf-as-optimization"><span class="math display">
+\max_\pi \; \mathbb{E}_{y \sim \pi(\cdot \mid x)}\bigl[R(x, y)\bigr],
+\tag{10.8}</span></span></p>
+<p>where <span class="math inline">R(x, y)</span> is a reward function capturing human preferences. The model learns to produce outputs that are <em>judged as high quality</em>, potentially surpassing the quality of any individual demonstration.</p>
+<section id="sec-generation-verification-gap" class="level3" data-number="10.5.1">
+<h3 data-number="10.5.1" class="anchored" data-anchor-id="sec-generation-verification-gap"><span class="header-section-number">10.5.1</span> The Generation–Verification Gap</h3>
+<p>The key insight enabling RLHF is the <strong>generation–verification gap</strong>: it is much easier to <em>judge</em> quality than to <em>produce</em> it. A chess amateur can reliably tell which of two positions is stronger, even though they cannot play at grandmaster level. A reader can judge which of two essays is more coherent, even though they could not write either one. This asymmetry means that <strong>scalar feedback</strong> (which response is better?) is both cheaper to collect and more informative than <strong>demonstration data</strong> (write a perfect response).</p>
+<p>Because verification is easier than generation, human preference judgments can guide the model beyond the quality frontier of the demonstration data. This is impossible with pure imitation — SFT can only approach the average quality of the demonstrations, never exceed it.</p>
+<div id="fig-generation-verification-gap" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-generation-verification-gap-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/generation-verification-gap.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-2" title="Figure&nbsp;10.2: The generation–verification gap: generating high-quality responses is far more difficult than judging response quality. This asymmetry is what makes scalar feedback (pairwise preferences) both cheap to collect and powerful enough to guide the model beyond the demonstration frontier."><img src="figures/generation-verification-gap.svg" class="img-fluid figure-img" style="width:65.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-generation-verification-gap-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10.2: The generation–verification gap: generating high-quality responses is far more difficult than judging response quality. This asymmetry is what makes scalar feedback (pairwise preferences) both cheap to collect and powerful enough to guide the model beyond the demonstration frontier.
+</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="sec-why-rlhf" class="level2" data-number="10.6">
+<h2 data-number="10.6" class="anchored" data-anchor-id="sec-why-rlhf"><span class="header-section-number">10.6</span> Why RLHF?</h2>
+<p>After SFT, the model can follow instructions, but it may still produce responses that are unhelpful, incorrect, verbose, or harmful. The core problem is that imitation learning optimizes for <strong>matching the data distribution</strong>, not for <strong>producing high-quality responses</strong>.</p>
+<p>RLHF (Reinforcement Learning from Human Feedback) addresses this by:</p>
+<ul>
+<li><strong>Aligning with human values:</strong> Teaching the model to produce responses that humans judge as helpful and harmless.</li>
+<li><strong>Improving reasoning capabilities:</strong> RL-based training can elicit capabilities beyond what appears in the SFT data.</li>
+</ul>
+<p>The post-training adaptation enables the model to:</p>
+<ul>
+<li>Follow natural language instructions reliably.</li>
+<li>Avoid harmful or misleading outputs.</li>
+<li>Respond according to human preference rather than simply mimicking training data.</li>
+<li>Improve core skills like reasoning and code generation.</li>
+</ul>
+</section>
+<section id="sec-instructgpt" class="level2" data-number="10.7">
+<h2 data-number="10.7" class="anchored" data-anchor-id="sec-instructgpt"><span class="header-section-number">10.7</span> The InstructGPT Pipeline</h2>
+<p>The InstructGPT approach (Ouyang et al., 2022) established the standard RLHF pipeline with three stages:</p>
+<p><span class="math display">
+\text{Base Model} \;\xrightarrow{\text{SFT}}\; \text{SFT Model} \;\xrightarrow{\text{Reward Model}}\; \text{RM} \;\xrightarrow{\text{PPO}}\; \text{Aligned Model}
+</span></p>
+<ol type="1">
+<li><strong>Collect demonstration data and train an SFT model</strong> (supervised finetuning on $$10k human-written instruction–response pairs).</li>
+<li><strong>Collect comparison data and train a reward model</strong> (human labelers rank model outputs; $$100k comparisons).</li>
+<li><strong>Optimize the policy against the reward model using PPO</strong> (reinforcement learning).</li>
+</ol>
+</section>
+<section id="sec-rlhf-data-collection" class="level2" data-number="10.8">
+<h2 data-number="10.8" class="anchored" data-anchor-id="sec-rlhf-data-collection"><span class="header-section-number">10.8</span> RLHF Data Collection</h2>
+<section id="sec-pairwise-feedback" class="level3" data-number="10.8.1">
+<h3 data-number="10.8.1" class="anchored" data-anchor-id="sec-pairwise-feedback"><span class="header-section-number">10.8.1</span> Pairwise Preference Feedback</h3>
+<p>The standard approach to collecting RLHF data is <strong>pairwise comparison</strong>: given a prompt <span class="math inline">x</span> and two model responses <span class="math inline">y_1, y_2</span>, a human annotator selects the better one. The InstructGPT guidelines instruct annotators to evaluate responses along three axes:</p>
+<ol type="1">
+<li><strong>Helpful:</strong> Does the response address the user’s request?</li>
+<li><strong>Truthful:</strong> Is the response factually accurate? Does it avoid making unsupported claims?</li>
+<li><strong>Harmless:</strong> Does the response avoid generating toxic, biased, or dangerous content?</li>
+</ol>
+<p>Pairwise comparison is preferred over absolute scoring because it is more <strong>reliable</strong> — humans find it easier to say “A is better than B” than to assign a numerical score on a 1–10 scale. However, it is still expensive: InstructGPT required approximately 100,000 pairwise comparisons from a team of trained annotators.</p>
+<div id="fig-rlhf-data-collection" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-rlhf-data-collection-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/rlhf-data-collection.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-3" title="Figure&nbsp;10.3: RLHF data collection via pairwise comparison: a prompt x is fed to the model, which generates two candidate responses y1 and y2. A human annotator selects the better response, producing a preference triple (x, yw, yl) for training the reward model."><img src="figures/rlhf-data-collection.svg" class="img-fluid figure-img" style="width:80.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-rlhf-data-collection-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10.3: RLHF data collection via pairwise comparison: a prompt x is fed to the model, which generates two candidate responses y1 and y2. A human annotator selects the better response, producing a preference triple (x, yw, yl) for training the reward model.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="sec-lm-feedback" class="level3" data-number="10.8.2">
+<h3 data-number="10.8.2" class="anchored" data-anchor-id="sec-lm-feedback"><span class="header-section-number">10.8.2</span> LM-Generated Feedback</h3>
+<p>The cost of human annotation has motivated the use of <strong>language models as judges</strong>. Instead of (or in addition to) human labelers, a strong LM evaluates response pairs:</p>
+<ul>
+<li><strong>GPT-4 as judge:</strong> Zheng et al.&nbsp;(2023) showed that GPT-4’s pairwise preferences agree with human annotators at roughly the same rate that two human annotators agree with each other.</li>
+<li><strong>UltraFeedback</strong> (Cui et al., 2023): A large-scale preference dataset generated by having GPT-4 score and compare responses from multiple models, providing a cheaper alternative to human annotation.</li>
+</ul>
+<div class="callout callout-style-simple callout-note">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>Using an LM as a judge introduces its own biases: LMs tend to prefer longer responses, responses in a confident tone, and responses that match their own generation style. These biases propagate into the reward model and ultimately into the aligned policy.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="sec-constitutional-ai" class="level3" data-number="10.8.3">
+<h3 data-number="10.8.3" class="anchored" data-anchor-id="sec-constitutional-ai"><span class="header-section-number">10.8.3</span> Constitutional AI</h3>
+<p><strong>Constitutional AI</strong> (Bai et al., 2022) takes LM-generated feedback a step further: instead of collecting any human preference labels, the model <strong>critiques its own outputs</strong> against a set of written principles (a “constitution”). The process is:</p>
+<ol type="1">
+<li>Generate a response to a prompt.</li>
+<li>Ask the model to critique the response against each constitutional principle (e.g., “Is this response helpful?” “Could this response be harmful?”).</li>
+<li>Ask the model to revise its response based on the critique.</li>
+<li>Use the (original, revised) pair as preference data for training.</li>
+</ol>
+<p>This approach eliminates human labelers from the feedback loop entirely, relying instead on the model’s ability to apply explicit principles. It has proven effective for reducing harmful outputs while maintaining helpfulness.</p>
+</section>
+<section id="sec-orm-prm-preview" class="level3" data-number="10.8.4">
+<h3 data-number="10.8.4" class="anchored" data-anchor-id="sec-orm-prm-preview"><span class="header-section-number">10.8.4</span> Outcome vs.&nbsp;Process Reward Models</h3>
+<p>There are two approaches to reward modeling that differ in <strong>granularity</strong>:</p>
+<ul>
+<li><strong>Outcome Reward Model (ORM):</strong> Scores the complete response as a whole — a single scalar for the entire (question, answer) pair. This is the standard approach used in InstructGPT and most RLHF systems.</li>
+<li><strong>Process Reward Model (PRM):</strong> Scores each intermediate reasoning step. Lightman et al.&nbsp;(2023) showed that PRMs significantly outperform ORMs for mathematical reasoning, because they provide denser supervision and better credit assignment.</li>
+</ul>
+<p>We discuss ORMs and PRMs in detail in Chapter 11, where the distinction becomes central to training reasoning models.</p>
+</section>
+</section>
+<section id="sec-reward-model" class="level2" data-number="10.9">
+<h2 data-number="10.9" class="anchored" data-anchor-id="sec-reward-model"><span class="header-section-number">10.9</span> Step 1: Data Collection and Reward Model</h2>
+<section id="sec-preference-data" class="level3" data-number="10.9.1">
+<h3 data-number="10.9.1" class="anchored" data-anchor-id="sec-preference-data"><span class="header-section-number">10.9.1</span> Preference Data</h3>
+<p>After the SFT stage, we denote the finetuned model as <span class="math inline">\pi^{\text{sft}}(\cdot \mid \cdot)</span>, a conditional distribution over output sequences. Given a user query <span class="math inline">x</span>, we sample two candidate responses:</p>
+<p><span class="math display">
+y_1, y_2 \stackrel{\text{i.i.d.}}{\sim} \pi^{\text{sft}}(\cdot \mid x).
+</span></p>
+<p>A human labeler then chooses the <strong>preferred</strong> response:</p>
+<ul>
+<li><span class="math inline">y_c</span>: the <strong>chosen</strong> (better) response.</li>
+<li><span class="math inline">y_r</span>: the <strong>rejected</strong> (worse) response.</li>
+</ul>
+<p>The resulting dataset is <span class="math inline">\mathcal{D} = \{(x^{(i)}, y_c^{(i)}, y_r^{(i)})\}_{i \in [N]}</span>.</p>
+</section>
+<section id="sec-bradley-terry" class="level3" data-number="10.9.2">
+<h3 data-number="10.9.2" class="anchored" data-anchor-id="sec-bradley-terry"><span class="header-section-number">10.9.2</span> The Bradley–Terry Model</h3>
+<p>We assume there exists an underlying <strong>golden reward function</strong> <span class="math inline">r^*: (x, y) \to \mathbb{R}</span> that scores any response <span class="math inline">y</span> to question <span class="math inline">x</span>. The <strong>Bradley–Terry model</strong> posits that human preferences follow a logistic model:</p>
+<p><span id="eq-bradley-terry"><span class="math display">
+\mathbb{P}(y_1 \succ y_2 \mid x) = \sigma\bigl(r^*(x, y_1) - r^*(x, y_2)\bigr),
+\tag{10.9}</span></span></p>
+<p>where <span class="math inline">\sigma(u) = \frac{\exp(u)}{\exp(u) + 1}</span> is the logistic (sigmoid) function.</p>
+<div id="def-bradley-terry" class="theorem definition">
+<p><span class="theorem-title"><strong>Definition 10.1 (Bradley–Terry Preference Model)</strong></span> Given two responses <span class="math inline">y_1</span> and <span class="math inline">y_2</span> to prompt <span class="math inline">x</span>, the probability that a human prefers <span class="math inline">y_1</span> is:</p>
+<p><span class="math display">
+\mathbb{P}(y_1 \succ y_2 \mid x) = \frac{\exp(r^*(x, y_1))}{\exp(r^*(x, y_1)) + \exp(r^*(x, y_2))}.
+</span></p>
+</div>
+</section>
+<section id="sec-contextual-bandit" class="level3" data-number="10.9.3">
+<h3 data-number="10.9.3" class="anchored" data-anchor-id="sec-contextual-bandit"><span class="header-section-number">10.9.3</span> Contextual Bandit Interpretation</h3>
+<p>Human labeling can be interpreted as a <strong>contextual bandit</strong> problem:</p>
+<ul>
+<li><strong>Context:</strong> <span class="math inline">s = (x, y_1, y_2)</span> (the question and two candidate answers).</li>
+<li><strong>Action:</strong> <span class="math inline">\mathcal{A} = \{\succ, \prec\}</span> (which response is better).</li>
+<li><strong>Reward:</strong> <span class="math inline">R(s, a) = r^*(x, y_1) - r^*(x, y_2)</span> if <span class="math inline">a = \text{``}\succ\text{''}</span>, and <span class="math inline">r^*(x, y_2) - r^*(x, y_1)</span> if <span class="math inline">a = \text{``}\prec\text{''}</span>.</li>
+</ul>
+<p>Under this formulation, the human labeler’s policy is:</p>
+<p><span class="math display">
+\nu(a) = \frac{\exp(R(s, a))}{\sum_{b \in \mathcal{A}} \exp(R(s, b))},
+</span></p>
+<p>which is exactly the <strong>entropy-regularized greedy policy</strong> — the optimal policy of an entropy-regularized RL problem.</p>
+<p>This connection reveals that learning <span class="math inline">r^*</span> from human labeling data is equivalent to a problem known as <strong>maximum-entropy inverse RL</strong>: given i.i.d. trajectories from the optimal policy of an entropy-regularized RL problem, recover the underlying reward function.</p>
+</section>
+<section id="sec-reward-estimation" class="level3" data-number="10.9.4">
+<h3 data-number="10.9.4" class="anchored" data-anchor-id="sec-reward-estimation"><span class="header-section-number">10.9.4</span> Estimating the Reward Model</h3>
+<p>The reward model <span class="math inline">r_\phi</span> uses the same transformer architecture as <span class="math inline">\pi^{\text{sft}}</span>, but with a <strong>linear prediction head</strong> that outputs a scalar reward instead of a token distribution. The bottom layers are initialized from the SFT model.</p>
+<p>The loss function is the negative log-likelihood under the Bradley–Terry model:</p>
+<p><span id="eq-reward-loss"><span class="math display">
+L(r_\phi) = -\mathbb{E}_{(x, y_c, y_r) \sim \mathcal{D}} \bigl[\log \sigma\bigl(r_\phi(x, y_c) - r_\phi(x, y_r)\bigr)\bigr].
+\tag{10.10}</span></span></p>
+<div class="callout callout-style-simple callout-note">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>The reward model <span class="math inline">r_\phi</span> is evaluated only when the <strong>entire</strong> response has been generated — it scores complete (question, answer) pairs, not individual tokens. However, as a transformer, it can also process partial sequences (question + partial answer) as input, which is useful for the value function in PPO.</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-ppo" class="level2" data-number="10.10">
+<h2 data-number="10.10" class="anchored" data-anchor-id="sec-ppo"><span class="header-section-number">10.10</span> Step 2: RL Finetuning via PPO</h2>
+<p>After learning a reward model <span class="math inline">r_\phi</span>, we fix it and optimize the policy using <strong>entropy-regularized RL</strong>.</p>
+<section id="sec-policy-objective" class="level3" data-number="10.10.1">
+<h3 data-number="10.10.1" class="anchored" data-anchor-id="sec-policy-objective"><span class="header-section-number">10.10.1</span> Policy Optimization Problem</h3>
+<p>The policy optimization objective is:</p>
+<p><span id="eq-ppo-objective-informal"><span class="math display">
+\max_\pi \; \mathbb{E}_{x \sim \rho} \Bigl\{ \mathbb{E}_{y \sim \pi(\cdot \mid x)} \bigl[r_\phi(x, y)\bigr] - \eta \cdot \text{KL}\bigl(\pi(\cdot \mid x) \,\|\, \pi^{\text{sft}}(\cdot \mid x)\bigr) \Bigr\},
+\tag{10.11}</span></span></p>
+<p>where:</p>
+<ul>
+<li><span class="math inline">\rho</span> is a dataset of questions (prompts).</li>
+<li><span class="math inline">r_\phi(x, y)</span> is the learned reward model.</li>
+<li>The <strong>KL regularization</strong> term ensures the optimized policy <span class="math inline">\pi</span> stays close to <span class="math inline">\pi^{\text{sft}}</span>, preventing reward hacking and mode collapse.</li>
+</ul>
+<div class="callout callout-style-simple callout-note">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>This form is commonly seen but is not fully rigorous, because <span class="math inline">y</span> is a sequence of tokens and <span class="math inline">\pi(\cdot \mid x)</span> is a distribution over tokens at each step, so the KL divergence at the sequence level does not directly decompose in this way. We make this precise next.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="sec-mdp-formulation" class="level3" data-number="10.10.2">
+<h3 data-number="10.10.2" class="anchored" data-anchor-id="sec-mdp-formulation"><span class="header-section-number">10.10.2</span> MDP Formulation</h3>
+<p>To make the optimization rigorous, we formulate text generation as a deterministic MDP:</p>
+<ul>
+<li><strong>Initial state:</strong> <span class="math inline">s_0 = x</span> (the question/prompt).</li>
+<li><strong>Action:</strong> <span class="math inline">a_t \in \text{Token Space}</span> (the next token to generate).</li>
+<li><strong>Transition:</strong> <span class="math inline">s_{t+1} = s_t \cup \{a_t\}</span> — deterministic, just appending the token to the sequence.</li>
+<li><strong>Termination:</strong> The episode ends when <span class="math inline">a_t = \text{[EOS]}</span> (end-of-sequence token), at which point <span class="math inline">r_t = r_\phi(s_{t+1})</span>. Otherwise, <span class="math inline">r_t = 0</span>.</li>
+</ul>
+<p>This is a <strong>deterministic transition, sparse reward</strong> MDP. The state at time <span class="math inline">t</span> is:</p>
+<p><span class="math display">
+s_t = (s_1, \; a_1, a_2, \ldots, a_t),
+</span></p>
+<p>consisting of the question followed by the first <span class="math inline">t</span> tokens of the answer.</p>
+<p>The rigorous policy optimization objective becomes:</p>
+<p><span id="eq-ppo-objective-rigorous"><span class="math display">
+\max_\pi \; \mathbb{E}_{s_1 \sim \rho} \; \mathbb{E}_{a_t \sim \pi(\cdot \mid s_t)} \left[\sum_{t \geq 1} r_t - \eta \cdot \text{KL}\bigl(\pi(\cdot \mid s_t) \,\|\, \pi^{\text{sft}}(\cdot \mid s_t)\bigr)\right],
+\tag{10.12}</span></span></p>
+<p>where:</p>
+<ul>
+<li><span class="math inline">\sum_{t \geq 1} r_t = r_\phi(s_1, y)</span> with <span class="math inline">y = (a_1, \ldots, a_T)</span> being the full answer.</li>
+<li>The KL regularization is evaluated <strong>per token</strong> over the trajectory: <span class="math inline">\text{KL} = \mathbb{E}_{\{s_t\} \sim \pi(\cdot \mid s_1)} \left[\eta \sum_{t \geq 1} \text{KL}\bigl(\pi(\cdot \mid s_t) \,\|\, \pi^{\text{ref}}(\cdot \mid s_t)\bigr)\right]</span>.</li>
+</ul>
+</section>
+<section id="sec-actor-critic" class="level3" data-number="10.10.3">
+<h3 data-number="10.10.3" class="anchored" data-anchor-id="sec-actor-critic"><span class="header-section-number">10.10.3</span> Actor-Critic for PPO</h3>
+<p>The optimization is solved using <strong>PPO + online RL</strong> with a fixed reward model. This requires training both an <strong>actor model</strong> (the policy) and a <strong>critic model</strong> (the value function).</p>
+<p><strong>Critic model:</strong> The critic <span class="math inline">V_\delta(s_t)</span> maps the state <span class="math inline">s_t = (s_1, a_1, \ldots, a_t)</span> to a scalar estimate of the cumulative reward:</p>
+<p><span class="math display">
+R(s_1) = -\eta \sum_{t=1}^{T} \log \frac{\pi(a_t \mid s_t)}{\pi^{\text{sft}}(a_t \mid s_t)} + r_\phi(x, y),
+</span></p>
+<p>which is the cumulative reward over the episode (including KL regularization). The critic is initialized from the SFT model.</p>
+<p><strong>Critic loss:</strong> Sample <span class="math inline">x = s_1 \sim \rho</span>, generate <span class="math inline">y = (a_1, \ldots, a_T) \sim \pi^{\text{old}}</span> (the rollout policy), and minimize:</p>
+<p><span id="eq-critic-loss"><span class="math display">
+L_{\text{critic}}(\delta) = \sum_{t=1}^{T} \bigl(V_\delta(s_t) - R(s_1)\bigr)^2.
+\tag{10.13}</span></span></p>
+<p><strong>Actor loss (PPO with GAE):</strong> The actor is updated using the clipped PPO objective with <strong>generalized advantage estimation</strong> (GAE):</p>
+<p><span id="eq-actor-loss"><span class="math display">
+L_{\text{actor}}(\pi) = \mathbb{E}_{\substack{x \sim \rho \\ y \sim \pi^{\text{old}}(\cdot \mid x)}} \left[\sum_{t=1}^{T} \min\bigl\{r_t(\pi) \cdot A_t, \; \text{clip}\bigl(r_t(\pi), 1-\varepsilon, 1+\varepsilon\bigr) \cdot A_t\bigr\}\right],
+\tag{10.14}</span></span></p>
+<p>where:</p>
+<ul>
+<li><span class="math inline">r_t(\pi) = \frac{\pi(a_t \mid s_t)}{\pi^{\text{old}}(a_t \mid s_t)}</span> is the importance sampling ratio.</li>
+<li><span class="math inline">A_t</span> is the <strong>generalized advantage estimation</strong>, computed based on the trajectory <span class="math inline">(x, y)</span> and the critic’s value predictions.</li>
+</ul>
+</section>
+</section>
+<section id="sec-ppo-challenges" class="level2" data-number="10.11">
+<h2 data-number="10.11" class="anchored" data-anchor-id="sec-ppo-challenges"><span class="header-section-number">10.11</span> PPO: Practical Challenges</h2>
+<p>While PPO is the standard algorithm for RLHF, it presents significant practical difficulties that motivate simpler alternatives:</p>
+<ol type="1">
+<li><p><strong>Four models simultaneously.</strong> PPO requires maintaining four large language models in memory during training:</p>
+<ul>
+<li>The <strong>policy</strong> <span class="math inline">\pi_\theta</span> (being trained).</li>
+<li>The <strong>reference policy</strong> <span class="math inline">\pi^{\text{sft}}</span> (frozen SFT model, for KL computation).</li>
+<li>The <strong>reward model</strong> <span class="math inline">r_\phi</span> (frozen, for scoring responses).</li>
+<li>The <strong>value function</strong> <span class="math inline">V_\delta</span> (critic, being trained alongside the policy).</li>
+</ul></li>
+<li><p><strong>Memory: $<span class="math inline">4</span>$ the cost of SFT.</strong> Storing four copies of a large model (plus their optimizer states for the two being trained) requires roughly four times the GPU memory of supervised finetuning.</p></li>
+<li><p><strong>Very finicky.</strong> PPO is sensitive to hyperparameters: the KL coefficient <span class="math inline">\eta</span>, the clipping parameter <span class="math inline">\varepsilon</span>, the learning rates for actor and critic, and the quality of the reward model all interact in complex ways. Small changes can cause training instability, reward hacking, or mode collapse.</p></li>
+<li><p><strong>On-policy: expensive rollouts.</strong> PPO is an on-policy algorithm — it must generate fresh responses from the current policy at each training step. This means running full autoregressive generation (which is slow for LLMs) interleaved with gradient updates. Off-policy approaches like DPO avoid this cost entirely.</p></li>
+</ol>
+<div id="fig-ppo-four-models" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ppo-four-models-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/ppo-four-models.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Figure&nbsp;10.4: The four models required during PPO-based RLHF training. The policy and value function are actively trained, while the reference policy and reward model remain frozen. Maintaining all four models simultaneously requires roughly four times the GPU memory of supervised finetuning."><img src="figures/ppo-four-models.svg" class="img-fluid figure-img" style="width:75.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ppo-four-models-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10.4: The four models required during PPO-based RLHF training. The policy and value function are actively trained, while the reference policy and reward model remain frozen. Maintaining all four models simultaneously requires roughly four times the GPU memory of supervised finetuning.
+</figcaption>
+</figure>
+</div>
+<div class="callout callout-style-simple callout-note">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>These challenges have driven the field toward simpler alternatives: DPO (which eliminates the reward model and critic) and GRPO (which eliminates the critic while keeping the reward model). We cover DPO next; GRPO is developed in Chapter 11.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="sec-dpo" class="level2" data-number="10.12">
+<h2 data-number="10.12" class="anchored" data-anchor-id="sec-dpo"><span class="header-section-number">10.12</span> Direct Preference Optimization (DPO)</h2>
+<p>PPO is effective but difficult to train — it requires maintaining four models simultaneously (policy, reference, reward, and value). <strong>Direct Preference Optimization</strong> (DPO; Rafailov et al., 2023) sidesteps this complexity by reducing the problem to supervised learning on preference data.</p>
+<section id="sec-dpo-idea" class="level3" data-number="10.12.1">
+<h3 data-number="10.12.1" class="anchored" data-anchor-id="sec-dpo-idea"><span class="header-section-number">10.12.1</span> Key Idea</h3>
+<p>Consider the entropy-regularized optimization problem:</p>
+<p><span class="math display">
+\max_{\pi(\cdot \mid x)} \; \mathbb{E}_{y \sim \pi(\cdot \mid x)} \bigl[r(x, y)\bigr] - \eta \cdot \text{KL}\bigl(\pi(\cdot \mid x) \,\|\, \pi^{\text{sft}}(\cdot \mid x)\bigr).
+</span></p>
+<p>This has a closed-form solution:</p>
+<p><span id="eq-dpo-optimal-policy"><span class="math display">
+\pi^{\text{new}}(y \mid x) = \frac{\pi^{\text{sft}}(y \mid x) \cdot \exp\bigl(\frac{1}{\eta} r(x, y)\bigr)}{Z(x)},
+\tag{10.15}</span></span></p>
+<p>where <span class="math inline">Z(x) = \sum_y \pi^{\text{sft}}(y \mid x) \cdot \exp\bigl(\frac{1}{\eta} r(x, y)\bigr)</span> is a normalization constant.</p>
+</section>
+<section id="sec-dpo-reparameterization" class="level3" data-number="10.12.2">
+<h3 data-number="10.12.2" class="anchored" data-anchor-id="sec-dpo-reparameterization"><span class="header-section-number">10.12.2</span> Reward Reparameterization</h3>
+<p>Rearranging (<a href="#eq-dpo-optimal-policy" class="quarto-xref"><span>10.15</span></a>), we can express the reward in terms of the policy:</p>
+<p><span id="eq-reward-reparameterization"><span class="math display">
+r(x, y) = \eta \cdot \log \frac{\pi^{\text{new}}(y \mid x)}{\pi^{\text{sft}}(y \mid x)} + \eta \cdot \log Z(x).
+\tag{10.16}</span></span></p>
+<p>Since <span class="math inline">\log Z(x)</span> is independent of <span class="math inline">y</span>, the <strong>reward difference</strong> between two responses cancels it:</p>
+<p><span class="math display">
+r(x, y_c) - r(x, y_r) = \eta \cdot \log \frac{\pi(y_c \mid x)}{\pi^{\text{sft}}(y_c \mid x)} - \eta \cdot \log \frac{\pi(y_r \mid x)}{\pi^{\text{sft}}(y_r \mid x)}.
+</span></p>
+</section>
+<section id="sec-dpo-loss" class="level3" data-number="10.12.3">
+<h3 data-number="10.12.3" class="anchored" data-anchor-id="sec-dpo-loss"><span class="header-section-number">10.12.3</span> The DPO Loss</h3>
+<p>Substituting into the Bradley–Terry log-likelihood, we obtain the <strong>DPO loss</strong>:</p>
+<p><span id="eq-dpo-loss"><span class="math display">
+L_{\text{DPO}}(\pi) = -\mathbb{E}_{(x, y_c, y_r) \sim \mathcal{D}} \left[\log \sigma\!\left(\eta \cdot \log \frac{\pi(y_c \mid x)}{\pi^{\text{sft}}(y_c \mid x)} - \eta \cdot \log \frac{\pi(y_r \mid x)}{\pi^{\text{sft}}(y_r \mid x)}\right)\right].
+\tag{10.17}</span></span></p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>DPO vs.&nbsp;PPO
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><strong>DPO is computationally easier and more stable</strong> than PPO: it only requires the policy and a frozen reference model, with no reward model or critic.</li>
+<li><strong>Mathematically equivalent</strong> to PPO + reward modeling in the population (infinite data) case.</li>
+<li><strong>DPO is offline</strong> (trains on a fixed dataset) while <strong>PPO is online</strong> (generates new samples during training).</li>
+<li><strong>In practice, PPO often outperforms DPO</strong> when trained properly, mainly because the offline dataset in DPO has insufficient coverage of the policy’s own distribution.</li>
+<li><strong>Empirical comparison:</strong> On the AlpacaFarm benchmark, PPO achieves a 46.8% win rate and DPO achieves 46.8% (simulated) — essentially tied. Most top open-source RLHF models use DPO due to its simplicity, making it the default for academic and open-source alignment work.</li>
+</ul>
+</div>
+</div>
+<div id="fig-dpo-vs-ppo" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-dpo-vs-ppo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/dpo-vs-ppo.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-5" title="Figure&nbsp;10.5: DPO vs.&nbsp;PPO: DPO eliminates the reward model and value function entirely, reducing the training pipeline from four models to two. While PPO is online and can be more effective when properly tuned, DPO is simpler, more stable, and the default choice for academic and open-source alignment work."><img src="figures/dpo-vs-ppo.svg" class="img-fluid figure-img" style="width:80.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-dpo-vs-ppo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10.5: DPO vs.&nbsp;PPO: DPO eliminates the reward model and value function entirely, reducing the training pipeline from four models to two. While PPO is online and can be more effective when properly tuned, DPO is simpler, more stable, and the default choice for academic and open-source alignment work.
+</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="sec-side-effects" class="level2" data-number="10.13">
+<h2 data-number="10.13" class="anchored" data-anchor-id="sec-side-effects"><span class="header-section-number">10.13</span> Side Effects of RLHF</h2>
+<p>RLHF is effective but not without costs. Understanding the side effects of preference optimization is important both for practitioners and for evaluating alignment claims.</p>
+<div id="fig-rlhf-side-effects" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-rlhf-side-effects-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/rlhf-side-effects.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-6" title="Figure&nbsp;10.6: Side effects of RLHF training. Optimizing against a learned reward model introduces three main failure modes: length bias (longer responses score higher), annotator bias (style and demographics of labelers leak into the model), and reward hacking (the policy exploits flaws in the reward model)."><img src="figures/rlhf-side-effects.svg" class="img-fluid figure-img" style="width:60.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-rlhf-side-effects-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10.6: Side effects of RLHF training. Optimizing against a learned reward model introduces three main failure modes: length bias (longer responses score higher), annotator bias (style and demographics of labelers leak into the model), and reward hacking (the policy exploits flaws in the reward model).
+</figcaption>
+</figure>
+</div>
+<section id="sec-length-effects" class="level3" data-number="10.13.1">
+<h3 data-number="10.13.1" class="anchored" data-anchor-id="sec-length-effects"><span class="header-section-number">10.13.1</span> Length Effects</h3>
+<p>RLHF strongly increases response length. Reward models tend to correlate length with quality: longer, more detailed responses score higher. As a result, RLHF-trained models produce responses that are substantially longer than their SFT counterparts. Singhal et al.&nbsp;(2024) document a strong Pareto front: win-rate against the SFT model increases with response length, and much of the apparent “improvement” from RLHF is simply “similar output, but much longer / more details.” Disentangling genuine quality improvement from length inflation remains an open problem, particularly because pairwise human judgments are themselves biased toward longer responses.</p>
+</section>
+<section id="sec-annotator-bias" class="level3" data-number="10.13.2">
+<h3 data-number="10.13.2" class="anchored" data-anchor-id="sec-annotator-bias"><span class="header-section-number">10.13.2</span> Annotator Bias and Style</h3>
+<p>The demographics and preferences of human annotators leak into the aligned model:</p>
+<ul>
+<li><strong>Cultural and political biases:</strong> Religious, political, and cultural preferences of the annotator pool shift model behavior. Different annotator populations produce meaningfully different reward models, and therefore different aligned models.</li>
+<li><strong>Factuality underestimation:</strong> Human annotators tend to underestimate factual errors and inconsistencies in model outputs. Assertive, confident-sounding text fools annotators into rating it higher, even when it contains factual mistakes.</li>
+<li><strong>Style over substance:</strong> Annotators’ quality judgments are heavily influenced by surface-level style preferences — lists, bullet points, and structured formatting dominate over actual content quality.</li>
+</ul>
+<p>This raises a fundamental question: <strong>whose preferences are we optimizing?</strong> The aligned model reflects the biases of its annotator pool, not some objective notion of helpfulness.</p>
+</section>
+<section id="sec-reward-hacking" class="level3" data-number="10.13.3">
+<h3 data-number="10.13.3" class="anchored" data-anchor-id="sec-reward-hacking"><span class="header-section-number">10.13.3</span> Reward Hacking</h3>
+<p>As the policy optimizes against the reward model, it discovers and exploits flaws in the reward model’s judgments:</p>
+<ul>
+<li>Longer responses receive higher reward (but are not genuinely better).</li>
+<li>Confident-sounding nonsense scores well — the reward model cannot reliably distinguish confident correctness from confident error.</li>
+<li>The KL penalty mitigates reward hacking by keeping the policy close to the SFT model, but does not eliminate it.</li>
+</ul>
+</section>
+<section id="sec-open-questions" class="level3" data-number="10.13.4">
+<h3 data-number="10.13.4" class="anchored" data-anchor-id="sec-open-questions"><span class="header-section-number">10.13.4</span> Open Questions</h3>
+<p>Several fundamental questions about RLHF remain unresolved:</p>
+<ul>
+<li><strong>On-policy vs.&nbsp;off-policy:</strong> Is the expensive on-policy generation of PPO truly necessary, or can off-policy methods like DPO achieve the same quality? Evidence is mixed.</li>
+<li><strong>Multi-objective alignment:</strong> How do we optimize for multiple, sometimes conflicting objectives (helpful AND harmless AND honest)? Current methods use a single scalar reward, which conflates these goals.</li>
+<li><strong>Iterative/online DPO:</strong> Can DPO be made iterative — generate new preference data from the current policy, retrain, repeat — to close the gap with PPO?</li>
+<li><strong>Beyond pairwise comparisons:</strong> Can we move beyond binary preference data to richer feedback signals (rankings, natural language critiques, process-level annotations)?</li>
+</ul>
+<p>These questions motivate the move toward <strong>verifiable rewards</strong> — objective, non-gameable reward signals — which we develop in the next chapter.</p>
+</section>
+</section>
+<section id="sec-summary" class="level2" data-number="10.14">
+<h2 data-number="10.14" class="anchored" data-anchor-id="sec-summary"><span class="header-section-number">10.14</span> Summary: From SFT to DPO</h2>
+<p>The two main approaches to post-training LLMs each make different tradeoffs:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>PPO (RLHF)</strong></th>
+<th><strong>DPO</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Requires reward model</strong></td>
+<td>Yes</td>
+<td>No</td>
+</tr>
+<tr class="even">
+<td><strong>Requires critic/value model</strong></td>
+<td>Yes</td>
+<td>No</td>
+</tr>
+<tr class="odd">
+<td><strong>Online/Offline</strong></td>
+<td>Online</td>
+<td>Offline</td>
+</tr>
+<tr class="even">
+<td><strong>Models at training time</strong></td>
+<td>4 (policy, reference, reward, value)</td>
+<td>2 (policy, reference)</td>
+</tr>
+<tr class="odd">
+<td><strong>Stability</strong></td>
+<td>Harder to tune</td>
+<td>More stable</td>
+</tr>
+<tr class="even">
+<td><strong>Sample efficiency</strong></td>
+<td>Higher (online)</td>
+<td>Lower (offline)</td>
+</tr>
+</tbody>
+</table>
+<p>For algorithms that eliminate the value model while retaining online generation — GRPO and its variants — see Chapter 11, which also covers the application of RL to reasoning models with verifiable rewards.</p>
+</section>
+<section id="sec-references" class="level2" data-number="10.15">
+<h2 data-number="10.15" class="anchored" data-anchor-id="sec-references"><span class="header-section-number">10.15</span> References</h2>
+<ul>
+<li>Ouyang, L. et al.&nbsp;(2022). Training language models to follow instructions with human feedback. <em>NeurIPS</em>.</li>
+<li>Rafailov, R. et al.&nbsp;(2023). Direct preference optimization: Your language model is secretly a reward model. <em>NeurIPS</em>.</li>
+<li>Zhou, C. et al.&nbsp;(2023). LIMA: Less is more for alignment. <em>NeurIPS</em>.</li>
+<li>Bai, Y. et al.&nbsp;(2022). Constitutional AI: Harmlessness from AI feedback. <em>arXiv preprint</em>.</li>
+<li>Lightman, H. et al.&nbsp;(2023). Let’s verify step by step. <em>arXiv preprint</em>.</li>
+<li>Singhal, P. et al.&nbsp;(2024). A long way to go: Investigating length correlations in RLHF. <em>arXiv preprint</em>.</li>
+<li>Zheng, L. et al.&nbsp;(2023). Judging LLM-as-a-judge with MT-Bench and Chatbot Arena. <em>NeurIPS</em>.</li>
+<li>Lambert, N. (2025). The State of Post-Training. <em>Talk</em>.</li>
+<li>LLM Post-Training: A Deep Dive into Reasoning Large Language Models (2025).</li>
+</ul>
+</section>
+<section id="sec-appendix-transformers" class="level2" data-number="10.16">
+<h2 data-number="10.16" class="anchored" data-anchor-id="sec-appendix-transformers"><span class="header-section-number">10.16</span> Appendix: Transformer Architectures</h2>
+<p>This appendix provides a comprehensive, self-contained introduction to transformer architectures. It covers motivations, a taxonomy of transformer-based language models, and builds the architecture component by component — from token embeddings and attention mechanisms through multi-head attention, positional encodings, feedforward layers, residual connections, and layer normalization. It concludes with exercises on parameter counting (GPT-3) and a mathematical framework for analyzing transformer circuits.</p>
+<section id="sec-app-overview" class="level3" data-number="10.16.1">
+<h3 data-number="10.16.1" class="anchored" data-anchor-id="sec-app-overview"><span class="header-section-number">10.16.1</span> What Will Be Covered</h3>
+<ul>
+<li><strong>Motivations:</strong> Why transformers are revolutionary — large language models, vision transformers, and applications beyond NLP.</li>
+<li><strong>Language tasks:</strong> Generative tasks (conditional generation) versus discriminative tasks (classification).</li>
+<li><strong>Three types of transformer-based language models:</strong> Encoder-only, decoder-only, and encoder-decoder architectures.</li>
+<li><strong>Transformer architecture in detail:</strong> The forward function from input tokens to output predictions.</li>
+<li><strong>Prediction head and loss function:</strong> Softmax decoding, cross-entropy loss, and maximum likelihood estimation.</li>
+<li><strong>Token embeddings:</strong> One-hot encoding, word embeddings (Word2Vec, GloVe), and the embedding matrix.</li>
+<li><strong>Attention mechanism:</strong> Cross-attention, self-attention, and the matrix form of scaled dot-product attention.</li>
+<li><strong>Three caveats and their solutions:</strong> Position embeddings, causal masking, and feedforward (MLP) layers.</li>
+<li><strong>Multi-head attention:</strong> Parallel attention heads and the output projection matrix.</li>
+<li><strong>Residual connections and layer normalization:</strong> Training stability via pre-norm and post-norm designs.</li>
+<li><strong>Putting it all together:</strong> The complete transformer decoder block.</li>
+<li><strong>Key model examples:</strong> BERT (encoder-only), Vision Transformer (encoder-only), GPT (decoder-only), and encoder-decoder models (T5).</li>
+<li><strong>Exercises:</strong> GPT-3 parameter counting and transformer circuits with the residual stream framework.</li>
+</ul>
+</section>
+<section id="sec-motivations" class="level3" data-number="10.16.2">
+<h3 data-number="10.16.2" class="anchored" data-anchor-id="sec-motivations"><span class="header-section-number">10.16.2</span> Motivations</h3>
+<p>Transformer models are revolutionary. The seminal paper “Attention Is All You Need” (Vaswani et al., 2017) introduced the transformer architecture, replacing recurrent and convolutional sequence-to-sequence models with a purely attention-based design. This architectural shift enabled unprecedented parallelism during training and led to dramatic scaling of model size and capability.</p>
+<p>Today, transformer-based models dominate the LMSYS Chatbot Arena Leaderboard (Chiang et al., 2024), with the top-ranked models including GPT-4 (OpenAI), Claude 3 (Anthropic), Gemini (Google), and Llama 3 (Meta). These models power conversational AI systems used by hundreds of millions of people worldwide.</p>
+<div class="callout callout-style-simple callout-note">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>Transformers have proven remarkably versatile, achieving state-of-the-art results far beyond natural language processing.</p>
+</div>
+</div>
+</div>
+<section id="sec-beyond-nlp" class="level4" data-number="10.16.2.1">
+<h4 data-number="10.16.2.1" class="anchored" data-anchor-id="sec-beyond-nlp"><span class="header-section-number">10.16.2.1</span> Transformers beyond NLP</h4>
+<p>The transformer architecture has demonstrated impressive performance across a wide range of domains:</p>
+<ul>
+<li><strong>Protein folding:</strong> AlphaFold2 (Jumper et al., 2021) uses transformer-based attention mechanisms to predict 3D protein structures with remarkable accuracy, a breakthrough published on the cover of <em>Nature</em>.</li>
+<li><strong>Image classification:</strong> The Vision Transformer (ViT) (Dosovitskiy et al., 2020) applies the standard transformer encoder to sequences of image patches, outperforming ResNet-based baselines with substantially less compute.</li>
+<li><strong>ML for systems:</strong> Zhou et al.&nbsp;(2020) showed that a transformer-based compiler model (GO-one) can speed up the compilation of other transformer models, demonstrating the power of ML-for-systems approaches.</li>
+</ul>
+</section>
+<section id="sec-language-tasks" class="level4" data-number="10.16.2.2">
+<h4 data-number="10.16.2.2" class="anchored" data-anchor-id="sec-language-tasks"><span class="header-section-number">10.16.2.2</span> Language Tasks</h4>
+<p>Before diving into transformer architectures, it is helpful to distinguish the two broad categories of language tasks:</p>
+<ol type="1">
+<li><p><strong>Generative tasks (conditional generation):</strong> The model generates text conditioned on some input (text or image). Examples include translation and code generation. The goal is to model <span class="math inline">P(\text{text} \mid \text{text/image})</span>.</p></li>
+<li><p><strong>Discriminative tasks (classification):</strong> The model predicts a label given text input. Examples include part-of-speech tagging and sentiment analysis. The goal is to model <span class="math inline">P(\text{label} \mid \text{text})</span>.</p></li>
+</ol>
+<p>Different transformer architectures are designed to handle these different task types, as we discuss next.</p>
+</section>
+</section>
+<section id="sec-three-types" class="level3" data-number="10.16.3">
+<h3 data-number="10.16.3" class="anchored" data-anchor-id="sec-three-types"><span class="header-section-number">10.16.3</span> Three Types of Transformer-Based Language Models</h3>
+<p>Transformer-based language models come in three major architectural variants, each suited to different task types. Understanding the distinctions between them is essential for choosing the right architecture for a given application.</p>
+<section id="sec-encoder-only" class="level4" data-number="10.16.3.1">
+<h4 data-number="10.16.3.1" class="anchored" data-anchor-id="sec-encoder-only"><span class="header-section-number">10.16.3.1</span> Encoder-Only Transformers</h4>
+<p>The first task type is <strong>feature extraction followed by downstream discriminative tasks</strong>. Encoder-only transformers are designed for this purpose.</p>
+<ul>
+<li><strong>Input:</strong> A sequence of tokens <span class="math inline">w_1, \ldots, w_L</span>, where <span class="math inline">L</span> is the sequence length.</li>
+<li><strong>Output:</strong> A sequence of feature vectors <span class="math inline">z_1, z_2, \ldots, z_L \in \mathbb{R}^d</span>.</li>
+<li><strong>Key characteristic:</strong> Each feature <span class="math inline">z_\ell</span> depends on the <strong>entire</strong> input sequence <span class="math inline">\{w_1, \ldots, w_L\}</span> for all <span class="math inline">\ell \in [L]</span>.</li>
+</ul>
+<p>The encoder-only transformer creates a sequence of token-level features of the input, which are then used for downstream tasks. These downstream tasks are trained separately using the extracted features:</p>
+<ul>
+<li><strong>Token-level tasks:</strong> Part-of-speech classification — use each <span class="math inline">z_\ell</span> to predict the label of <span class="math inline">w_\ell</span>.</li>
+<li><strong>Sentence-level tasks:</strong> Sentiment analysis — aggregate <span class="math inline">z_1, \ldots, z_L</span> and feed into a classifier.</li>
+</ul>
+<p><strong>Key examples:</strong> BERT (Devlin et al., 2018), Vision Transformer (ViT) (Dosovitskiy et al., 2020).</p>
+</section>
+<section id="sec-decoder-only" class="level4" data-number="10.16.3.2">
+<h4 data-number="10.16.3.2" class="anchored" data-anchor-id="sec-decoder-only"><span class="header-section-number">10.16.3.2</span> Decoder-Only Transformers</h4>
+<p>The second task type is <strong>(conditional) autoregressive generation</strong>. Decoder-only transformers are designed for this purpose.</p>
+<ul>
+<li><strong>Input:</strong> A sequence of tokens <span class="math inline">w_1, w_2, \ldots, w_L</span>.</li>
+<li><strong>Output:</strong> A sequence of features <span class="math inline">z_1, z_2, \ldots, z_L</span>.</li>
+<li><strong>Key characteristic:</strong> Each feature <span class="math inline">z_\ell</span> depends <strong>only</strong> on <span class="math inline">w_1, w_2, \ldots, w_\ell</span> (the model cannot look into the future — this is the autoregressive property).</li>
+<li>The model predicts <span class="math inline">w_{\ell+1}</span> using <span class="math inline">z_\ell</span> only, via a <strong>softmax prediction layer</strong>.</li>
+</ul>
+<p><strong>Key examples:</strong> The GPT family (GPT-2, GPT-3, GPT-4), Llama, Mistral.</p>
+<section id="sec-autoregressive-llm" class="level5" data-number="10.16.3.2.1">
+<h5 data-number="10.16.3.2.1" class="anchored" data-anchor-id="sec-autoregressive-llm"><span class="header-section-number">10.16.3.2.1</span> Autoregressive LLMs: Predict the Next Token</h5>
+<p>The core task of a decoder-only transformer is next-token prediction. Given a context, the model outputs a probability distribution over the vocabulary for the next token:</p>
+<p><span class="math display">
+\text{``I''} \quad \text{``am''} \quad \text{``a''} \quad \text{``Yale''} \quad ? \quad \Longrightarrow \quad P(w_5 \mid w_{1:4})
+</span></p>
+<p>An <strong>autoregressive LLM</strong> is defined as:</p>
+<p><span class="math display">
+\text{Autoregressive LLM} = \text{Decoder-only TF} + \text{Prediction Head}
+</span></p>
+<p>which models <span class="math inline">P_\theta(w_{L+1} \mid w_1, \ldots, w_L)</span>.</p>
+</section>
+<section id="sec-autoregressive-generation" class="level5" data-number="10.16.3.2.2">
+<h5 data-number="10.16.3.2.2" class="anchored" data-anchor-id="sec-autoregressive-generation"><span class="header-section-number">10.16.3.2.2</span> Autoregressive Generation</h5>
+<p>During generation, the model produces tokens one at a time, each conditioned on all previously generated tokens. For example, given the prompt “My name is X.”:</p>
+<p><span class="math display">
+\begin{aligned}
+&amp;P(\text{``I''} \mid \text{prompt} = \text{``My name is X.''}) \\
+&amp;P(\text{``am''} \mid \text{prompt} = \text{``My name is X. I''}) \\
+&amp;P(\text{``a''} \mid \text{prompt} = \text{``My name is X. I am''}) \\
+&amp;P(\text{``Yale''} \mid \text{prompt} = \text{``My name is X. I am a''}) \\
+&amp;P(\text{``student''} \mid \text{prompt} = \text{``My name is X. I am a Yale''})
+\end{aligned}
+</span></p>
+<p>At each step, the model outputs <span class="math inline">P_\theta(\text{next word} \mid \text{prompt})</span>. The input tokens are fed in, and the output tokens are generated autoregressively — each new output is appended to the input for the next step.</p>
+</section>
+</section>
+<section id="sec-encoder-decoder" class="level4" data-number="10.16.3.3">
+<h4 data-number="10.16.3.3" class="anchored" data-anchor-id="sec-encoder-decoder"><span class="header-section-number">10.16.3.3</span> Encoder-Decoder Transformers</h4>
+<p>The third model type is the <strong>encoder-decoder transformer</strong> — the original transformer architecture from Vaswani et al.&nbsp;(2017).</p>
+<ul>
+<li><strong>Task:</strong> Machine translation (and other conditional generation tasks).</li>
+<li><strong>Architecture:</strong> The encoder processes the input sequence into features, and the decoder generates the output sequence autoregressively, attending to the encoder’s features via cross-attention.</li>
+</ul>
+<p>For example, in machine translation: the encoder processes (“Hello”, “world”, “!”) into features, and the decoder generates (“Bonjour”, “le”, “monde”, “!”) one token at a time. At each decoding step, the decoder attends to the full encoder output while generating the next target token.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Remark: Current Popularity of Architectures
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Encoder-decoder models and encoder-only LLMs are not popular today. <strong>Decoder-only</strong> models are by far the most popular — the GPT family, Llama, Mistral, and others all use this architecture. Decoder-only models can perform discriminative tasks as well (via prompting). The main exception is the Vision Transformer (ViT), which uses an encoder-only architecture.</p>
+</div>
+</div>
+<div id="fig-transformer-three-types" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-transformer-three-types-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/transformer-three-types.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-7" title="Figure&nbsp;10.7: Three types of transformer-based language models. Encoder-only models (BERT, ViT) use bidirectional attention for feature extraction. Decoder-only models (GPT, Llama) use causal masking for autoregressive generation. Encoder-decoder models (T5) combine both for sequence-to-sequence tasks. The attention mask pattern determines what each position can attend to."><img src="figures/transformer-three-types.svg" class="img-fluid figure-img" style="width:90.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-transformer-three-types-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10.7: Three types of transformer-based language models. Encoder-only models (BERT, ViT) use bidirectional attention for feature extraction. Decoder-only models (GPT, Llama) use causal masking for autoregressive generation. Encoder-decoder models (T5) combine both for sequence-to-sequence tasks. The attention mask pattern determines what each position can attend to.
+</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="sec-architectures" class="level3" data-number="10.16.4">
+<h3 data-number="10.16.4" class="anchored" data-anchor-id="sec-architectures"><span class="header-section-number">10.16.4</span> Architectures of Transformers</h3>
+<p>This is the most important and most technically involved part of this lecture. There are many components in transformer neural networks, and to understand the architecture we need to understand the <strong>forward function</strong>: how an input language token sequence is transformed into the output.</p>
+<section id="sec-mental-picture" class="level4" data-number="10.16.4.1">
+<h4 data-number="10.16.4.1" class="anchored" data-anchor-id="sec-mental-picture"><span class="header-section-number">10.16.4.1</span> Mental Picture</h4>
+<p>The high-level data flow through a transformer is:</p>
+<p><span class="math display">
+\underbrace{w_1, w_2, \ldots, w_L}_{\text{Input tokens } (L \times V)} \;\longrightarrow\; \boxed{\text{Transformer}} \;\longrightarrow\; \underbrace{z_1, z_2, \ldots, z_L}_{\text{Features } (L \times d)} \;\longrightarrow\; \boxed{\text{Prediction Layer}} \;\longrightarrow\; \underbrace{\ell_1, \ell_2, \ldots, \ell_L}_{\text{Loss}}
+</span></p>
+<p>where the transformer block contains:</p>
+<ul>
+<li><strong>Embedding</strong> (token + position)</li>
+<li><strong>Multi-head attention</strong></li>
+<li><strong>MLP (feedforward) layers</strong></li>
+<li><strong>Layer normalization</strong></li>
+<li><strong>Residual connections</strong></li>
+</ul>
+<p>For reference, GPT-3 uses the following dimensions:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Symbol</th>
+<th>Meaning</th>
+<th>GPT-3 Value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">V</span></td>
+<td>Vocabulary size</td>
+<td>50,257</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">d</span></td>
+<td>Model dimension</td>
+<td>12,288</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">L</span></td>
+<td>Sequence length (context window)</td>
+<td>2,048</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-simple callout-note">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>The prediction layer (often called the <strong>prediction head</strong>) is chosen depending on the task. It is possible to have a single loss (e.g., for classifying a sentence) or a per-token loss (e.g., for next-token prediction).</p>
+</div>
+</div>
+</div>
+<div id="fig-transformer-decoder-overview" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-transformer-decoder-overview-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/transformer-decoder-overview.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-8" title="Figure&nbsp;10.8: High-level data flow through a transformer decoder. Input tokens are embedded, processed through N repeated transformer blocks (each containing attention, MLP, and normalization), and decoded via unembedding and softmax into output probability distributions over the vocabulary."><img src="figures/transformer-decoder-overview.svg" class="img-fluid figure-img" style="width:90.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-transformer-decoder-overview-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10.8: High-level data flow through a transformer decoder. Input tokens are embedded, processed through N repeated transformer blocks (each containing attention, MLP, and normalization), and decoded via unembedding and softmax into output probability distributions over the vocabulary.
+</figcaption>
+</figure>
+</div>
+<p>We now describe each component in detail.</p>
+</section>
+<section id="sec-prediction-head" class="level4" data-number="10.16.4.2">
+<h4 data-number="10.16.4.2" class="anchored" data-anchor-id="sec-prediction-head"><span class="header-section-number">10.16.4.2</span> Prediction Head</h4>
+<p>The prediction head is designed according to the task and determines the loss function.</p>
+<p><strong>For discriminative tasks</strong>, we choose the corresponding loss:</p>
+<ul>
+<li><strong>Sentiment analysis:</strong> Aggregate <span class="math inline">z_1, \ldots, z_L</span> (e.g., <span class="math inline">z = \frac{1}{L}\sum_{\ell=1}^{L} z_\ell</span>), then feed into a softmax linear classifier: <span class="math inline">P(\text{positive} \mid z) \propto \exp(w^\top z)</span>.</li>
+<li><strong>Part-of-speech classification:</strong> Use each <span class="math inline">z_\ell</span> to predict the label of <span class="math inline">w_\ell</span> via softmax linear multi-class classification.</li>
+</ul>
+<p><strong>For autoregressive generation:</strong> Use <span class="math inline">z_\ell</span> to predict <span class="math inline">w_{\ell+1}</span> via softmax linear classification.</p>
+<section id="sec-softmax" class="level5" data-number="10.16.4.2.1">
+<h5 data-number="10.16.4.2.1" class="anchored" data-anchor-id="sec-softmax"><span class="header-section-number">10.16.4.2.1</span> Output Distribution: Decoding (Unembedding) + Softmax</h5>
+<p>To convert the transformer’s feature vector into a probability distribution over the vocabulary, we need two ingredients: a decoding (unembedding) matrix and the softmax function.</p>
+<p>The <strong>softmax function</strong> converts any <span class="math inline">N</span> real numbers <span class="math inline">\{v_i\}_{i \in [N]}</span> into a probability distribution over <span class="math inline">[N] = \{1, \ldots, N\}</span>:</p>
+<div id="def-softmax" class="theorem definition">
+<p><span class="theorem-title"><strong>Definition 10.2 (Softmax Function)</strong></span> For any <span class="math inline">N</span> real numbers <span class="math inline">\{v_i\}_{i \in [N]}</span>, the softmax function produces a probability distribution <span class="math inline">P \in \mathbb{R}^N</span> defined by:</p>
+<p><span class="math display">
+P(i) = \frac{\exp(v_i)}{\sum_{j=1}^{N} \exp(v_j)}.
+</span></p>
+<p>Equivalently, we write <span class="math inline">P(i) \propto \exp(v_i)</span>.</p>
+</div>
+<p>The key insight is that softmax always gives us a valid probability distribution: all entries are non-negative and sum to one.</p>
+<p>Now, at each position <span class="math inline">\ell</span>, the transformer outputs a feature vector <span class="math inline">z_\ell \in \mathbb{R}^d</span>. To produce a distribution over the vocabulary <span class="math inline">[N]</span> (where <span class="math inline">N = V</span>), we use a <strong>decoding matrix</strong> (also called the <strong>unembedding matrix</strong>) <span class="math inline">W_U \in \mathbb{R}^{N \times d}</span>:</p>
+<p><span class="math display">
+z_\ell \in \mathbb{R}^d \;\xrightarrow{W_U}\; W_U z_\ell \in \mathbb{R}^N \;\xrightarrow{\text{Softmax}}\; \text{distribution over } [N].
+</span></p>
+<p>This is a <strong>softmax linear model</strong>: a linear mapping followed by softmax normalization.</p>
+</section>
+</section>
+<section id="sec-loss-function" class="level4" data-number="10.16.4.3">
+<h4 data-number="10.16.4.3" class="anchored" data-anchor-id="sec-loss-function"><span class="header-section-number">10.16.4.3</span> Loss Function for Decoder-Only Models</h4>
+<p>With the prediction head defined, we can now specify the training objective for decoder-only models.</p>
+<p>At each token position <span class="math inline">\ell \in [L]</span>, the transformer outputs <span class="math inline">z_\ell \in \mathbb{R}^d</span>. After unembedding and softmax, we obtain a distribution <span class="math inline">p_\ell \in \Delta_V</span> over the vocabulary. The next token <span class="math inline">w_{\ell+1}</span> is represented as a one-hot vector in <span class="math inline">\mathbb{R}^V</span>.</p>
+<p>The <strong>cross-entropy loss</strong> is:</p>
+<p><span id="eq-cross-entropy"><span class="math display">
+\text{Loss}(\theta) = -\sum_{\ell=1}^{L-1} w_{\ell+1}^\top \log p_\ell = -\sum_{\ell=1}^{L-1} \log P_\theta(w_{\ell+1} \mid w_1, \ldots, w_{\ell-1}).
+\tag{10.18}</span></span></p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Remark: Cross-Entropy and MLE
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The cross-entropy loss in (<a href="#eq-cross-entropy" class="quarto-xref"><span>10.18</span></a>) is equivalent to maximum likelihood estimation (MLE). Minimizing the cross-entropy is the same as maximizing the log-likelihood of the observed next tokens given their contexts.</p>
+</div>
+</div>
+</section>
+<section id="sec-token-embedding" class="level4" data-number="10.16.4.4">
+<h4 data-number="10.16.4.4" class="anchored" data-anchor-id="sec-token-embedding"><span class="header-section-number">10.16.4.4</span> Token Embedding</h4>
+<p>Before the transformer can process text, we need to convert discrete tokens into continuous vectors. This is the role of the <strong>token embedding</strong> layer.</p>
+<p>A token is approximately a word (though in practice, tokenizers may split or merge words — for instance, 110 words can become 162 tokens). Each token <span class="math inline">w_\ell</span> takes a value in the vocabulary, and is initially represented as a <strong>one-hot vector</strong> <span class="math inline">w_\ell \in \mathbb{R}^V</span>.</p>
+<section id="sec-one-hot" class="level5" data-number="10.16.4.4.1">
+<h5 data-number="10.16.4.4.1" class="anchored" data-anchor-id="sec-one-hot"><span class="header-section-number">10.16.4.4.1</span> One-Hot Encoding</h5>
+<p>Each word is represented as a vector with as many values as there are words in the vocabulary. Each column represents one possible word:</p>
+<ul>
+<li>“the” <span class="math inline">\to (1, 0, 0, \ldots, 0)</span></li>
+<li>“good” <span class="math inline">\to (0, 0, 1, \ldots, 0)</span></li>
+<li>“movie” <span class="math inline">\to (0, 0, 0, \ldots, 1, \ldots, 0)</span></li>
+</ul>
+<p>For large vocabularies ($$100k columns), these vectors are very long and contain all zeros except for one entry. This is a very <strong>sparse</strong> representation.</p>
+</section>
+<section id="sec-word-embedding" class="level5" data-number="10.16.4.4.2">
+<h5 data-number="10.16.4.4.2" class="anchored" data-anchor-id="sec-word-embedding"><span class="header-section-number">10.16.4.4.2</span> Word Embedding</h5>
+<p>The key idea of word embedding is to map each word index to a <strong>continuous</strong> vector through a <strong>lookup table</strong>. Each word <span class="math inline">w</span> is associated with a vector <span class="math inline">x_w \in \mathbb{R}^d</span>, computed via the <strong>embedding matrix</strong> <span class="math inline">W_E \in \mathbb{R}^{d \times V}</span> (learned from data):</p>
+<p><span id="eq-embedding"><span class="math display">
+x_i = W_E w_i.
+\tag{10.19}</span></span></p>
+<p>Since <span class="math inline">w_i</span> is a one-hot vector, the product <span class="math inline">W_E w_i</span> simply selects the <span class="math inline">i</span>-th column of <span class="math inline">W_E</span>. The embedding can be trained <strong>end-to-end</strong> with the model. Popular pre-trained word embeddings include <strong>Word2Vec</strong> and <strong>GloVe</strong>.</p>
+</section>
+<section id="sec-why-embeddings" class="level5" data-number="10.16.4.4.3">
+<h5 data-number="10.16.4.4.3" class="anchored" data-anchor-id="sec-why-embeddings"><span class="header-section-number">10.16.4.4.3</span> Why Word Embeddings?</h5>
+<p>Word embeddings equip words with a notion of “distance,” which captures semantic similarity. The standard measure is <strong>cosine similarity</strong>:</p>
+<p><span class="math display">
+\cos(u, v) = \frac{u^\top v}{\|u\| \cdot \|v\|}.
+</span></p>
+<p>Key properties of word embeddings:</p>
+<ul>
+<li><strong>Similar words are close</strong> in the embedded space.</li>
+<li><strong>Word2Vec encodes semantic meaning:</strong> The famous example “king” <span class="math inline">-</span> “man” <span class="math inline">+</span> “woman” <span class="math inline">\approx</span> “queen” demonstrates that linear relationships in the embedding space correspond to semantic relationships.</li>
+<li>Once in Euclidean space, it is easy to operate using calculus (gradients, optimization, etc.).</li>
+</ul>
+</section>
+<section id="sec-summary-so-far" class="level5" data-number="10.16.4.4.4">
+<h5 data-number="10.16.4.4.4" class="anchored" data-anchor-id="sec-summary-so-far"><span class="header-section-number">10.16.4.4.4</span> Summary So Far</h5>
+<p>The data flow up to this point is:</p>
+<p><span class="math display">
+\underbrace{\text{Input}}_{L \times V} \;\xrightarrow{\text{Embedding } (d \times V)}\; \underbrace{L \times d}_{\text{embedded tokens}} \;\xrightarrow{\text{Attention, MLP, Normalization}}\; \underbrace{L \times d}_{\text{features}} \;\xrightarrow{\text{Decoding + Softmax } (V \times d)}\; \underbrace{\text{Output}}_{L \times V}
+</span></p>
+<p>We now turn to the core of the transformer: the <strong>attention mechanism</strong>.</p>
+</section>
+</section>
+<section id="sec-attention" class="level4" data-number="10.16.4.5">
+<h4 data-number="10.16.4.5" class="anchored" data-anchor-id="sec-attention"><span class="header-section-number">10.16.4.5</span> Attention Mechanism</h4>
+<p>Attention is one of the most important ideas in modern deep learning. At a high level:</p>
+<div class="callout callout-style-simple callout-note">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p><strong>Attention</strong> treats each word’s representation as a <strong>query</strong> to access and incorporate information from <strong>a set of values</strong>. Attention is <em>weighted averaging</em> — a soft lookup that is very powerful when the weights are learned.</p>
+</div>
+</div>
+</div>
+<p>In a standard <strong>lookup table</strong>, a query matches exactly one key and returns its value. In <strong>attention</strong>, the query matches all keys <em>softly</em> (with weights between 0 and 1), and the keys’ values are multiplied by the weights and summed.</p>
+<section id="sec-cross-attention" class="level5" data-number="10.16.4.5.1">
+<h5 data-number="10.16.4.5.1" class="anchored" data-anchor-id="sec-cross-attention"><span class="header-section-number">10.16.4.5.1</span> Cross-Attention</h5>
+<p>We begin with the general form of attention, called <strong>cross-attention</strong>, before specializing to self-attention.</p>
+<p>Suppose we have a set of (key, value) pairs <span class="math inline">\{(k_i, v_i)\}_{i \in [L]}</span>, where <span class="math inline">k_i \in \mathbb{R}^{d_1}</span> and <span class="math inline">v_i \in \mathbb{R}^{d'}</span> (the value dimension <span class="math inline">d'</span> may differ from the key dimension <span class="math inline">d_1</span>). Now we have a query <span class="math inline">q \in \mathbb{R}^{d_1}</span>.</p>
+<p>The question is: how do we find the “value” associated with query <span class="math inline">q</span>?</p>
+<p><strong>Step 1: Compute similarity</strong> between <span class="math inline">q</span> and each key <span class="math inline">k_i</span>:</p>
+<p><span class="math display">
+e = (q^\top k_1, \ldots, q^\top k_L) \in \mathbb{R}^L.
+</span></p>
+<p><strong>Step 2: Normalize via softmax</strong> to obtain attention weights:</p>
+<p><span class="math display">
+\alpha = \text{Softmax}(e) = \text{distribution over } [L],
+</span></p>
+<p>where</p>
+<p><span class="math display">
+\text{Softmax}\{k_1^\top q, \ldots, k_L^\top q\} \quad \Longrightarrow \quad \alpha_i = \frac{\exp(k_i^\top q / \sqrt{d_1})}{\sum_{j=1}^{L} \exp(k_j^\top q / \sqrt{d_1})}.
+</span></p>
+<p>Here <span class="math inline">\alpha_i</span> represents the probability that <span class="math inline">k_i</span> is closest to <span class="math inline">q</span>.</p>
+<p><strong>Step 3: Aggregate</strong> the values according to the attention weights:</p>
+<p><span class="math display">
+h = \sum_{i=1}^{L} \alpha_i \cdot v_i \in \mathbb{R}^{d'}.
+</span></p>
+<p>The output is the pair <span class="math inline">(q, h)</span>, where <span class="math inline">h</span> is the context-aware representation.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Remark: Attention Scores and Alternatives
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The vector <span class="math inline">(k_1^\top q, \ldots, k_L^\top q)</span> is called the <strong>attention score</strong>. Similarity is captured by the dot product <span class="math inline">k_i^\top q</span>. While softmax is the standard normalization, other functions (e.g., ReLU) can also be used.</p>
+</div>
+</div>
+</section>
+<section id="sec-permutation-invariance" class="level5" data-number="10.16.4.5.2">
+<h5 data-number="10.16.4.5.2" class="anchored" data-anchor-id="sec-permutation-invariance"><span class="header-section-number">10.16.4.5.2</span> Permutation Invariance of Attention</h5>
+<p>A fundamental property of the attention output is <strong>permutation invariance</strong>:</p>
+<p><span class="math display">
+\sum_{i=1}^{L} \alpha_i \cdot v_i = \sum_{i=1}^{L} \frac{\exp(q^\top k_i / \sqrt{d_1})}{\sum_{j=1}^{L} \exp(q^\top k_j / \sqrt{d_1})} \cdot v_i
+</span></p>
+<p>remains the same if we permute the key-value pairs <span class="math inline">\{(k_i, v_i)\}_{i \in [L]}</span>, because the sum <span class="math inline">\sum_{i=1}^{L}</span> is invariant to ordering.</p>
+<p>This is a significant issue for language modeling, because <strong>ordering matters</strong> in natural language: “united states” <span class="math inline">\neq</span> “states united.” We will address this with position embeddings (see <a href="#sec-position-embedding" class="quarto-xref"><span>Section 10.16.4.7</span></a>).</p>
+</section>
+<section id="sec-self-attention" class="level5" data-number="10.16.4.5.3">
+<h5 data-number="10.16.4.5.3" class="anchored" data-anchor-id="sec-self-attention"><span class="header-section-number">10.16.4.5.3</span> Self-Attention</h5>
+<p>Self-attention is an attention module where the <strong>query, key, and value</strong> are all computed from the <strong>same</strong> input vectors. Given input embeddings <span class="math inline">x_1, \ldots, x_L \in \mathbb{R}^d</span>, we compute:</p>
+<ul>
+<li>Keys: <span class="math inline">k_i = W_K x_i</span>, using <span class="math inline">W_K \in \mathbb{R}^{d \times d_1}</span></li>
+<li>Queries: <span class="math inline">q_i = W_Q x_i</span>, using <span class="math inline">W_Q \in \mathbb{R}^{d \times d_1}</span></li>
+<li>Values: <span class="math inline">v_i = W_V x_i</span>, using <span class="math inline">W_V \in \mathbb{R}^{d \times d_1}</span></li>
+</ul>
+<p>The attention weights for position <span class="math inline">\ell</span> are:</p>
+<p><span id="eq-self-attn-weights"><span class="math display">
+\alpha_\ell = \text{Softmax}\left(\left\{\frac{q_\ell^\top k_j}{\sqrt{d_1}}\right\}_{j \in [L]}\right) \in \Delta_L,
+\tag{10.20}</span></span></p>
+<p>where <span class="math inline">\alpha_\ell</span> is a distribution over <span class="math inline">\{1, \ldots, L\}</span>. The entry <span class="math inline">\alpha_{\ell,j}</span> captures the similarity between <span class="math inline">\{x_\ell, x_j\}</span>.</p>
+<p>The output at position <span class="math inline">\ell</span> is:</p>
+<p><span id="eq-self-attn-output"><span class="math display">
+h_\ell = \sum_{j=1}^{L} \alpha_{\ell,j} \, v_j = \sum_{j=1}^{L} \alpha_{\ell,j} \, (W_V x_j).
+\tag{10.21}</span></span></p>
+<p>In words: each position <span class="math inline">\ell</span> computes a weighted average of the value vectors, where the weights reflect how relevant each other position <span class="math inline">j</span> is to position <span class="math inline">\ell</span>.</p>
+</section>
+<section id="sec-matrix-self-attention" class="level5" data-number="10.16.4.5.4">
+<h5 data-number="10.16.4.5.4" class="anchored" data-anchor-id="sec-matrix-self-attention"><span class="header-section-number">10.16.4.5.4</span> Matrix Form of Self-Attention</h5>
+<p>The self-attention computation can be expressed compactly in matrix notation. Let <span class="math inline">X \in \mathbb{R}^{L \times d}</span> be the matrix with rows <span class="math inline">x_1, \ldots, x_L</span>.</p>
+<ul>
+<li>Map into queries, keys, values: <span class="math inline">Q = X W_Q</span>, <span class="math inline">K = X W_K</span>, <span class="math inline">V = X W_V \in \mathbb{R}^{L \times d_1}</span>, where <span class="math inline">W_Q, W_K, W_V \in \mathbb{R}^{d \times d_1}</span>.</li>
+<li>Calculate the attention score matrix: <span class="math inline">E = Q K^\top \in \mathbb{R}^{L \times L}</span>.</li>
+<li>Apply softmax to each row: <span class="math inline">P = \text{Softmax}(E / \sqrt{d_1}) \in \mathbb{R}^{L \times L}</span>.</li>
+<li>Compute the output:</li>
+</ul>
+<p><span id="eq-matrix-self-attention"><span class="math display">
+\text{Output} = P V = \text{Softmax}\!\left(\frac{Q K^\top}{\sqrt{d_1}}\right) \cdot V.
+\tag{10.22}</span></span></p>
+<p>This is the famous <strong>scaled dot-product attention</strong> formula.</p>
+<div id="fig-scaled-dot-product-attention" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-scaled-dot-product-attention-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/scaled-dot-product-attention.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-9" title="Figure&nbsp;10.9: Scaled dot-product attention. The input X is projected into queries Q, keys K, and values V via learned weight matrices. Attention scores QK^\top / \sqrt{d_1} are computed, normalized by softmax, and used to weight the values. Multi-head attention runs H parallel heads, each on a d_1 = d/H subspace, and combines them via an output projection W_O."><img src="figures/scaled-dot-product-attention.svg" class="img-fluid figure-img" style="width:55.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-scaled-dot-product-attention-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10.9: Scaled dot-product attention. The input <span class="math inline">X</span> is projected into queries <span class="math inline">Q</span>, keys <span class="math inline">K</span>, and values <span class="math inline">V</span> via learned weight matrices. Attention scores <span class="math inline">QK^\top / \sqrt{d_1}</span> are computed, normalized by softmax, and used to weight the values. Multi-head attention runs <span class="math inline">H</span> parallel heads, each on a <span class="math inline">d_1 = d/H</span> subspace, and combines them via an output projection <span class="math inline">W_O</span>.
+</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="sec-three-caveats" class="level4" data-number="10.16.4.6">
+<h4 data-number="10.16.4.6" class="anchored" data-anchor-id="sec-three-caveats"><span class="header-section-number">10.16.4.6</span> Three Caveats of Self-Attention</h4>
+<p>Before self-attention can serve as a building block for a full transformer, we must address three important limitations:</p>
+<ol type="1">
+<li><strong>Self-attention is permutation invariant</strong> — it has no inherent notion of order. We need to include position information.</li>
+<li><strong>Attention scores are computed between all token pairs</strong> — in a decoder-only model, we need to <strong>mask the future</strong>. During training, we feed the whole sentence as input but need to compute <span class="math inline">\sum_{\ell \geq 1} \log P_\theta(w_\ell \mid w_{1:\ell-1})</span>.</li>
+<li><strong>The output <span class="math inline">\text{output}_\ell = \sum_{j=1}^{L} \alpha_{\ell,j} \, W_V x_j</span> is a weighted average of linear functions</strong> of the embeddings — we need to add nonlinearities via fully connected layers.</li>
+</ol>
+<p>The solutions are:</p>
+<ol type="1">
+<li><strong>Position embeddings</strong> — include position “<span class="math inline">\ell</span>” in the input.</li>
+<li><strong>Causal masking</strong> — prevent attending to future tokens.</li>
+<li><strong>Feedforward (MLP) layers</strong> — add nonlinearity after each attention layer.</li>
+</ol>
+<p>We now describe each solution in detail.</p>
+</section>
+<section id="sec-position-embedding" class="level4" data-number="10.16.4.7">
+<h4 data-number="10.16.4.7" class="anchored" data-anchor-id="sec-position-embedding"><span class="header-section-number">10.16.4.7</span> Position Embedding</h4>
+<p>We want to include token position in the input. The key trick in transformers is to <strong>add</strong> the position embedding to the token embedding:</p>
+<p><span class="math display">
+\text{emb}(\text{token}, \text{position}) = \text{emb}(\text{token}) + \text{emb}(\text{position}).
+</span></p>
+<p>That is, for token <span class="math inline">w_i</span> at position <span class="math inline">i</span>:</p>
+<p><span id="eq-position-embedding"><span class="math display">
+x_i = \text{emb}(w_i) + \text{pe}_i \in \mathbb{R}^d,
+\tag{10.23}</span></span></p>
+<p>where <span class="math inline">\text{pe}_i \in \mathbb{R}^d</span> is the positional embedding vector for position <span class="math inline">i</span>, and <span class="math inline">d</span> is the dimension of the word (token) embedding.</p>
+<div class="callout callout-style-simple callout-note">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p><strong>Note:</strong> Position embeddings are only added at the first layer of the attention module. Both token values and position values are discrete: position <span class="math inline">\in \mathbb{R}^L</span> as a one-hot vector.</p>
+</div>
+</div>
+</div>
+<p>There are <strong>three major practices</strong> for position embedding:</p>
+<section id="sec-absolute-pos" class="level5" data-number="10.16.4.7.1">
+<h5 data-number="10.16.4.7.1" class="anchored" data-anchor-id="sec-absolute-pos"><span class="header-section-number">10.16.4.7.1</span> 1. Absolute (Learned) Positional Embedding</h5>
+<p>Each position <span class="math inline">\ell</span> maps to a learned vector <span class="math inline">\text{pe}_\ell \in \mathbb{R}^d</span>, trained directly as parameters. The full set of positional embeddings is <span class="math inline">\{\text{pe}_1, \ldots, \text{pe}_L\} \in \mathbb{R}^{L \times d}</span>.</p>
+</section>
+<section id="sec-sinusoidal-pos" class="level5" data-number="10.16.4.7.2">
+<h5 data-number="10.16.4.7.2" class="anchored" data-anchor-id="sec-sinusoidal-pos"><span class="header-section-number">10.16.4.7.2</span> 2. Sinusoidal Positional Embedding</h5>
+<p>Instead of learning position vectors, we can use a fixed sinusoidal encoding. The positional embedding vector at position <span class="math inline">t</span> is:</p>
+<p><span id="eq-sinusoidal"><span class="math display">
+\vec{p}_t = \begin{pmatrix} \sin(\omega_1 \cdot t) \\ \cos(\omega_1 \cdot t) \\ \sin(\omega_2 \cdot t) \\ \cos(\omega_2 \cdot t) \\ \vdots \\ \sin(\omega_{d/2} \cdot t) \\ \cos(\omega_{d/2} \cdot t) \end{pmatrix} \in \mathbb{R}^d,
+\tag{10.24}</span></span></p>
+<p>where <span class="math inline">\omega_1, \ldots, \omega_{d/2}</span> are fixed frequencies.</p>
+<p>A key property of sinusoidal embeddings is that they encode <strong>relative positional information</strong> through a rotation matrix. Define:</p>
+<p><span id="eq-rotation-matrix"><span class="math display">
+M_{\varphi, \omega} = \begin{pmatrix} \cos(\omega \varphi) &amp; \sin(\omega \varphi) \\ -\sin(\omega \varphi) &amp; \cos(\omega \varphi) \end{pmatrix}.
+\tag{10.25}</span></span></p>
+<p>Then:</p>
+<p><span class="math display">
+M_{\varphi, \omega} \begin{pmatrix} \sin(\omega \cdot t) \\ \cos(\omega \cdot t) \end{pmatrix} = \begin{pmatrix} \sin(\omega(t + \varphi)) \\ \cos(\omega(t + \varphi)) \end{pmatrix}.
+</span></p>
+<p>This means that the positional encoding at position <span class="math inline">t + \varphi</span> can be obtained from the encoding at position <span class="math inline">t</span> by applying the rotation matrix <span class="math inline">M_{\varphi, \omega}</span>. When <span class="math inline">\varphi \approx 0</span>, <span class="math inline">M_{\varphi, \omega} \approx I</span>, so nearby positions have similar embeddings.</p>
+</section>
+<section id="sec-relative-pos" class="level5" data-number="10.16.4.7.3">
+<h5 data-number="10.16.4.7.3" class="anchored" data-anchor-id="sec-relative-pos"><span class="header-section-number">10.16.4.7.3</span> 3. Relative Positional Embedding</h5>
+<p>Instead of embedding absolute positions, we can learn embedding vectors for <strong>relative positions</strong>: <span class="math inline">0, -1, -2, -3, \ldots</span> This maps each pair of positions <span class="math inline">(i, j)</span> to a learned vector <span class="math inline">\vec{P}_{i-j}</span>.</p>
+<p>The attention score at position <span class="math inline">i</span> is modified to:</p>
+<p><span id="eq-relative-pos-attn"><span class="math display">
+\alpha_i = \text{Softmax}\left(\left\{q_i^\top (k_j + \vec{P}_{i-j})\right\}_{j \in [L]}\right).
+\tag{10.26}</span></span></p>
+<p>Compare this with absolute embedding, where we would have <span class="math inline">(q_i + \vec{P}_i)^\top (k_j + \vec{P}_j)</span>. Relative positional embedding directly captures the distance between positions rather than their absolute locations.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Remark: RoPE in Llama
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Relative positional embedding is the popular choice today. <strong>RoPE</strong> (Rotary Position Embedding), used in the Llama family of models, is a specific implementation of relative positional embedding based on rotation matrices. The sinusoidal embedding can be viewed as a special case of relative positional encoding.</p>
+</div>
+</div>
+<div id="fig-position-embeddings" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-position-embeddings-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/position-embeddings-comparison.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-10" title="Figure&nbsp;10.10: Comparison of three position embedding methods. Absolute embeddings learn a separate vector per position. Sinusoidal embeddings use fixed sin/cos patterns with a rotation-matrix interpretation. Relative embeddings (RoPE) directly encode positional differences in the attention scores, enabling better length generalization."><img src="figures/position-embeddings-comparison.svg" class="img-fluid figure-img" style="width:90.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-position-embeddings-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10.10: Comparison of three position embedding methods. Absolute embeddings learn a separate vector per position. Sinusoidal embeddings use fixed sin/cos patterns with a rotation-matrix interpretation. Relative embeddings (RoPE) directly encode positional differences in the attention scores, enabling better length generalization.
+</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="sec-causal-masking" class="level4" data-number="10.16.4.8">
+<h4 data-number="10.16.4.8" class="anchored" data-anchor-id="sec-causal-masking"><span class="header-section-number">10.16.4.8</span> Causal Masking</h4>
+<p>In a decoder-only model, the feature <span class="math inline">z_\ell</span> should only depend on tokens <span class="math inline">w_1, \ldots, w_\ell</span> — we must not allow the model to “see the future.” To enforce this, we manually set:</p>
+<p><span class="math display">
+\alpha_{\ell,j} = 0 \quad \text{for all } j &gt; \ell.
+</span></p>
+<p>To achieve this in practice, we define a <strong>mask matrix</strong>:</p>
+<p><span id="eq-causal-mask"><span class="math display">
+\text{Mask}_{\ell,j} = \begin{cases} 0 &amp; \text{if } j \leq \ell, \\ -\infty &amp; \text{if } j &gt; \ell. \end{cases}
+\tag{10.27}</span></span></p>
+<p>The masked attention score is then:</p>
+<p><span id="eq-masked-attention"><span class="math display">
+\text{Attention score} = \text{Softmax}\!\left(Q K^\top + \text{Mask}\right).
+\tag{10.28}</span></span></p>
+<p>After the softmax, the <span class="math inline">-\infty</span> entries become <strong>zero</strong>, effectively preventing any information flow from future positions.</p>
+<div class="callout callout-style-simple callout-note">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>Causal masking is only used in <strong>decoder</strong> transformers. Encoder-only models (like BERT) use a full attention mask (all ones), allowing each position to attend to every other position.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="sec-mlp-layers" class="level4" data-number="10.16.4.9">
+<h4 data-number="10.16.4.9" class="anchored" data-anchor-id="sec-mlp-layers"><span class="header-section-number">10.16.4.9</span> Feedforward (MLP) Layers</h4>
+<p>The third limitation of self-attention is that its output is a weighted average of linear functions — there are no elementwise nonlinearities. Stacking more self-attention layers just re-averages value vectors. The fix is to add a <strong>feedforward network</strong> to post-process each output vector.</p>
+<p>At position <span class="math inline">\ell</span>, the attention output is <span class="math inline">\text{output}_\ell = \sum_{j=1}^{L} \alpha_{\ell,j} \cdot v_j \in \mathbb{R}^{d_1}</span>. The <strong>MLP</strong> is a 2-layer neural network applied independently to each position:</p>
+<p><span id="eq-mlp"><span class="math display">
+m_\ell = \text{MLP}(\text{output}_\ell) = W_2 \cdot \sigma(W_1 \, \text{output}_\ell + b_1) + b_2,
+\tag{10.29}</span></span></p>
+<p>where:</p>
+<ul>
+<li><span class="math inline">W_1 \in \mathbb{R}^{d_1 \times d_f}</span>, <span class="math inline">b_1 \in \mathbb{R}^{d_f}</span> (first layer)</li>
+<li><span class="math inline">W_2 \in \mathbb{R}^{d_f \times d_1}</span>, <span class="math inline">b_2 \in \mathbb{R}^{d_1}</span> (second layer)</li>
+<li><span class="math inline">\sigma</span> is a nonlinear activation (ReLU or GELU)</li>
+<li><span class="math inline">d_f \gg d_1</span> — the hidden dimension is much larger than the model dimension (in GPT-3, <span class="math inline">d_f = 4d</span>)</li>
+</ul>
+<p>The same MLP is applied <strong>independently</strong> for each position <span class="math inline">\ell \in [L]</span>. The intuition is that the feedforward network processes the result of attention, adding the nonlinearity needed for deep learning.</p>
+</section>
+<section id="sec-self-attention-to-transformer" class="level4" data-number="10.16.4.10">
+<h4 data-number="10.16.4.10" class="anchored" data-anchor-id="sec-self-attention-to-transformer"><span class="header-section-number">10.16.4.10</span> From Self-Attention to Transformer</h4>
+<p>We now have all the ingredients to build the full transformer architecture. Instead of using a single attention module, we use <strong>multi-head self-attention</strong> with multiple attention heads in parallel, and repeat the blocks for multiple layers. The feature dimension <span class="math inline">d</span> does not change across layers.</p>
+<section id="sec-multi-head-attention" class="level5" data-number="10.16.4.10.1">
+<h5 data-number="10.16.4.10.1" class="anchored" data-anchor-id="sec-multi-head-attention"><span class="header-section-number">10.16.4.10.1</span> Multi-Head Attention</h5>
+<p>Multi-head attention runs <span class="math inline">H</span> attention heads in parallel, each operating on a different subspace of the input.</p>
+<ul>
+<li><span class="math inline">H</span> = number of attention heads.</li>
+<li>Each head <span class="math inline">h</span> has three weight matrices <span class="math inline">\{W_K^h, W_Q^h, W_V^h\}_{h \in [H]}</span>, each in <span class="math inline">\mathbb{R}^{d \times d_1}</span>.</li>
+<li>The head dimension is <span class="math inline">d_1 = d / H</span>.</li>
+<li>The output of head <span class="math inline">h</span> at position <span class="math inline">\ell</span>: <span class="math inline">\text{output}_\ell^h = \sum_{j=1}^{L} \alpha_{\ell,j}^h \, v_j^h \in \mathbb{R}^{d_1}</span>.</li>
+<li>The outputs from all heads are <strong>concatenated</strong> and then multiplied by the <strong>output matrix</strong> <span class="math inline">W_O \in \mathbb{R}^{d \times d}</span>:</li>
+</ul>
+<p><span id="eq-app-multi-head"><span class="math display">
+\text{Final output} = W_O \begin{pmatrix} \text{output}^1 \\ \text{output}^2 \\ \vdots \\ \text{output}^H \end{pmatrix} \in \mathbb{R}^d.
+\tag{10.30}</span></span></p>
+<div id="exm-multi-head" class="theorem example">
+<p><span class="theorem-title"><strong>Example 10.1 (Multi-Head Attention with <span class="math inline">H = 3</span>)</strong></span> At each position <span class="math inline">\ell</span>, let <span class="math inline">x_\ell \in \mathbb{R}^d</span> be the input, with <span class="math inline">d = 3 d_1</span>. We can view <span class="math inline">x_\ell</span> as three blocks: <span class="math inline">x_\ell = (x_\ell^{(1)}, x_\ell^{(2)}, x_\ell^{(3)})</span>, where each <span class="math inline">x_\ell^{(h)} \in \mathbb{R}^{d_1}</span>.</p>
+<ul>
+<li>Head <span class="math inline">h</span> looks at the subspace corresponding to <span class="math inline">x_\ell^{(h)} \in \mathbb{R}^{d_1}</span>.</li>
+<li>The output of head <span class="math inline">h</span>: <span class="math inline">\text{output}^h = \sum_{j=1}^{L} \alpha_{\ell,j}^h \cdot v_j^h</span>.</li>
+<li>The final output combines all heads: <span class="math inline">\text{final output} = W_O [\text{output}^1; \text{output}^2; \text{output}^3] \in \mathbb{R}^d</span>.</li>
+</ul>
+<p>Each head can learn to attend to different types of information (e.g., syntactic vs.&nbsp;semantic relationships), and the output matrix <span class="math inline">W_O</span> mixes the outputs across heads.</p>
+</div>
+</section>
+</section>
+<section id="sec-residual-and-norm" class="level4" data-number="10.16.4.11">
+<h4 data-number="10.16.4.11" class="anchored" data-anchor-id="sec-residual-and-norm"><span class="header-section-number">10.16.4.11</span> Transformer Architecture: Residual Connections and Layer Normalization</h4>
+<p>The full transformer architecture repeats multi-head attention (MHA) blocks, with two additional components for training stability:</p>
+<ol type="1">
+<li><strong>Residual connections</strong></li>
+<li><strong>Layer normalization</strong></li>
+</ol>
+<section id="sec-residual-connections" class="level5" data-number="10.16.4.11.1">
+<h5 data-number="10.16.4.11.1" class="anchored" data-anchor-id="sec-residual-connections"><span class="header-section-number">10.16.4.11.1</span> Residual Connections</h5>
+<p>Instead of computing <span class="math inline">X^{(i)} = \text{Layer}(X^{(i-1)})</span>, we let:</p>
+<p><span class="math display">
+X^{(i)} = X^{(i-1)} + \text{Layer}(X^{(i-1)}).
+</span></p>
+<p>In the context of multi-head attention:</p>
+<p><span id="eq-residual"><span class="math display">
+X \;\longmapsto\; X + \text{MHA}(X),
+\tag{10.31}</span></span></p>
+<p>where both <span class="math inline">X</span> and <span class="math inline">\text{MHA}(X)</span> are in <span class="math inline">\mathbb{R}^{L \times d}</span>. We add the input directly to the output of multi-head attention. This <strong>biases the mapping toward the identity</strong>, so the network only needs to learn the “residual” correction from the previous layer. Residual connections are a trick borrowed from ResNets that helps deep models train much more effectively.</p>
+</section>
+<section id="sec-layer-norm" class="level5" data-number="10.16.4.11.2">
+<h5 data-number="10.16.4.11.2" class="anchored" data-anchor-id="sec-layer-norm"><span class="header-section-number">10.16.4.11.2</span> Layer Normalization</h5>
+<p>Normalization is applied to each feature vector <strong>individually</strong>. For a vector <span class="math inline">x \in \mathbb{R}^d</span>:</p>
+<ol type="1">
+<li><p><strong>Mean:</strong> <span class="math inline">\mu = \frac{1}{d} \sum_{j=1}^{d} x_j</span>.</p></li>
+<li><p><strong>Standard deviation:</strong> <span class="math inline">\sigma = \sqrt{\frac{1}{d} \sum_{j=1}^{d} (x_j - \mu)^2}</span>.</p></li>
+<li><p><strong>Normalization:</strong> <span class="math inline">v = \frac{x - \mu}{\sigma + \varepsilon}</span>, where <span class="math inline">\varepsilon</span> is a small number to avoid numerical instability.</p></li>
+</ol>
+<p><strong>LayerNorm</strong> applies the mapping <span class="math inline">x \mapsto v</span> independently for all vectors <span class="math inline">x_1, x_2, \ldots, x_L \in \mathbb{R}^d</span> in the sequence.</p>
+</section>
+<section id="sec-pre-post-norm" class="level5" data-number="10.16.4.11.3">
+<h5 data-number="10.16.4.11.3" class="anchored" data-anchor-id="sec-pre-post-norm"><span class="header-section-number">10.16.4.11.3</span> Pre-Norm vs.&nbsp;Post-Norm</h5>
+<p>There are two common designs for placing layer normalization within a transformer block:</p>
+<p><strong>Post-norm</strong> (original transformer):</p>
+<p><span class="math display">
+\text{MHA} \to \text{Add \&amp; Norm} \to \text{FFN} \to \text{Add \&amp; Norm}
+</span></p>
+<p><strong>Pre-norm</strong> (more popular now):</p>
+<p><span class="math display">
+\text{Norm} \to \text{MHA} \to \text{Add} \to \text{Norm} \to \text{FFN} \to \text{Add}
+</span></p>
+<p>The pre-norm design is more popular today because it provides better <strong>training stability</strong>: gradients flow more smoothly through the residual connections when normalization is applied before (rather than after) each sublayer.</p>
+</section>
+</section>
+<section id="sec-complete-decoder" class="level4" data-number="10.16.4.12">
+<h4 data-number="10.16.4.12" class="anchored" data-anchor-id="sec-complete-decoder"><span class="header-section-number">10.16.4.12</span> The Complete Transformer Decoder Block</h4>
+<p>Putting everything together, the complete decoder-only transformer consists of:</p>
+<ol type="1">
+<li><strong>Input:</strong> Token sequence <span class="math inline">w_1, \ldots, w_L</span> (<span class="math inline">L \times V</span>).</li>
+<li><strong>Token embedding:</strong> <span class="math inline">W_E</span> maps tokens to <span class="math inline">L \times d</span>.</li>
+<li><strong>Add position embeddings:</strong> <span class="math inline">x_\ell = \text{emb}(w_\ell) + \text{pe}_\ell</span> (<span class="math inline">L \times d</span>).</li>
+<li><strong>Repeat for <span class="math inline">n_{\text{layer}}</span> blocks:</strong>
+<ul>
+<li>Masked multi-head attention (<span class="math inline">d \times d_1</span>, <span class="math inline">d_1 = d/H</span>)</li>
+<li>Add &amp; Norm (residual connection + layer normalization)</li>
+<li>Feed-forward network</li>
+<li>Add &amp; Norm</li>
+</ul></li>
+<li><strong>Decoder layer</strong> outputs features (<span class="math inline">L \times d</span>).</li>
+<li><strong>Unembedding + Softmax</strong> produces final output (<span class="math inline">L \times V</span>).</li>
+</ol>
+<p>Each block consists of self-attention, Add &amp; Norm, feed-forward, and Add &amp; Norm. That is the complete transformer decoder.</p>
+<div id="fig-transformer-decoder-block" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-transformer-decoder-block-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/transformer-decoder-block.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-11" title="Figure&nbsp;10.11: The complete transformer decoder block (pre-norm design). Input flows upward through layer normalization, masked multi-head attention, a residual addition, another layer normalization, a feedforward MLP, and a second residual addition. Skip connections (shown as bypass arrows) add the input directly to the output of each sublayer. This block is repeated N times."><img src="figures/transformer-decoder-block.svg" class="img-fluid figure-img" style="width:50.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-transformer-decoder-block-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10.11: The complete transformer decoder block (pre-norm design). Input flows upward through layer normalization, masked multi-head attention, a residual addition, another layer normalization, a feedforward MLP, and a second residual addition. Skip connections (shown as bypass arrows) add the input directly to the output of each sublayer. This block is repeated <span class="math inline">N</span> times.
+</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="sec-revisit-models" class="level3" data-number="10.16.5">
+<h3 data-number="10.16.5" class="anchored" data-anchor-id="sec-revisit-models"><span class="header-section-number">10.16.5</span> Revisiting Encoder-Only and Decoder-Only Models</h3>
+<p>Now that we understand the full architecture, we can revisit the three model types and highlight their key differences:</p>
+<ul>
+<li><strong>Encoder-only:</strong> Does not use causal masking. In training, randomly <strong>mask</strong> (hide) some tokens and predict them. The attention mask is all ones (every position attends to every other position).</li>
+<li><strong>Decoder-only:</strong> Uses <strong>causal masking</strong> to mask the future. Trained to predict the next token. The attention mask is lower-triangular.</li>
+<li><strong>Encoder-decoder:</strong> The output of the encoder is fed into decoder blocks, attended by features of the decoder using <strong>cross-attention</strong> (at each layer of the decoder).</li>
+</ul>
+<section id="sec-bert" class="level4" data-number="10.16.5.1">
+<h4 data-number="10.16.5.1" class="anchored" data-anchor-id="sec-bert"><span class="header-section-number">10.16.5.1</span> BERT: Encoder-Only</h4>
+<p><strong>BERT</strong> (Bidirectional Encoder Representations from Transformers; Devlin et al., 2018) is an encoder-only language model with two pre-training objectives:</p>
+<ol type="1">
+<li><strong>Masked Language Model (MLM):</strong> Mask some percentage (15%) of the input tokens at random, and train the model to predict the masked tokens.</li>
+<li><strong>Next Sentence Prediction (NSP):</strong> Predict whether sentence B is the next sentence of sentence A (less commonly used).</li>
+</ol>
+<p>The pre-trained model is then <strong>fine-tuned</strong> to downstream tasks (sentiment analysis, question answering, etc.). Because BERT uses no causal masking, its attention mask is all ones — every token can attend to every other token, making representations truly bidirectional.</p>
+</section>
+<section id="sec-vit" class="level4" data-number="10.16.5.2">
+<h4 data-number="10.16.5.2" class="anchored" data-anchor-id="sec-vit"><span class="header-section-number">10.16.5.2</span> Vision Transformer (ViT)</h4>
+<p>The <strong>Vision Transformer</strong> (Dosovitskiy et al., 2021) applies the standard transformer encoder to <strong>tokenized image patches</strong>:</p>
+<ol type="1">
+<li>Convert a 2D image into a sequence of patches (e.g., a <span class="math inline">96 \times 96</span> image with <span class="math inline">32 \times 32</span> patches yields <span class="math inline">3 \times 3 = 9</span> tokens, each of dimension <span class="math inline">3 \times 32 \times 32 = 3072</span>).</li>
+<li>Linearly project each flattened patch into the model dimension <span class="math inline">d</span>.</li>
+<li>Add positional embeddings.</li>
+<li>Feed the patch embeddings to a standard transformer encoder (multi-head attention + feedforward + layer norm).</li>
+</ol>
+<p>ViT demonstrates that the transformer architecture, originally designed for NLP, transfers remarkably well to computer vision with minimal modification.</p>
+</section>
+<section id="sec-gpt" class="level4" data-number="10.16.5.3">
+<h4 data-number="10.16.5.3" class="anchored" data-anchor-id="sec-gpt"><span class="header-section-number">10.16.5.3</span> GPT: Decoder-Only</h4>
+<p><strong>GPT</strong> (Generative Pre-trained Transformer; Radford et al., 2018) is a decoder-only language model. The pre-training objective is <strong>next word prediction</strong>:</p>
+<p><span id="eq-gpt-objective"><span class="math display">
+L_1(\mathcal{U}) = \sum_i \log P(u_i \mid u_{i-k}, \ldots, u_{i-1}; \Theta).
+\tag{10.32}</span></span></p>
+<p>Key points about the GPT family:</p>
+<ul>
+<li>For smaller models (GPT-2), the pre-trained model is <strong>fine-tuned</strong> to downstream tasks.</li>
+<li>Larger models (GPT-3 and beyond) can operate in <strong>zero-shot</strong> or <strong>few-shot</strong> mode, performing tasks with no or minimal task-specific training.</li>
+<li>The causal attention mask is <strong>lower-triangular</strong>: each position can only attend to itself and previous positions.</li>
+</ul>
+</section>
+<section id="sec-encoder-decoder-models" class="level4" data-number="10.16.5.4">
+<h4 data-number="10.16.5.4" class="anchored" data-anchor-id="sec-encoder-decoder-models"><span class="header-section-number">10.16.5.4</span> Encoder-Decoder Models</h4>
+<p>The original transformer (Vaswani et al., 2017) is an encoder-decoder architecture. <strong>T5</strong> (Raffel et al., 2020) extends this idea as a unified text-to-text model for transfer learning on various NLP tasks.</p>
+<ul>
+<li>The <strong>prompt</strong> is fed to the encoder.</li>
+<li>The <strong>decoder</strong> generates the answer autoregressively.</li>
+<li>At each layer of the decoder, <strong>cross-attention</strong> connects the decoder to the encoder’s output: the decoder’s queries attend to the encoder’s keys and values.</li>
+</ul>
+<p>For example, in machine translation from English to German: the encoder processes <span class="math inline">x_1 = \text{``I''}, x_2 = \text{``want''}, \ldots, x_7 = \text{EOS}</span>, and the decoder generates <span class="math inline">y_0 = \text{BOS}, y_1 = \text{``Ich''}, y_2 = \text{``will''}, \ldots, y_6 = \text{EOS}</span> step by step.</p>
+</section>
+</section>
+<section id="sec-exercises" class="level3" data-number="10.16.6">
+<h3 data-number="10.16.6" class="anchored" data-anchor-id="sec-exercises"><span class="header-section-number">10.16.6</span> Exercises</h3>
+<section id="sec-exercise-gpt3" class="level4" data-number="10.16.6.1">
+<h4 data-number="10.16.6.1" class="anchored" data-anchor-id="sec-exercise-gpt3"><span class="header-section-number">10.16.6.1</span> Exercise 1: Understanding GPT-3 Parameter Count</h4>
+<p>GPT-3 175B has the following configuration:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Parameter</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">n_{\text{layers}}</span></td>
+<td>96</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">d_{\text{model}}</span></td>
+<td>12,288</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">n_{\text{heads}}</span></td>
+<td>96</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">d_{\text{head}}</span></td>
+<td>128</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">L</span> (context window)</td>
+<td>2,048</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">N</span> (vocabulary size)</td>
+<td>50,257</td>
+</tr>
+</tbody>
+</table>
+<p>Note that <span class="math inline">d = d_{\text{model}} = n_{\text{heads}} \times d_{\text{head}} = 96 \times 128 = 12{,}288</span>.</p>
+<p>The MLP layer is defined as:</p>
+<p><span class="math display">
+\text{MLP}(x) = W_2 \cdot \max\{W_1 x + b_1, 0\} + b_2,
+</span></p>
+<p>where <span class="math inline">W_1 \in \mathbb{R}^{d \times 4d}</span> and <span class="math inline">W_2 \in \mathbb{R}^{4d \times d}</span>.</p>
+<p>We now count parameters for each component:</p>
+<p><strong>1. Word embedding:</strong> <span class="math inline">W_E \in \mathbb{R}^{d \times N}</span> maps tokens (<span class="math inline">L \times N</span> one-hot) to embeddings (<span class="math inline">L \times d</span>).</p>
+<p><span class="math display">
+\text{\# param} = N \cdot d.
+</span></p>
+<p><strong>2. Position embedding:</strong> <span class="math inline">W_{\text{PE}} \in \mathbb{R}^{L \times d}</span> maps positions (<span class="math inline">L \times L</span>) to embeddings (<span class="math inline">L \times d</span>).</p>
+<p><span class="math display">
+\text{\# param} = L \cdot d.
+</span></p>
+<p><strong>3. Self-attention layers:</strong> Each head has <span class="math inline">W_Q^h, W_K^h, W_V^h</span>, each of size <span class="math inline">d \times d_1</span> (where <span class="math inline">d_1 = d_{\text{head}}</span>).</p>
+<p><span class="math display">
+\text{\# param per layer} = 3 \times d \times d_1 \times H = 3d^2.
+</span></p>
+<p>Plus the output matrix <span class="math inline">W_O</span> of size <span class="math inline">d \times d</span>. Total per layer: <span class="math inline">4d^2</span>. Total across all layers:</p>
+<p><span class="math display">
+\text{\# param (attention)} = 4d^2 \times n_{\text{layer}}.
+</span></p>
+<p><strong>4. MLP layers:</strong> Each layer has <span class="math inline">(W_1, W_2, b_1, b_2)</span>. Counting only <span class="math inline">W_1</span> and <span class="math inline">W_2</span>:</p>
+<p><span class="math display">
+\text{\# param per layer} = 4d \times d \times 2 = 8d^2.
+</span></p>
+<p>Total across all layers:</p>
+<p><span class="math display">
+\text{\# param (MLP)} = 8d^2 \times n_{\text{layer}}.
+</span></p>
+<p><strong>Total parameter count (neglecting small components like biases and layer norm):</strong></p>
+<p><span id="eq-gpt3-params"><span class="math display">
+\text{\# param} = N \times d + L \times d + 12 \cdot d^2 \times n_{\text{layer}}.
+\tag{10.33}</span></span></p>
+<p>Plugging in the GPT-3 values:</p>
+<p><span class="math display">
+\text{\# param} \approx 50{,}257 \times 12{,}288 + 2{,}048 \times 12{,}288 + 12 \times 12{,}288^2 \times 96 \approx 174{,}074{,}267{,}648 \approx 174 \times 10^9.
+</span></p>
+<p>This is <strong>99.5% accurate</strong> compared to the reported 175 billion parameters.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Remark: Where Do the Parameters Live?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The vast majority of parameters are in the attention and MLP layers (<span class="math inline">12 d^2 \times n_{\text{layer}}</span>), not in the embedding layers. The embedding parameters (<span class="math inline">N \times L + L \times d</span>) are a tiny fraction of the total. See: <a href="https://www.lesswrong.com/posts/3duR8CrvcHywrnhLo/how-does-gpt-3-spend-its-175b-parameters">How does GPT-3 spend its 175B parameters?</a></p>
+</div>
+</div>
+</section>
+<section id="sec-exercise-circuits" class="level4" data-number="10.16.6.2">
+<h4 data-number="10.16.6.2" class="anchored" data-anchor-id="sec-exercise-circuits"><span class="header-section-number">10.16.6.2</span> Exercise 2: Transformer Circuits and the Residual Stream</h4>
+<p>We can view the transformer as a model that processes a sequence of tokens in multiple layers. In each layer, we have a sequence of <span class="math inline">L</span> vectors. The vector at each position is processed by attention, normalization, and MLP — and the vector itself is <strong>added directly</strong> to the next layer by the residual connection. This perspective is called the <strong>residual stream</strong> framework.</p>
+<section id="sec-residual-stream" class="level5" data-number="10.16.6.2.1">
+<h5 data-number="10.16.6.2.1" class="anchored" data-anchor-id="sec-residual-stream"><span class="header-section-number">10.16.6.2.1</span> The Residual Stream</h5>
+<p>The key equations are:</p>
+<ul>
+<li><strong>Token embedding:</strong> <span class="math inline">x_0 = W_E \, t</span>, where <span class="math inline">t</span> is the token (including position).</li>
+<li><strong>After attention head <span class="math inline">h</span>:</strong> <span class="math inline">x_{i+1} = x_i + \sum_{h \in H_i} h(x_i)</span>.</li>
+<li><strong>After MLP <span class="math inline">m</span>:</strong> <span class="math inline">x_{i+2} = x_{i+1} + m(x_{i+1})</span>.</li>
+<li><strong>Final logits:</strong> <span class="math inline">T(t) = W_U x_{-1}</span>, where <span class="math inline">W_U</span> is the unembedding matrix.</li>
+</ul>
+</section>
+<section id="sec-single-layer" class="level5" data-number="10.16.6.2.2">
+<h5 data-number="10.16.6.2.2" class="anchored" data-anchor-id="sec-single-layer"><span class="header-section-number">10.16.6.2.2</span> Single-Layer Attention-Only Transformer</h5>
+<p>To build intuition, consider a simplified transformer with a <strong>single layer</strong> and <strong>no MLP</strong>. We use a convenient notation for tokens:</p>
+<p><span class="math display">
+t = \begin{pmatrix} w \\ i \end{pmatrix} \in \mathbb{R}^{L + V},
+</span></p>
+<p>where <span class="math inline">w</span> is the token value and <span class="math inline">i</span> is the token position. After the embedding layer:</p>
+<p><span class="math display">
+x_i(0) = W_E \, t \in \mathbb{R}^d,
+</span></p>
+<p>where <span class="math inline">W_E \in \mathbb{R}^{d \times (L + V)}</span> combines both token and position embeddings.</p>
+<p>Let <span class="math inline">x_0 = (x_1(0), \ldots, x_L(0))</span> denote the full embedded sequence.</p>
+<p><strong>Consider attention head <span class="math inline">h</span></strong> with weight matrices <span class="math inline">W_Q^h, W_K^h, W_V^h</span>. For the single-layer analysis, we write these as <span class="math inline">d \times d</span> matrices (with zero blocks in the unused subspaces).</p>
+<p>The <strong>attention score</strong> of head <span class="math inline">h</span> is:</p>
+<p><span class="math display">
+A^h = \text{Softmax}\!\left(x_0 \, W_{QK}^h \, x_0^\top\right) \in \mathbb{R}^{L \times L},
+</span></p>
+<p>where we define the <strong>QK-matrix</strong>:</p>
+<div id="def-qk-matrix" class="theorem definition">
+<p><span class="theorem-title"><strong>Definition 10.3 (QK-Matrix)</strong></span> The QK-matrix of head <span class="math inline">h</span> is:</p>
+<p><span class="math display">
+W_{QK}^h = (W_Q^h)^\top W_K^h / \sqrt{d} \in \mathbb{R}^{d \times d}.
+</span></p>
+</div>
+<p>The QK-matrix captures how queries and keys interact to determine attention patterns.</p>
+<p><strong>Output of head <span class="math inline">h</span>:</strong></p>
+<p><span class="math display">
+\text{output}_\ell^h = \sum_{j=1}^{L} A_{\ell,j}^h \, v_j = \sum_{j=1}^{L} A_{\ell,j}^h \, (W_V^h \, x_j(0)).
+</span></p>
+<p>There is an <strong>output matrix</strong> <span class="math inline">W_O = \{W_O^1, \ldots, W_O^H\}</span>, where <span class="math inline">W_O^h</span> is the part of <span class="math inline">W_O</span> that is multiplied to the output of head <span class="math inline">h</span>.</p>
+<p>The <strong>final contribution</strong> from each attention head <span class="math inline">h</span> is:</p>
+<p><span class="math display">
+h(x_0) = \left\{\sum_{j=1}^{L} A_{\ell,j}^h \, W_O^h W_V^h \, x_j(0)\right\}_{\ell \in [L]}.
+</span></p>
+<p>This motivates the definition of the <strong>OV-matrix</strong>:</p>
+<div id="def-ov-matrix" class="theorem definition">
+<p><span class="theorem-title"><strong>Definition 10.4 (OV-Matrix)</strong></span> The OV-matrix of head <span class="math inline">h</span> is:</p>
+<p><span class="math display">
+W_{OV}^h = W_O^h W_V^h \in \mathbb{R}^{d \times d}.
+</span></p>
+</div>
+<p>The OV-matrix captures how the value vectors are transformed and mixed by each head.</p>
+<p>In matrix form:</p>
+<p><span class="math display">
+h(x_0) = A^h \, x_0 \, (W_{OV}^h)^\top \in \mathbb{R}^{L \times d}.
+</span></p>
+</section>
+<section id="sec-residual-unembedding" class="level5" data-number="10.16.6.2.3">
+<h5 data-number="10.16.6.2.3" class="anchored" data-anchor-id="sec-residual-unembedding"><span class="header-section-number">10.16.6.2.3</span> Adding the Residual Link and Unembedding</h5>
+<p>Adding the residual connection and unembedding layer, the final logits <span class="math inline">T \in \mathbb{R}^{L \times V}</span> are:</p>
+<p><span class="math display">
+T = x_0 W_U^\top + \sum_{h \in H} A^h \, x_0 \, (W_{OV}^h)^\top W_U^\top = x_0 W_U^\top + \sum_{h \in H} A^h \, x_0 \, (W_U W_{OV}^h)^\top.
+</span></p>
+<p>Recalling that <span class="math inline">x_0 = W_E X</span>, where <span class="math inline">X</span> is the input sequence (tokens + positions), we can write <span class="math inline">T</span> as a function of <span class="math inline">X</span>:</p>
+<p><span id="eq-transformer-circuit"><span class="math display">
+\boxed{T(x) = x \, (W_U W_E)^\top + \sum_{h=1}^{H} A^h \cdot x \, (W_U \, W_{OV}^h \, W_E),}
+\tag{10.34}</span></span></p>
+<p>where</p>
+<p><span class="math display">
+A^h = \text{Softmax}\!\left(x \, W_{QK}^h \, x^\top\right).
+</span></p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Remark: Why This Formula Matters
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>(<a href="#eq-transformer-circuit" class="quarto-xref"><span>10.34</span></a>) makes it much easier to study and interpret single-layer attention-only transformers. The first term <span class="math inline">x(W_U W_E)^\top</span> is the “direct path” (residual connection only), and the sum over heads captures how attention redistributes information. Each head’s contribution is governed by a single matrix <span class="math inline">W_U W_{OV}^h W_E</span>, which can be analyzed to understand what the head computes. This is the foundation of the <strong>transformer circuits</strong> research program (Elhage et al., 2021).</p>
+</div>
+</div>
+
+
+</section>
+</section>
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../lectures/09-alphago.html" class="pagination-link" aria-label="AlphaGo">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">AlphaGo</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../lectures/11-rl-verifiable-rewards.html" class="pagination-link" aria-label="RL from Verifiable Rewards">
+        <span class="nav-page-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">RL from Verifiable Rewards</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<script>
+// Plotly Warmtone theming helpers — shared across all lectures
+// Reads CSS custom properties set by _warmtone.scss (light/dark aware)
+const plotlyConfig = {responsive: true, displayModeBar: false};
+const figFont = '"Source Serif 4", Georgia, "Times New Roman", serif';
+const figFontHeading = '"Crimson Pro", Georgia, serif';
+
+function css(v) {
+  return getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+}
+
+function legendStyle() {
+  return {
+    font: {family: figFont, size: 13, color: css('--fig-text')},
+    bgcolor: css('--fig-bg') + 'dd',
+    bordercolor: css('--fig-grid'),
+    borderwidth: 1,
+  };
+}
+
+function themeLayout(extra) {
+  return Object.assign({
+    paper_bgcolor: css('--fig-bg'),
+    plot_bgcolor: css('--fig-plot-bg'),
+    font: {family: figFont, color: css('--fig-text'), size: 14},
+  }, extra || {});
+}
+
+function themeAxis(title, extra) {
+  return Object.assign({
+    title: {text: title, font: {family: figFont, size: 14}},
+    gridcolor: css('--fig-grid'),
+    zerolinecolor: css('--fig-grid'),
+    linecolor: css('--fig-axis'),
+    tickfont: {family: figFont, size: 12, color: css('--fig-axis')},
+  }, extra || {});
+}
+
+// Plotly color sequences matching the Warmtone palette
+const warmtonePalette = [
+  '#7b97ad', '#b8995e', '#ad8480', '#7a9a7e', '#907ea0',
+  '#6f9996', '#8a6e5e', '#b56b6b', '#8fa3b8', '#a09488'
+];
+</script>
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
+
+
+
+
+</body></html>
