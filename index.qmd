@@ -1,0 +1,92 @@
+---
+number-sections: false
+---
+
+## Welcome {.unnumbered}
+
+Reinforcement learning addresses one of the most fundamental questions in machine learning: *how should an agent make sequential decisions in an uncertain environment to maximize long-term performance?* Unlike supervised learning, where the training data is fixed, an RL agent must actively explore its environment, observe the consequences of its actions, and adapt its strategy over time.
+
+These interactive lecture notes develop RL from the ground up --- starting with Markov decision processes, Bellman equations, and planning algorithms, moving through sample-efficient model-based methods, exploration strategies, and deep RL, and culminating in the modern applications that have made RL a central tool in AI: superhuman game play (AlphaGo), the alignment of large language models with human preferences (RLHF), and the training of reasoning models via RL from verifiable rewards (GRPO, DeepSeek R1). Each chapter includes formal definitions and theorems with cross-references, interactive Plotly visualizations for geometric intuition, and worked examples you can adapt for your own research.
+
+## Course Flow {.unnumbered}
+
+```{mermaid}
+%%| fig-width: 8
+flowchart TD
+    A["<b>1. Introduction</b><br/>RL formulation, models,<br/>stochastic decision processes"]
+    B["<b>2. MDP Basics</b><br/>Value functions, Bellman equations,<br/>fundamental theorem of MDPs"]
+    C["<b>3. MDP Planning</b><br/>Value iteration, policy iteration,<br/>LP, performance difference lemma"]
+    D["<b>4. Approximate Planning</b><br/>Function approximation,<br/>simulation lemma, error propagation"]
+    E["<b>5. Certainty Equivalence</b><br/>Model-based RL,<br/>sample complexity, generative model"]
+    F["<b>6. Exploration</b><br/>UCB, Thompson sampling,<br/>UCB-VI, regret bounds"]
+    G["<b>7. Value-Based Deep RL</b><br/>DQN, DDPG, TD3, SAC"]
+    G2["<b>8. Policy-Based Deep RL</b><br/>Actor-critic, A2C, PPO"]
+    H["<b>9. AlphaGo</b><br/>Behavior cloning, self-play,<br/>value networks, MCTS"]
+    I["<b>10. RLHF &amp; Alignment</b><br/>Reward modeling,<br/>PPO, DPO"]
+    J["<b>11. Verifiable Rewards</b><br/>GRPO, DeepSeek R1,<br/>reasoning models"]
+
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    F --> G2
+    G --> H
+    G2 --> H
+    G2 --> I
+    I --> J
+
+    style A fill:#e0e9f0,stroke:#7b97ad,color:#3d3530
+    style B fill:#e0e9f0,stroke:#7b97ad,color:#3d3530
+    style C fill:#f0e8d9,stroke:#b8995e,color:#3d3530
+    style D fill:#f0e8d9,stroke:#b8995e,color:#3d3530
+    style E fill:#ede4d7,stroke:#a58b6d,color:#3d3530
+    style F fill:#ede4d7,stroke:#a58b6d,color:#3d3530
+    style G fill:#dde8de,stroke:#7a9a7e,color:#3d3530
+    style G2 fill:#dde8de,stroke:#7a9a7e,color:#3d3530
+    style H fill:#dde8de,stroke:#7a9a7e,color:#3d3530
+    style I fill:#dde8de,stroke:#7a9a7e,color:#3d3530
+    style J fill:#dde8de,stroke:#7a9a7e,color:#3d3530
+```
+
+## Course Overview {.unnumbered}
+
+### Part I: Foundations
+
+- **[Introduction](lectures/01-introduction.qmd)** --- What does it mean for an agent to learn from experience? We set up the RL problem: an agent interacts with an environment, receives rewards, and must figure out which actions lead to the best long-term outcomes. We formalize this using Markov decision processes.
+
+- **[MDP Basics](lectures/02-mdp-basics.qmd)** --- How do we measure how good a state or action is? We define value functions and derive the Bellman equations --- recursive relationships that form the backbone of nearly every RL algorithm. We prove that optimal policies always exist and can be found among deterministic, memoryless strategies.
+
+- **[MDP Planning](lectures/03-mdp-planning.qmd)** --- If we know the rules of the world, how do we compute the best strategy? We study value iteration, policy iteration, and linear programming approaches. We also derive the performance difference lemma --- a powerful tool that quantifies exactly how much one policy improves over another.
+
+### Part II: Approximate Methods
+
+- **[Approximate Planning](lectures/04-approximate-planning.qmd)** --- Real-world problems are too large to solve exactly. What happens when we plan with an imperfect model? We study how approximation errors propagate through planning algorithms and develop tools to keep errors under control.
+
+- **[Certainty Equivalence](lectures/05-certainty-equivalence.qmd)** --- A clean recipe for learning: estimate a model of the world from data, then plan as if the estimate were correct. We analyze how much data is needed for this approach to work well, cleanly separating the statistical challenge (estimation) from the computational one (planning).
+
+### Part III: Exploration and Learning
+
+- **[Exploration](lectures/06-exploration.qmd)** --- The agent faces a dilemma: should it exploit what it already knows works, or explore something new that might be even better? We study this tradeoff through multi-armed bandits (UCB, Thompson sampling) and extend these ideas to full MDPs.
+
+- **[Value-Based Deep RL](lectures/07-value-based-deep-rl.qmd)** --- How do we scale RL to high-dimensional state and action spaces? We cover DQN for discrete actions, then extend to continuous control with DDPG, TD3, and SAC --- the value-based algorithms that power RL from Atari to robotics.
+
+- **[Policy-Based Deep RL](lectures/08-policy-based-deep-rl.qmd)** --- Instead of learning Q-functions, we directly optimize parameterized policies. We develop actor-critic methods, Advantage Actor-Critic (A2C), and Proximal Policy Optimization (PPO), with practical techniques like GAE and clipped surrogate objectives.
+
+### Part IV: Applications
+
+- **[AlphaGo](lectures/09-alphago.qmd)** --- How did a computer first beat a world champion at Go, a game thought to be decades beyond the reach of AI? AlphaGo combines imitation learning from human games, self-play via policy gradient, a value network for position evaluation, and Monte Carlo tree search for look-ahead planning. We then discuss AlphaGo Zero, which achieves even stronger play without any human data using a shared dual-head residual network.
+
+- **[RLHF and Alignment](lectures/10-rl-for-llms.qmd)** --- The most impactful application of RL today: aligning language models with human preferences. After a self-contained introduction to the transformer decoder and LLM training pipeline, we develop the full RLHF framework --- reward modeling from human comparisons, PPO-based optimization, and Direct Preference Optimization (DPO) --- showing how the MDP framework from the first half of the course directly drives the technology behind ChatGPT, Claude, and other conversational AI systems. We also examine the side effects of RLHF, from length bias to reward hacking.
+
+- **[RL from Verifiable Rewards](lectures/11-rl-verifiable-rewards.qmd)** --- For tasks like mathematics and coding, we can verify answers directly rather than relying on a learned reward model. This lecture develops Group Relative Policy Optimization (GRPO), analyzes its biases and fixes, and walks through the landmark case studies --- DeepSeek R1-Zero, DeepSeek R1, Kimi K1.5, and Qwen 3 --- that demonstrate how pure RL from verifiable rewards can produce reasoning capabilities rivaling the best proprietary models.
+
+## Acknowledgements {.unnumbered}
+
+When preparing these lecture notes, we have drawn on materials from the following relevant courses:
+
+- [CS 6789: Foundations of Reinforcement Learning](https://wensun.github.io/CS6789_fall_2024.html) by [Wen Sun](https://wensun.github.io/), Cornell University
+- [CS 542: Statistical Reinforcement Learning](https://nanjiang.cs.illinois.edu/cs542/) by [Nan Jiang](https://nanjiang.cs.illinois.edu/), UIUC
+- [CMPUT 605: Theoretical Foundations of Reinforcement Learning](https://rltheory.github.io/pages/about/) by [Csaba Szepesvári](https://sites.google.com/view/csaboracle/), University of Alberta
+- [ECE 524: Foundations of Reinforcement Learning](https://sites.google.com/view/cjin/teaching/ece524) by [Chi Jin](https://sites.google.com/view/cjin/), Princeton University

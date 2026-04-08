@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 350">
+  <defs>
+    <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#3D3530"/>
+    </marker>
+    <style>
+      text {
+        font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
+        fill: #3D3530;
+      }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect x="0" y="0" width="600" height="350" fill="#f7f3ee"/>
+
+  <!-- Plot area: left=70, right=560, top=30, bottom=290 -->
+  <!-- X range: 0–1200 mapped to 70–560 (490 px) -->
+  <!-- Y range: 0–1.0 mapped to 290–30 (260 px) -->
+  <!-- Helpers: x(t) = 70 + t/1200*490, y(e) = 290 - e*260 -->
+
+  <!-- Grid lines (horizontal) -->
+  <line x1="70" y1="238" x2="560" y2="238" stroke="#e0d9d1" stroke-width="0.5"/>  <!-- 0.2 -->
+  <line x1="70" y1="186" x2="560" y2="186" stroke="#e0d9d1" stroke-width="0.5"/>  <!-- 0.4 -->
+  <line x1="70" y1="134" x2="560" y2="134" stroke="#e0d9d1" stroke-width="0.5"/>  <!-- 0.6 -->
+  <line x1="70" y1="82"  x2="560" y2="82"  stroke="#e0d9d1" stroke-width="0.5"/>  <!-- 0.8 -->
+  <line x1="70" y1="30"  x2="560" y2="30"  stroke="#e0d9d1" stroke-width="0.5"/>  <!-- 1.0 -->
+
+  <!-- Grid lines (vertical) -->
+  <line x1="151.67" y1="30" x2="151.67" y2="290" stroke="#e0d9d1" stroke-width="0.5"/>  <!-- 200 -->
+  <line x1="233.33" y1="30" x2="233.33" y2="290" stroke="#e0d9d1" stroke-width="0.5"/>  <!-- 400 -->
+  <line x1="315"    y1="30" x2="315"    y2="290" stroke="#e0d9d1" stroke-width="0.5"/>  <!-- 600 -->
+  <line x1="396.67" y1="30" x2="396.67" y2="290" stroke="#e0d9d1" stroke-width="0.5"/>  <!-- 800 -->
+  <line x1="478.33" y1="30" x2="478.33" y2="290" stroke="#e0d9d1" stroke-width="0.5"/>  <!-- 1000 -->
+
+  <!-- Shaded region below the curve (exploration region, 0-1000) -->
+  <!-- Curve: (70,30) to (478.33,287.4), then down to (478.33,290), back to (70,290) -->
+  <polygon
+    points="70,30 478.33,287.4 478.33,290 70,290"
+    fill="#7B97AD" fill-opacity="0.15"/>
+
+  <!-- Epsilon curve: linear decrease from (0,1.0) to (1000,0.01), then flat at 0.01 to 1200 -->
+  <!-- (0,1.0) -> x=70, y=30 -->
+  <!-- (1000,0.01) -> x=478.33, y=287.4 -->
+  <!-- (1200,0.01) -> x=560, y=287.4 -->
+  <polyline
+    points="70,30 478.33,287.4 560,287.4"
+    fill="none" stroke="#7B97AD" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+
+  <!-- Dashed horizontal line at epsilon_min = 0.01 -->
+  <line x1="70" y1="287.4" x2="560" y2="287.4"
+    stroke="#968a80" stroke-width="1" stroke-dasharray="6,4"/>
+
+  <!-- Label for epsilon_min -->
+  <text x="564" y="284" font-size="11" fill="#968a80">ε_min = 0.01</text>
+
+  <!-- X-axis -->
+  <line x1="70" y1="290" x2="560" y2="290" stroke="#968a80" stroke-width="1.5"/>
+  <!-- Y-axis -->
+  <line x1="70" y1="30" x2="70" y2="290" stroke="#968a80" stroke-width="1.5"/>
+
+  <!-- X-axis ticks and labels -->
+  <line x1="70" y1="290" x2="70" y2="295" stroke="#968a80" stroke-width="1"/>
+  <text x="70" y="310" font-size="11" text-anchor="middle">0</text>
+
+  <line x1="151.67" y1="290" x2="151.67" y2="295" stroke="#968a80" stroke-width="1"/>
+  <text x="151.67" y="310" font-size="11" text-anchor="middle">200</text>
+
+  <line x1="233.33" y1="290" x2="233.33" y2="295" stroke="#968a80" stroke-width="1"/>
+  <text x="233.33" y="310" font-size="11" text-anchor="middle">400</text>
+
+  <line x1="315" y1="290" x2="315" y2="295" stroke="#968a80" stroke-width="1"/>
+  <text x="315" y="310" font-size="11" text-anchor="middle">600</text>
+
+  <line x1="396.67" y1="290" x2="396.67" y2="295" stroke="#968a80" stroke-width="1"/>
+  <text x="396.67" y="310" font-size="11" text-anchor="middle">800</text>
+
+  <line x1="478.33" y1="290" x2="478.33" y2="295" stroke="#968a80" stroke-width="1"/>
+  <text x="478.33" y="310" font-size="11" text-anchor="middle">1000</text>
+
+  <line x1="560" y1="290" x2="560" y2="295" stroke="#968a80" stroke-width="1"/>
+  <text x="560" y="310" font-size="11" text-anchor="middle">1200</text>
+
+  <!-- X-axis title -->
+  <text x="315" y="338" font-size="13" text-anchor="middle">Time step t</text>
+
+  <!-- Y-axis ticks and labels -->
+  <line x1="65" y1="290" x2="70" y2="290" stroke="#968a80" stroke-width="1"/>
+  <text x="60" y="294" font-size="11" text-anchor="end">0</text>
+
+  <line x1="65" y1="238" x2="70" y2="238" stroke="#968a80" stroke-width="1"/>
+  <text x="60" y="242" font-size="11" text-anchor="end">0.2</text>
+
+  <line x1="65" y1="186" x2="70" y2="186" stroke="#968a80" stroke-width="1"/>
+  <text x="60" y="190" font-size="11" text-anchor="end">0.4</text>
+
+  <line x1="65" y1="134" x2="70" y2="134" stroke="#968a80" stroke-width="1"/>
+  <text x="60" y="138" font-size="11" text-anchor="end">0.6</text>
+
+  <line x1="65" y1="82" x2="70" y2="82" stroke="#968a80" stroke-width="1"/>
+  <text x="60" y="86" font-size="11" text-anchor="end">0.8</text>
+
+  <line x1="65" y1="30" x2="70" y2="30" stroke="#968a80" stroke-width="1"/>
+  <text x="60" y="34" font-size="11" text-anchor="end">1.0</text>
+
+  <!-- Y-axis title (rotated) -->
+  <text x="18" y="160" font-size="13" text-anchor="middle"
+    transform="rotate(-90 18 160)">Exploration rate ε</text>
+
+  <!-- Annotation: "Exploration" label with arrow -->
+  <text x="155" y="88" font-size="13" font-style="italic">Exploration</text>
+  <line x1="185" y1="94" x2="165" y2="138"
+    stroke="#3D3530" stroke-width="1.2" marker-end="url(#arrowhead)"/>
+
+  <!-- Annotation: "Exploitation" label with arrow -->
+  <text x="420" y="230" font-size="13" font-style="italic">Exploitation</text>
+  <line x1="460" y1="236" x2="500" y2="278"
+    stroke="#3D3530" stroke-width="1.2" marker-end="url(#arrowhead)"/>
+</svg>

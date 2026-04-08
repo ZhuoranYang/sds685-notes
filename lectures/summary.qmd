@@ -1,0 +1,27 @@
+---
+number-sections: false
+---
+
+# Course Summary {.unnumbered}
+
+This concludes our journey through **Reinforcement Learning and Sequential Decision Making**. Over the course of ten lectures, we have built a comprehensive understanding of the field --- from the mathematical foundations of Markov decision processes through the deep RL algorithms that power modern AI systems.
+
+
+## Foundations (Chapters 1--3)
+
+We introduced Markov decision processes (MDPs) as the mathematical framework for sequential decision making under uncertainty. We defined value functions and derived the Bellman equations --- the recursive relationships that form the backbone of nearly every RL algorithm. We proved that optimal policies always exist among deterministic, memoryless strategies, and studied three classical planning algorithms: value iteration, policy iteration, and linear programming. The performance difference lemma gave us a powerful tool for quantifying how much one policy improves over another.
+
+
+## Approximate Methods (Chapters 4--5)
+
+Real-world problems are too large to solve exactly. We studied how approximation errors propagate through planning algorithms and developed the simulation lemma to keep errors under control. The certainty equivalence principle provided a clean recipe for learning: estimate a model of the world from data, then plan as if the estimate were correct --- cleanly separating the statistical challenge (estimation) from the computational one (planning).
+
+
+## Exploration and Learning (Chapters 6--7)
+
+We confronted the fundamental exploration--exploitation tradeoff: should the agent exploit what it already knows, or explore something new? Starting from multi-armed bandits (UCB, Thompson sampling), we extended these ideas to full MDPs. We then turned to the practical deep RL algorithms --- policy gradient, actor-critic, PPO, and SAC --- that bring these ideas to scale in high-dimensional environments.
+
+
+## Applications (Chapters 8--10)
+
+We saw how the theory developed in earlier chapters drives three of the most consequential applications of RL. **AlphaGo** (Chapter 8) combined behavior cloning, policy gradient self-play, value networks, and Monte Carlo tree search to achieve superhuman play at Go --- and AlphaGo Zero showed that human data can be eliminated entirely. **RLHF and Alignment** (Chapter 9) developed the pipeline that aligns language models with human preferences: reward modeling via the Bradley--Terry model, PPO-based policy optimization, and Direct Preference Optimization (DPO). We examined side effects of RLHF including length bias, annotator bias, and reward hacking. **RL from Verifiable Rewards** (Chapter 10) showed how verifiable rewards for math and code enable a cleaner RL paradigm. We developed GRPO, analyzed its biases, and traced the landmark case studies --- DeepSeek R1-Zero, DeepSeek R1, Kimi K1.5, and Qwen 3 --- that demonstrate how pure RL can produce reasoning capabilities rivaling the best proprietary models. This is the technology behind the new wave of reasoning AI systems --- a direct application of the MDP and policy gradient frameworks from the first half of the course.

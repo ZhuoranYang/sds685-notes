@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 440" font-family="'Georgia', 'Times New Roman', serif">
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#3d3530"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="700" height="440" rx="12" fill="#f9f6f0" stroke="#d4c9b8" stroke-width="1.5"/>
+
+  <!-- Title -->
+  <text x="350" y="36" text-anchor="middle" font-size="17" font-weight="bold" fill="#3d3530">Hierarchy of RL Models</text>
+
+  <!-- SDP (top-level) -->
+  <rect x="220" y="56" width="260" height="52" rx="10" fill="#7b97ad" fill-opacity="0.22" stroke="#7b97ad" stroke-width="2.5"/>
+  <text x="350" y="80" text-anchor="middle" font-size="17" font-weight="bold" fill="#3d3530">Stochastic Decision</text>
+  <text x="350" y="99" text-anchor="middle" font-size="17" font-weight="bold" fill="#3d3530">Process (SDP)</text>
+
+  <!-- Vertical line from SDP down -->
+  <line x1="350" y1="108" x2="350" y2="140" stroke="#3d3530" stroke-width="1.8" marker-end="url(#arr)"/>
+
+  <!-- Annotation: most general -->
+  <text x="510" y="86" text-anchor="start" font-size="12" fill="#8a7a5e" font-style="italic">most general model</text>
+
+  <!-- Bandit -->
+  <rect x="30" y="148" width="170" height="44" rx="8" fill="#b8995e" fill-opacity="0.22" stroke="#b8995e" stroke-width="2"/>
+  <text x="115" y="175" text-anchor="middle" font-size="15" font-weight="bold" fill="#3d3530">Bandit</text>
+
+  <!-- Contextual Bandit -->
+  <rect x="220" y="148" width="170" height="44" rx="8" fill="#b8995e" fill-opacity="0.22" stroke="#b8995e" stroke-width="2"/>
+  <text x="305" y="175" text-anchor="middle" font-size="15" font-weight="bold" fill="#3d3530">Contextual Bandit</text>
+
+  <!-- MDP label (bracket) -->
+  <rect x="430" y="148" width="240" height="44" rx="8" fill="#7a9a7e" fill-opacity="0.15" stroke="#7a9a7e" stroke-width="2"/>
+  <text x="550" y="175" text-anchor="middle" font-size="15" font-weight="bold" fill="#3d3530">Markov Decision Processes</text>
+
+  <!-- Lines from SDP to children -->
+  <line x1="350" y1="140" x2="115" y2="148" stroke="#3d3530" stroke-width="1.5"/>
+  <line x1="350" y1="140" x2="305" y2="148" stroke="#3d3530" stroke-width="1.5"/>
+  <line x1="350" y1="140" x2="550" y2="148" stroke="#3d3530" stroke-width="1.5"/>
+
+  <!-- Annotations for Bandit -->
+  <text x="115" y="213" text-anchor="middle" font-size="11.5" fill="#7b7067" font-style="italic">single step</text>
+  <text x="115" y="227" text-anchor="middle" font-size="11.5" fill="#7b7067" font-style="italic">no state</text>
+
+  <!-- Annotations for Contextual Bandit -->
+  <text x="305" y="213" text-anchor="middle" font-size="11.5" fill="#7b7067" font-style="italic">single step</text>
+  <text x="305" y="227" text-anchor="middle" font-size="11.5" fill="#7b7067" font-style="italic">+ context/state</text>
+
+  <!-- Vertical line from MDP down to two sub-types -->
+  <line x1="550" y1="192" x2="550" y2="240" stroke="#3d3530" stroke-width="1.5"/>
+
+  <!-- Episodic MDP -->
+  <rect x="410" y="260" width="140" height="48" rx="8" fill="#7a9a7e" fill-opacity="0.22" stroke="#7a9a7e" stroke-width="2"/>
+  <text x="480" y="282" text-anchor="middle" font-size="14" font-weight="bold" fill="#3d3530">Episodic MDP</text>
+  <text x="480" y="299" text-anchor="middle" font-size="12" fill="#5a524c" font-style="italic">horizon H</text>
+
+  <!-- Discounted MDP -->
+  <rect x="575" y="260" width="105" height="48" rx="8" fill="#7a9a7e" fill-opacity="0.22" stroke="#7a9a7e" stroke-width="2"/>
+  <text x="627" y="282" text-anchor="middle" font-size="14" font-weight="bold" fill="#3d3530">Discounted</text>
+  <text x="627" y="299" text-anchor="middle" font-size="12" fill="#5a524c" font-style="italic">discount in (0,1)</text>
+
+  <!-- Lines from MDP to sub-types -->
+  <line x1="550" y1="240" x2="480" y2="260" stroke="#3d3530" stroke-width="1.5"/>
+  <line x1="550" y1="240" x2="627" y2="260" stroke="#3d3530" stroke-width="1.5"/>
+
+  <!-- Annotation for Episodic -->
+  <text x="480" y="330" text-anchor="middle" font-size="11" fill="#7b7067" font-style="italic">+ Markov property</text>
+  <text x="480" y="344" text-anchor="middle" font-size="11" fill="#7b7067" font-style="italic">+ finite horizon</text>
+  <text x="480" y="358" text-anchor="middle" font-size="11" fill="#7b7067" font-style="italic">+ additive reward</text>
+
+  <!-- Annotation for Discounted -->
+  <text x="627" y="330" text-anchor="middle" font-size="11" fill="#7b7067" font-style="italic">+ Markov property</text>
+  <text x="627" y="344" text-anchor="middle" font-size="11" fill="#7b7067" font-style="italic">+ infinite horizon</text>
+  <text x="627" y="358" text-anchor="middle" font-size="11" fill="#7b7067" font-style="italic">+ discounted reward</text>
+
+  <!-- Increasing structure arrow at bottom -->
+  <line x1="60" y1="410" x2="640" y2="410" stroke="#b8995e" stroke-width="1.8" marker-end="url(#arr)"/>
+  <text x="350" y="430" text-anchor="middle" font-size="13" fill="#8a7a5e" font-weight="bold">Increasing structural assumptions</text>
+</svg>

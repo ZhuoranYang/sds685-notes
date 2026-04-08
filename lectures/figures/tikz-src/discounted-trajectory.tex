@@ -1,0 +1,53 @@
+\documentclass[tikz,border=8pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage{mathpazo}
+\usetikzlibrary{arrows.meta, positioning, calc}
+
+\definecolor{stblue}{HTML}{7B97AD}
+\definecolor{rwgold}{HTML}{B8995E}
+\definecolor{dkbrown}{HTML}{3D3530}
+\definecolor{wmgray}{HTML}{7B7067}
+\definecolor{cream}{HTML}{F9F6F0}
+\definecolor{border}{HTML}{D4C9B8}
+
+\begin{document}
+\begin{tikzpicture}[
+  state/.style={rectangle, rounded corners=5pt, draw=stblue, line width=1.2pt,
+    fill=stblue!12, minimum width=11mm, minimum height=9mm, font=\bfseries},
+  reward/.style={circle, draw=rwgold, line width=1.2pt,
+    fill=rwgold!12, minimum size=9mm, font=\bfseries},
+  >={Stealth[length=2.5mm, width=2mm]},
+  arr/.style={draw=dkbrown, line width=0.9pt, ->},
+  act/.style={font=\small, text=wmgray, above, midway},
+  slab/.style={font=\footnotesize, text=wmgray, below=4mm},
+]
+
+% Background
+\fill[cream, rounded corners=8pt] (-0.6,-1.8) rectangle (14.5,1.3);
+\draw[border, rounded corners=8pt, line width=1pt] (-0.6,-1.8) rectangle (14.5,1.3);
+
+\node[state] (s0) at (0,0) {$s_0$};
+\node[reward, right=12mm of s0] (r0) {$r_0$};
+\node[state, right=9mm of r0] (s1) {$s_1$};
+\node[reward, right=12mm of s1] (r1) {$r_1$};
+\node[state, right=9mm of r1] (s2) {$s_2$};
+\node[reward, right=12mm of s2] (r2) {$r_2$};
+\node[right=7mm of r2, font=\large, text=dkbrown] (dots) {$\cdots$};
+\node[right=3mm of dots, font=\normalsize, text=dkbrown] (forever) {forever};
+
+\draw[arr] (s0) -- node[act] {$a_0$} (r0);
+\draw[arr] (r0) -- (s1);
+\draw[arr] (s1) -- node[act] {$a_1$} (r1);
+\draw[arr] (r1) -- (s2);
+\draw[arr] (s2) -- node[act] {$a_2$} (r2);
+\draw[arr] (r2) -- (dots);
+
+\node[slab] at (s0.south) {step 0};
+\node[slab] at (s1.south) {step 1};
+\node[slab] at (s2.south) {step 2};
+
+\node[font=\small\itshape, text=wmgray]
+  at ($(s1.south)!0.5!(s2.south) + (0,-10mm)$)
+  {Discount $\gamma$ ensures finite total reward};
+\end{tikzpicture}
+\end{document}

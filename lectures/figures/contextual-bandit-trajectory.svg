@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 580 130" font-family="'Georgia', 'Times New Roman', serif">
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#3d3530"/>
+    </marker>
+  </defs>
+
+  <rect width="580" height="130" rx="12" fill="#f9f6f0" stroke="#d4c9b8" stroke-width="1.5"/>
+
+  <!-- Context box -->
+  <rect x="30" y="25" width="110" height="70" rx="10" fill="#7a9a7e" fill-opacity="0.18" stroke="#7a9a7e" stroke-width="2.5"/>
+  <text x="85" y="55" text-anchor="middle" font-size="16" fill="#3d3530">context</text>
+  <text x="85" y="77" text-anchor="middle" font-size="18" font-weight="bold" fill="#3d3530" font-style="italic">o</text>
+
+  <!-- Arrow: observe -->
+  <path d="M 140,60 L 200,60" stroke="#3d3530" stroke-width="2.2" fill="none" marker-end="url(#arr)"/>
+  <text x="170" y="50" text-anchor="middle" font-size="13" fill="#5a524c" font-style="italic">observe</text>
+
+  <!-- Agent box -->
+  <rect x="200" y="25" width="120" height="70" rx="10" fill="#7b97ad" fill-opacity="0.18" stroke="#7b97ad" stroke-width="2.5"/>
+  <text x="260" y="65" text-anchor="middle" font-size="20" font-weight="bold" fill="#3d3530">Agent</text>
+
+  <!-- Arrow: choose action -->
+  <path d="M 320,60 L 410,60" stroke="#3d3530" stroke-width="2.2" fill="none" marker-end="url(#arr)"/>
+  <text x="365" y="50" text-anchor="middle" font-size="14" fill="#5a524c" font-style="italic">choose action</text>
+
+  <!-- Reward circle -->
+  <circle cx="475" cy="60" r="42" fill="#b8995e" fill-opacity="0.18" stroke="#b8995e" stroke-width="2.5"/>
+  <text x="475" y="57" text-anchor="middle" font-size="16" font-weight="bold" fill="#3d3530">reward</text>
+  <text x="475" y="75" text-anchor="middle" font-size="15" fill="#3d3530" font-style="italic">r</text>
+
+  <!-- Bottom annotation -->
+  <text x="290" y="118" text-anchor="middle" font-size="12" fill="#7b7067" font-style="italic">Single step with context; no state transitions</text>
+</svg>

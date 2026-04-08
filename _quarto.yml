@@ -1,0 +1,72 @@
+project:
+  type: book
+  output-dir: _book
+
+book:
+  title: "S&DS 685 — Reinforcement Learning and Sequential Decision Making"
+  subtitle: "Lecture notes for S&DS 685, a graduate-level course on theoretical foundations of reinforcement learning, offered in 2023 and 2025"
+  author:
+    - name: "Zhuoran Yang"
+      url: "https://zhuoranyang.github.io/"
+  chapters:
+    - index.qmd
+    - part: "Foundations"
+      chapters:
+        - lectures/01-introduction.qmd
+        - lectures/02-mdp-basics.qmd
+        - lectures/03-mdp-planning.qmd
+    - part: "Approximate Methods"
+      chapters:
+        - lectures/04-approximate-planning.qmd
+        - lectures/05-certainty-equivalence.qmd
+    - part: "Exploration and Learning"
+      chapters:
+        - lectures/06-exploration.qmd
+        - lectures/07-value-based-deep-rl.qmd
+        - lectures/08-policy-based-deep-rl.qmd
+    - part: "Applications"
+      chapters:
+        - lectures/09-alphago.qmd
+        - lectures/10-rl-for-llms.qmd
+        - lectures/11-rl-verifiable-rewards.qmd
+    - lectures/summary.qmd
+
+  page-navigation: true
+  search: true
+  sidebar:
+    style: floating
+    collapse-level: 2
+
+lightbox: auto
+
+format:
+  html:
+    theme: [default, _warmtone.scss]
+    code-copy: true
+    code-overflow: wrap
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    html-math-method: katex
+    fig-path: lectures/figures/
+    include-in-header:
+      - text: |
+          <script src="https://cdn.plot.ly/plotly-2.35.0.min.js" charset="utf-8"></script>
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+          <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    include-after-body:
+      - file: _plotly-theme.html
+
+language:
+  title-block-author-single: "Instructor"
+
+crossref:
+  chapters: true
+  thm-title: "Theorem"
+  lem-title: "Lemma"
+  cor-title: "Corollary"
+  prp-title: "Proposition"
+  def-title: "Definition"
+  exm-title: "Example"
+  exr-title: "Exercise"

@@ -1,0 +1,607 @@
+---
+title: "Deep RL II: Policy-Based Methods"
+subtitle: "Actor-critic, A2C, and PPO"
+---
+
+
+Policy-based methods take a fundamentally different approach from the value-based methods of the previous chapter: instead of learning the optimal Q-function and deriving a policy from it, they directly optimize a parameterized policy $\pi_\theta$ using gradient ascent on the expected return. When combined with a learned value function (the critic), these become **actor-critic** methods. This chapter covers Actor-Critic with neural networks, Advantage Actor-Critic (A2C), and Proximal Policy Optimization (PPO).
+
+::: {.callout-important}
+## The Central Question
+*How can we directly optimize policies using gradient methods, and what practical innovations (baselines, advantage estimation, trust regions) are needed to make policy gradient methods work with deep neural networks?*
+:::
+
+## What Will Be Covered {#sec-overview}
+
+- Actor-Critic with neural networks
+- Advantage Actor-Critic (A2C)
+- Proximal Policy Optimization (PPO)
+
+
+## Actor-Critic with Neural Networks {#sec-ac-nn}
+
+### Policy Gradient Theorem {#sec-pg-theorem}
+
+Let $\pi_\theta: \mathcal{S} \to \Delta(\mathcal{A})$ be a stochastic policy with parameter $\theta$. Consider $J(\pi_\theta)$ as a function of $\theta$, where $R(\tau) = \sum_{t=0}^{\infty} \gamma^t r_t$ is a random variable (the discounted return of a trajectory).
+
+::: {#thm-policy-gradient}
+## Policy Gradient Theorem
+
+The policy gradient theorem states that:
+
+**Form 1 (REINFORCE):**
+$$
+\nabla_\theta J(\pi_\theta) = \mathbb{E}_{\tau \sim \pi_\theta} \Biggl[ R(\tau) \cdot \Biggl( \sum_{t=0}^{\infty} \nabla_\theta \log \pi_\theta(a_t \mid s_t) \Biggr) \Biggr].
+$$ {#eq-pg-form1}
+
+**Form 2 (with baseline):**
+$$
+\nabla_\theta J(\pi_\theta) = \mathbb{E}_{(s,a) \sim d_\mu^{\pi_\theta}} \bigl[ \bigl( Q^{\pi_\theta}(s, a) - b(s) \bigr) \cdot \nabla_\theta \log \pi_\theta(a \mid s) \bigr],
+$$ {#eq-pg-form2}
+
+where $b$ is any function of $s$. Taking $b = V^{\pi_\theta}$ gives:
+$$
+\nabla_\theta J(\pi_\theta) = \mathbb{E} \bigl[ A^{\pi_\theta}(s, a) \cdot \nabla_\theta \log \pi_\theta(a \mid s) \bigr].
+$$ {#eq-pg-advantage}
+:::
+
+This theorem is fundamental to all policy gradient methods. It tells us that the gradient of the expected return has a simple form involving the log-probability of actions weighted by how good those actions are.
+
+![The policy gradient landscape. Contour lines show levels of the expected return J(theta) in the policy parameter space. The gradient direction points uphill toward regions of higher reward. Policy gradient methods follow this gradient to iteratively improve the policy.](figures/policy-gradient-landscape.svg){#fig-policy-gradient-landscape width="80%"}
+
+### REINFORCE and Its Limitations {#sec-reinforce}
+
+Based on Form 1, we get the **REINFORCE** algorithm: sample a trajectory $\{(s_t, a_t, r_t)\}_{t=0}^{T}$ and approximate the expectation by:
+$$
+\Biggl( \sum_{t=0}^{T} \nabla_\theta \log \pi_\theta(a_t \mid s_t) \Biggr) \cdot \Biggl( \sum_{t=0}^{T} \gamma^t r_t \Biggr).
+$$
+
+This approach suffers from **high variance**, because we sample a dependent trajectory, and $\sum_{t=0}^{T} \nabla_\theta \log \pi_\theta(a_t \mid s_t)$ might have a large variance.
+
+### Actor-Critic Methods {#sec-ac-methods}
+
+![The actor-critic architecture. The Actor (policy network) takes a state and outputs an action sent to the environment. The Critic (value network) evaluates the state and computes the TD error, which feeds back into the actor update.](figures/actor-critic-architecture.svg){#fig-actor-critic width="80%"}
+
+To reduce variance, actor-critic methods use:
+$$
+\nabla_\theta J(\pi_\theta) = \mathbb{E}_{s, a \sim d_\mu^{\pi_\theta}} \bigl[ \nabla_\theta \log \pi_\theta(a \mid s) \cdot Q^{\pi_\theta}(s, a) \bigr],
+$$ {#eq-ac-gradient}
+and use data to **estimate** $Q^{\pi_\theta}$.
+
+**How to estimate $Q^{\pi_\theta}$? Temporal difference learning.**
+
+- At current critic $Q_\phi: \mathcal{S} \times \mathcal{A} \to \mathbb{R}$:
+- Draw sample $(s, a, r, s', a')$ where $a \sim \pi_\theta(\cdot \mid s)$ and $a' \sim \pi_\theta(\cdot \mid s')$.
+- TD target: $y = r + Q_\phi(s', a')$.
+- Loss: $L(\phi) = (y - Q_\phi(s, a))^2$.
+- Update: $\phi \leftarrow \phi - \alpha \cdot \nabla L(\phi)$.
+
+::: {.callout-tip}
+## Remark: On-Policy vs. Off-Policy
+
+Here, we do not use a target network. TD learning here is an **on-policy** algorithm.
+
+- **On-policy:** Evaluating $\pi$ using data sampled from $\pi$.
+- **Off-policy:** Estimating $Q^\pi$ without using data from $\pi$.
+
+DQN is off-policy because we do not have data from $\pi^*$. In actor-critic, when evaluating $\pi_\theta$ (estimating $Q^{\pi_\theta}$), we do not necessarily need experience replay. We can use a target network, but experience replay is not needed.
+:::
+
+### Policy Network and Value Network {#sec-policy-value-network}
+
+To implement actor-critic methods with neural networks, we need to specify the network architectures for the policy (actor) and value function (critic). We first recall the relationship between $V^\pi$ and $Q^\pi$.
+
+::: {#def-state-value}
+## State-Value Function
+
+$$V_\pi(s) = \sum_a \pi(a \mid s) \cdot Q_\pi(s, a).$$ {#eq-state-value}
+:::
+
+In practice, both the policy and value function are represented as neural networks, which are trained end-to-end.
+
+::: {#def-function-approx}
+## Function Approximation Using Neural Networks
+
+- Approximate the policy function $\pi(a \mid s)$ by $\pi(a \mid s; \boldsymbol{\theta})$ (**actor**).
+- Approximate the value function $Q_\pi(s, a)$ by $q(s, a; \mathbf{w})$ (**critic**).
+:::
+
+### Training {#sec-ac-training}
+
+**Update the policy network (actor) by policy gradient:**
+
+- Seek to increase state-value: $V(s; \boldsymbol{\theta}, \mathbf{w}) = \sum_a \pi(a \mid s; \boldsymbol{\theta}) \cdot q(s, a; \mathbf{w})$.
+- Compute policy gradient:
+$$
+\frac{\partial V(s; \boldsymbol{\theta})}{\partial \boldsymbol{\theta}} = \mathbb{E}_A \biggl[ \frac{\partial \log \pi(A \mid s, \boldsymbol{\theta})}{\partial \boldsymbol{\theta}} \cdot q(s, A; \mathbf{w}) \biggr].
+$$ {#eq-ac-policy-gradient}
+- Perform gradient ascent.
+
+**Update the value network (critic) by TD learning:**
+
+- Predicted action-value: $q_t = q(s_t, a_t; \mathbf{w})$.
+- TD target: $y_t = r_t + \gamma \cdot q(s_{t+1}, a_{t+1}; \mathbf{w})$.
+- Gradient:
+$$
+\frac{\partial (q_t - y_t)^2 / 2}{\partial \mathbf{w}} = (q_t - y_t) \cdot \frac{\partial \, q(s_t, a_t; \mathbf{w})}{\partial \mathbf{w}}.
+$$ {#eq-ac-critic-gradient}
+- Perform gradient descent.
+
+
+## Advantage Actor-Critic (A2C) {#sec-a2c}
+
+### Policy Gradient with TD Error {#sec-pg-td-error}
+
+The policy gradient theorem can be rewritten as:
+$$
+\nabla_\theta J(\pi_\theta) = \mathbb{E}_{(s,a) \sim d_\mu^{\pi_\theta}} \bigl[ \nabla_\theta \log \pi_\theta(a \mid s) \cdot A^{\pi_\theta}(s, a) \bigr].
+$$ {#eq-pg-advantage-form}
+
+Intuitively, estimating the **advantage** is better than estimating $Q^{\pi_\theta}$ because the advantage is centered:
+$$
+\sum_a A^{\pi_\theta}(s, a) \cdot \pi_\theta(a \mid s) = 0.
+$$
+
+But how to estimate $A^{\pi_\theta}$? One could estimate $Q^{\pi_\theta}$ and $V^{\pi_\theta}$ separately, but a better method is to use a **single value function** $V^{\pi_\theta}$ and notice that:
+$$
+\nabla_\theta J(\pi_\theta) = \mathbb{E}_{(s,a) \sim d_\mu^{\pi_\theta}} \Bigl[ \nabla_\theta \log \pi_\theta(a \mid s) \cdot \bigl( r + \gamma \cdot V^{\pi_\theta}(s') - V^{\pi_\theta}(s) \bigr) \Bigr],
+$$ {#eq-a2c-td-error}
+
+where $r + \gamma \cdot V^{\pi_\theta}(s') - V^{\pi_\theta}(s)$ is the **TD error**. This works because:
+$$
+\mathbb{E} \bigl[ r + \gamma \cdot V^{\pi_\theta}(s') - V^{\pi_\theta}(s) \;\big|\; s_t = s, \, a_t = a \bigr] = A^{\pi_\theta}(s, a).
+$$
+
+### The A2C Algorithm {#sec-a2c-algorithm}
+
+This leads to the **Advantage Actor-Critic (A2C)** algorithm:
+
+::: {.callout-note}
+## Algorithm: A2C
+
+**Step 1.** Estimate $V^{\pi_\theta}$ using on-policy TD learning (using critic network $V_\phi$):
+
+- TD target: $y = r + \gamma \cdot V_\phi(s')$.
+- Loss: $(y - V_\phi(s_t))^2$.
+- Gradient for $\phi$: $(y - V_\phi(s)) \cdot \nabla_\phi V_\phi(s)$.
+
+**Step 2.** Update $\pi_\theta$ using $[\text{TD error}] \times [\nabla_\theta \log \pi_\theta(a_t \mid s_t)]$:
+
+- Gradient for $\theta$: $(r + \gamma \cdot V_\phi(s') - V_\phi(s)) \cdot \nabla_\theta \log \pi_\theta(a \mid s)$.
+- Actor loss: $(r + \gamma \cdot V(s') - V(s)) \cdot \log \pi_\theta(a \mid s)$.
+
+This is an **on-policy** algorithm with data collected using $\pi_\theta$: $(s, a, r, s') \sim \pi_\theta$.
+:::
+
+::: {.callout-tip}
+## Remark: Implementation Details
+
+In terms of implementation, we roll out multiple trajectories using $\pi_\theta$, and use these trajectories (rollout buffer) as a batch to compute the actor and critic losses, and corresponding gradients. Then update $\theta$ and $\phi$. The buffer size equals $n_{\text{steps}} \times n_{\text{envs}}$, and the batch size equals the buffer size --- all data in the rollout buffer is used for computing the gradient.
+:::
+
+### Bias-Variance Tradeoff in Policy Evaluation {#sec-bias-variance}
+
+**TD learning (TD(0)):** Uses $r_t + V(s_{t+1})$ to estimate $V^\pi(s_t)$.
+
+- **Biased estimator** because $\mathbb{E}(r_t + V(s_{t+1})) = T^\pi V \neq V^\pi$ (unless $V = V^\pi$).
+- **Low variance** because $V$ is a fixed function; randomness only comes from a single transition.
+
+**Monte Carlo (TD(1)):** Uses $\sum_{\ell \geq t} \gamma^{\ell - t} r_\ell$ to estimate $V^\pi(s_t)$.
+
+- **Unbiased estimator.**
+- **High variance** because randomness comes from the whole trajectory.
+
+How to strike a balance? **$N$-step lookahead.**
+
+### Extension: $N$-Step Lookahead {#sec-n-step}
+
+In the previous A2C algorithm, we use the following properties:
+$$
+\mathbb{E} \bigl[ r_t + \gamma \cdot V^{\pi_\theta}(s_{t+1}) \mid s_t = s, \, a_t = a \bigr] = A^{\pi_\theta}(s, a), \quad \forall \, s, a,
+$$
+$$
+\mathbb{E} \bigl[ r_t + \gamma \cdot V^{\pi_\theta}(s_{t+1}) - V^{\pi_\theta}(s_t) \mid s_t = s \bigr] = 0, \quad \forall \, s.
+$$
+
+The first property leads to the actor update (TD error $\times$ $\nabla \log \pi$), and the second leads to the critic update (TD learning).
+
+The $N$-step return interpolates between the single-step TD target ($N = 1$) and the full Monte Carlo return ($N = \infty$), offering a principled way to control the bias-variance tradeoff.
+
+::: {#def-n-step-return}
+## $N$-Step Return
+
+In general, given a value function $V: \mathcal{S} \to \mathbb{R}$ and any integer $N$, let $(s_0, a_0, s_1, a_1, \ldots, s_T, a_T, \ldots)$ be a trajectory sampled from a policy $\pi$. Define the **$N$-step return**:
+$$
+G_t^{(N)} = r_t + \gamma \cdot r_{t+1} + \gamma^2 \cdot r_{t+2} + \cdots + \gamma^{N-1} \cdot r_{t+N-1} + V(s_{t+N}).
+$$ {#eq-n-step-return}
+:::
+
+Key properties:
+
+- If $V = V^\pi$, then $\mathbb{E}\bigl[ G_t^{(N)} \mid s_t = s, \, a_t = a \bigr] = Q^\pi(s, a)$ for all $N \geq 1$.
+- Consider the equation $\mathbb{E}\bigl[ G_t^{(N)} \mid s_t = s \bigr] = V(s)$. This equation has a unique solution $V = V^\pi$.
+
+### Critic Loss with $N$-Step Returns {#sec-n-step-critic}
+
+**Critic loss:**
+$$
+y_t = G_t^{(N)}, \qquad \text{Loss}(V_\phi) = \sum_t \bigl( y_t - V_\phi(s_t) \bigr)^2.
+$$ {#eq-n-step-critic-loss}
+
+**Critic update direction:**
+$$
+\sum_t \bigl( y_t - V_\phi(s_t) \bigr) \cdot \nabla_\phi V_\phi(s_t),
+$$
+computed based on trajectories sampled from $\pi_\theta$.
+
+::: {.callout-tip}
+## Remark: How to Choose $N$?
+
+- $N = 1$: Standard TD learning (called TD(0)).
+- $N = \infty$: Monte Carlo sampling, where $G_t^\infty = \sum_{\ell \geq t} \gamma^{\ell - t} r_\ell$ (called TD(1)).
+
+**TD($\lambda$):** Take a weighted sum over all $N$! Define the **$\lambda$-return**:
+$$
+G_t^\lambda = (1 - \lambda) \sum_{n=1}^{\infty} \lambda^{n-1} \cdot G_t^{(n)} = (1 - \lambda) \cdot \bigl( G_t^{(1)} + \lambda \cdot G_t^{(2)} + \cdots \bigr), \qquad \lambda \in (0, 1).
+$$ {#eq-lambda-return}
+:::
+
+### TD($\lambda$) for Critic Estimation {#sec-td-lambda}
+
+The $\lambda$-return $G_t^\lambda$ satisfies:
+$$
+\mathbb{E}\bigl[ G_t^\lambda \mid s_t = s \bigr] = V(s) \quad \text{has solution} \quad V = V^\pi.
+$$
+
+Therefore, we can apply a TD learning algorithm with TD target $= G_t^\lambda$:
+
+- Loss: $(G_t^\lambda - V_\phi(s_t))^2$.
+- Update direction: $(G_t^\lambda - V_\phi(s_t)) \cdot \nabla_\phi V_\phi(s_t)$.
+
+![Generalized Advantage Estimation (GAE). The top shows a trajectory with TD errors computed at each step. The middle shows the bias-variance spectrum from 1-step TD (low variance, high bias) to Monte Carlo (high variance, no bias). GAE takes a weighted average over all N-step returns using the parameter lambda, with the typical choice lambda = 0.95 balancing bias and variance.](figures/gae-bias-variance.svg){#fig-gae-bias-variance width="95%"}
+
+### Generalized Advantage Estimation (GAE) {#sec-gae}
+
+Using $\lambda$-return, if $V = V^\pi$ in the computation of $G_t^\lambda$, we have:
+$$
+\mathbb{E}\bigl[ G_t^\lambda - V^\pi(s_t) \mid s_t = s, \, a_t = a \bigr] = A^\pi(s, a).
+$$ {#eq-gae-property}
+
+Thus, we can use $G_t^\lambda - V(s_t)$ (computed using the current critic $V$) as an estimator of the advantage. This is called **Generalized Advantage Estimation (GAE)**.
+
+**An equivalent computation of GAE.** Define the **single-step TD error**:
+$$
+\delta_t^V = r_t + V(s_{t+1}) - V(s_t).
+$$ {#eq-td-error}
+
+Then we can write:
+$$
+G_t^{(n)} - V(s_t) = \delta_t^V + \gamma \cdot \delta_{t+1}^V + \gamma^2 \cdot \delta_{t+2}^V + \cdots + \gamma^{n-1} \cdot \delta_{t+n-1}^V.
+$$ {#eq-n-step-td-decomposition}
+
+This follows from a telescoping argument:
+$$
+G_t^{(n)} - V(s_t) = \underbrace{r_t + \gamma V(s_{t+1}) - V(s_t)}_{\delta_t^V} + \gamma \cdot \bigl( G_{t+1}^{(n-1)} - V(s_{t+1}) \bigr),
+$$
+which by recursion gives $\delta_t^V + \gamma \cdot \delta_{t+1}^V + \cdots + \gamma^{n-1} \cdot \delta_{t+n-1}^V$.
+
+Therefore:
+$$
+\text{GAE}_t^V = (1 - \lambda) \sum_{n=1}^{\infty} \lambda^{n-1} \bigl( G_t^{(n)} - V(s_t) \bigr) = \sum_{\ell=0}^{\infty} (\lambda \gamma)^\ell \cdot \delta_{t+\ell}^V.
+$$ {#eq-gae-formula}
+
+This is how GAE is implemented in practice.
+
+**Practical implementation of GAE:**
+$$
+\text{GAE}_t^V \approx \sum_{\ell=t}^{T} (\gamma \lambda)^{\ell - t} \cdot \delta_\ell^V,
+$$ {#eq-gae-practical}
+where:
+
+- $V$: current critic.
+- $T$: horizon of episode (last step of trajectory).
+- $\delta_\ell^V = \begin{cases} r_\ell + V(s_{\ell+1}) - V(s_\ell) & \text{if } \ell \neq T \text{ (not last step)}, \\ r_\ell - V(s_\ell) & \text{if } \ell = T \text{ (last step, i.e., "done")}. \end{cases}$
+
+### Implementation of GAE {#sec-gae-implementation}
+
+The following code computes GAE by iterating backwards through the trajectory:
+
+```python
+advantages = np.zeros((self.n_workers, self.worker_steps), dtype=np.float32)
+last_advantage = 0
+
+last_value = values[:, -1]
+
+for t in reversed(range(self.worker_steps)):
+    mask = 1.0 - done[:, t]           # If "done" (t+1 = T), V(s_{t+1}) = 0
+    last_value = last_value * mask
+    last_advantage = last_advantage * mask
+
+    delta = rewards[:, t] + self.gamma * last_value - values[:, t]
+
+    last_advantage = delta + self.gamma * self.lambda_ * last_advantage
+
+    advantages[:, t] = last_advantage
+
+    last_value = values[:, t]
+
+return advantages
+```
+
+### Implementation of A2C in StableBaselines3 {#sec-a2c-implementation}
+
+The StableBaselines3 implementation includes:
+
+- Entropy regularization in the actor loss.
+- Return and advantage values are computed in the **rollout buffer**.
+
+The training function computes:
+
+- **GAE computation** in the rollout buffer: iterates backwards, computing `delta = rewards[step] + gamma * next_values * next_non_terminal - values[step]` and accumulating `last_gae_lam = delta + gamma * gae_lambda * next_non_terminal * last_gae_lam`.
+- **Returns:** `self.returns = self.advantages + self.values`.
+- **Normalized advantage:** `advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)`.
+- **Policy gradient loss:** `policy_loss = -(advantages * log_prob).mean()`.
+- **Value loss:** `value_loss = F.mse_loss(rollout_data.returns, values)`.
+- **Entropy loss:** to favor exploration.
+- **Total loss:** `loss = policy_loss + self.ent_coef * entropy_loss + self.vf_coef * value_loss`.
+
+
+## Proximal Policy Optimization (PPO) {#sec-ppo}
+
+### Motivation: Soft Policy Iteration with Neural Networks {#sec-ppo-motivation}
+
+Recall that the **performance difference lemma (PDL)** gives us the descent direction for policy optimization:
+$$
+J(\pi') - J(\pi) = \mathbb{E}_{(s,a) \sim d_\mu^{\pi'}} \bigl[ \langle Q^\pi(s, \cdot), \, \pi'(\cdot \mid s) - \pi(\cdot \mid s) \rangle_{\mathcal{A}} \bigr].
+$$
+
+Here, let $\pi = \pi_{\text{old}}$ (the current policy) and $\pi' = \pi_\theta$ (the new policy we want to optimize). Notice that $\langle Q^\pi(s, \cdot), \pi(\cdot \mid s) \rangle = V^\pi(s)$. We can equivalently write:
+$$
+J(\pi_\theta) - J(\pi_{\text{old}}) = \mathbb{E}_{(s,a) \sim d_\mu^{\pi_\theta}} \bigl[ A^{\pi_{\text{old}}}(s, a) \bigr].
+$$ {#eq-pdl}
+
+The idea of **soft policy iteration** is:
+
+1. Estimate the update direction $A^{\pi_{\text{old}}}$ (via $Q^{\pi_{\text{old}}}$).
+2. Move $\pi_\theta$ along the direction of $A^{\pi_{\text{old}}}$ (estimated) with a small stepsize ($\pi_{\text{new}} = \pi_{\text{old}} + \text{small step}$). For example, update using mirror descent.
+
+![The derivation of PPO in three steps. Starting from the performance difference lemma, we encounter a data mismatch problem (we need data from the new policy but only have data from the old policy). Importance sampling fixes this but introduces instability when the ratio is large. Clipping the ratio resolves this, yielding the PPO objective.](figures/ppo-logic-flow.svg){#fig-ppo-logic-flow width="95%"}
+
+### From Soft Policy Iteration to PPO {#sec-soft-pi-to-ppo}
+
+When we parameterize $\pi_\theta$ using a function (e.g., neural network), a challenge in implementing policy mirror descent is that we cannot update each $\pi(\cdot \mid s)$ separately. We can only construct a loss function:
+$$
+F(\theta) = \mathbb{E}_{(s,a) \sim d_\mu^{\pi_\theta}} \bigl[ A^{\pi_{\text{old}}}(s, a) \bigr].
+$$
+
+**Problem:** We do not have data from $d_\mu^{\pi_\theta}$ because we have not executed $\pi_\theta$ yet.
+
+**Fix:** Approximate $F$ using **importance sampling**:
+$$
+L(\theta) = \mathbb{E}_{\substack{s \sim d_\mu^{\pi_{\text{old}}} \\ a \sim \pi_\theta(\cdot \mid s)}} \bigl[ A^{\pi_{\text{old}}}(s, a) \bigr] = \mathbb{E}_{(s,a) \sim d_\mu^{\pi_{\text{old}}}} \biggl[ \frac{\pi_\theta(a \mid s)}{\pi_{\text{old}}(a \mid s)} \cdot A^{\pi_{\text{old}}}(s, a) \biggr].
+$$ {#eq-ppo-surrogate}
+
+Here $L(\theta) \approx F(\theta)$ if $\pi_\theta$ and $\pi_{\text{old}}$ are close. This objective leads to **Proximal Policy Optimization (PPO)**.
+
+### The PPO Clipped Objective {#sec-ppo-clipped}
+
+![The PPO clipped surrogate objective. Left: when the advantage A > 0 (good action), the objective rises linearly with the ratio r(theta; s,a) but is clipped flat when r > 1+e, preventing the policy from changing too much. Right: when A < 0 (bad action), the objective descends but is clipped flat when r < 1-e. In both cases, clipping ensures gradients vanish when the policy ratio leaves the trust region [1-e, 1+e].](figures/ppo-clipped-objective.svg){#fig-ppo-clipped width="80%"}
+
+PPO updates $\pi_{\text{old}}$ using the gradient of a loss function that is similar to the importance-sampled surrogate. At the same time, we want to make sure $\pi_\theta$ and $\pi_{\text{old}}$ are close. To ensure this, we **clip the density ratio** and write:
+$$
+L^{\text{clip}}(\theta) = \mathbb{E}_{(s,a) \sim d_\mu^{\pi_{\text{old}}}} \Bigl[ \min \bigl\{ r(\theta; s, a) \cdot A^{\pi_{\text{old}}}(s, a), \; \text{Clip}\bigl( r(\theta; s, a), \, 1 - \varepsilon, \, 1 + \varepsilon \bigr) \cdot A^{\pi_{\text{old}}}(s, a) \bigr\} \Bigr],
+$$ {#eq-ppo-clip}
+
+where the **importance sampling ratio** is:
+$$
+r(\theta; s, a) = \frac{\pi_\theta(a \mid s)}{\pi_{\text{old}}(a \mid s)},
+$$ {#eq-ppo-ratio}
+and the clip function is:
+$$
+\text{Clip}(x, 1 - \varepsilon, 1 + \varepsilon) = \begin{cases} 1 - \varepsilon & \text{if } x \leq 1 - \varepsilon, \\ x & \text{if } x \in [1 - \varepsilon, 1 + \varepsilon], \\ 1 + \varepsilon & \text{if } x \geq 1 + \varepsilon. \end{cases}
+$$
+
+By clipping $r(\theta; s, a)$ to $[1 - \varepsilon, 1 + \varepsilon]$, we approximately ensure that $\pi_\theta$ is close to $\pi_{\text{old}}$, at least on trajectories generated by $\pi_{\text{old}}$. Why? If $\pi_\theta / \pi_{\text{old}}$ is too large or too small, we clip it and the gradient becomes $0$.
+
+::: {.callout-tip}
+## Why the $\min$ in the PPO Objective?
+
+The PPO objective takes the **minimum** of the unclipped and clipped surrogate terms. This is a deliberate, pessimistic choice that prevents the policy from moving too far in *either* direction:
+
+- **When $A > 0$ (good action):** the unclipped term $r(\theta; s, a) \cdot A$ grows as $r(\theta; s, a)$ increases (the policy takes this action more). Clipping caps the benefit at $(1+\varepsilon)A$, and the $\min$ selects the capped version once $r(\theta; s, a) > 1+\varepsilon$ --- stopping the policy from over-committing to a single good action.
+
+- **When $A < 0$ (bad action):** the unclipped term $r(\theta; s, a) \cdot A$ becomes more negative as $r(\theta; s, a)$ decreases (the policy avoids this action). Clipping caps this at $(1-\varepsilon)A$, and the $\min$ selects the capped version once $r(\theta; s, a) < 1-\varepsilon$ --- stopping the policy from aggressively avoiding an action based on a single bad estimate.
+
+Without the $\min$, the clipped term alone would still allow the objective to grow in regions where clipping is inactive. The $\min$ ensures that the objective is always the **more conservative** of the two, creating a flat plateau beyond the trust region $[1-\varepsilon, 1+\varepsilon]$ where the gradient vanishes.
+:::
+
+### Gradient Analysis of the Clipped Loss {#sec-ppo-gradient}
+
+The following table summarizes the behavior of the clipped objective in different cases, where $r_t(\theta) = \pi_\theta(a_t \mid s_t) / \pi_{\text{old}}(a_t \mid s_t)$ is the importance sampling ratio and $A_t = \widehat{A}^{\pi_{\text{old}}}(s_t, a_t)$ is the estimated advantage:
+
+| Case | $r_t(\theta)$ | $A_t$ | Return of min | Clipped? | Sign | Gradient |
+|------|-----------|--------|---------------|----------|------|----------|
+| 1 | $\in [1-\varepsilon, 1+\varepsilon]$ | $+$ | $r_t(\theta) A_t$ | no | $+$ | passes |
+| 2 | $\in [1-\varepsilon, 1+\varepsilon]$ | $-$ | $r_t(\theta) A_t$ | no | $-$ | passes |
+| 3 | $< 1-\varepsilon$ | $+$ | $r_t(\theta) A_t$ | no | $+$ | passes |
+| 4 | $< 1-\varepsilon$ | $-$ | $(1-\varepsilon) A_t$ | yes | $-$ | **zero** |
+| 5 | $> 1+\varepsilon$ | $+$ | $(1+\varepsilon) A_t$ | yes | $+$ | **zero** |
+| 6 | $> 1+\varepsilon$ | $-$ | $r_t(\theta) A_t$ | no | $-$ | passes |
+
+The key insight is that clipping prevents the objective from benefiting when the ratio moves **too far** in the direction that would increase the objective. When $A > 0$ and $r_t(\theta) > 1 + \varepsilon$ (case 5), the policy is already taking this action much more than before, so we stop the gradient. When $A < 0$ and $r_t(\theta) < 1 - \varepsilon$ (case 4), the policy is already avoiding this action, so we again stop the gradient.
+
+### Implementation of PPO {#sec-ppo-implementation}
+
+::: {.callout-note}
+## Algorithm: PPO
+
+**Critic loss:** There are many ways to construct the critic loss. For example, TD(0):
+$$
+y_t = r_t + V_\phi(s_{t+1}), \qquad L(\phi) = \bigl( y_t - V_\phi(s_t) \bigr)^2.
+$$
+In Stable-Baselines3, **GAE** is used.
+
+**Actor loss:**
+$$
+L^{\text{clip}}(\theta) = \min \bigl\{ r_t(\theta) \cdot \widehat{A}_t, \; \text{Clip}\bigl( r_t(\theta), \, 1 - \varepsilon, \, 1 + \varepsilon \bigr) \cdot \widehat{A}_t \bigr\},
+$$
+where $r_t(\theta) = \pi_\theta(a_t \mid s_t) / \pi_{\text{old}}(a_t \mid s_t)$ and $\widehat{A}_t$ is the estimated GAE.
+
+**Training loop:**
+
+- $\pi_{\text{old}}$ and the rollout buffer (data) are fixed for $T = n_{\text{epochs}} \times \frac{\text{buffer size}}{\text{batch size}}$ steps.
+- Initialize $\pi_\theta^0 = \pi_{\text{old}}$.
+- For $t = 1, 2, \ldots, T$:
+  - Estimate a mini-batch stochastic gradient $g^t = \nabla L^{\text{clip}}(\theta^t)$.
+  - $\theta^{t+1} \leftarrow \text{update}(\theta^t, g^t)$.
+  - Monitor $\text{KL}(\pi_{\text{old}}, \pi_\theta) = \mathbb{E}_{a \sim \pi_{\text{old}}} [\log \pi_{\text{old}}(a \mid s) - \log \pi_\theta(a \mid s)]$ to track if $\pi_\theta$ is far from $\pi_{\text{old}}$.
+
+**Data collection:** We collect $n_{\text{steps}} \times n_{\text{envs}}$ (= buffer size) transition tuples from $\pi_{\text{old}}$ as the training data for updating both policy and value. We update $\pi_\theta$ and $V_\phi$ for $n_{\text{epochs}}$ epochs (sample reuse when updating $\pi_\theta$). Total number of gradient steps $= n_{\text{epochs}} \times \frac{\text{buffer size}}{\text{batch size}}$.
+:::
+
+### Code: Building the Actor Loss in PPO {#sec-ppo-code}
+
+```python
+# train for n_epochs epochs
+for epoch in range(self.n_epochs):
+    approx_kl_divs = []
+    # Do a complete pass on the rollout buffer
+    for rollout_data in self.rollout_buffer.get(self.batch_size):
+        actions = rollout_data.actions
+        if isinstance(self.action_space, spaces.Discrete):
+            actions = actions.long().flatten()
+
+        values, log_prob, entropy = self.policy.evaluate_actions(
+            rollout_data.observations, actions)
+        values = values.flatten()
+        # Normalize advantage
+        advantages = rollout_data.advantages
+        advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
+
+        # ratio between old and new policy, should be one at the first iteration
+        ratio = th.exp(log_prob - rollout_data.old_log_prob)
+
+        # clipped surrogate loss
+        policy_loss_1 = advantages * ratio
+        policy_loss_2 = advantages * th.clamp(ratio, 1 - clip_range, 1 + clip_range)
+        policy_loss = -th.min(policy_loss_1, policy_loss_2).mean()
+```
+
+### Comparisons Between A2C and PPO {#sec-a2c-ppo-comparison}
+
+| Property | PPO | A2C |
+|----------|-----|-----|
+| **Buffer Size** | $n_{\text{steps}} \times n_{\text{envs}}$ | $n_{\text{steps}} \times n_{\text{envs}}$ |
+| **Gradient Steps per Rollout** | $n_{\text{epochs}} \times \frac{n_{\text{steps}} \times n_{\text{envs}}}{n_{\text{batch}}}$ | 1 |
+| **Sample Reuse** | Multiple passes (sample reuse) | Single pass (no reuse) |
+| **Sample Efficiency** | Higher | Lower |
+| **Updates Frequency** | Fewer updates (more steps per rollout) | Frequent updates (smaller rollouts) |
+
+### Summary: A2C vs. PPO Actor Loss {#sec-summary-a2c-ppo}
+
+**A2C:** The actor loss in A2C directly updates the policy $\pi_\theta$ based on the log-probability of actions and the advantage:
+$$
+\mathcal{L}_{\text{actor}}^{\text{A2C}} = -\mathbb{E}_t \bigl[ \widehat{A}_t \cdot \log \pi_\theta(a_t \mid s_t) \bigr].
+$$
+
+Here $\widehat{A}_t$ measures how much better the chosen action $a_t$ is compared to the baseline value $V(s_t)$.
+
+**PPO:** PPO modifies the actor loss by introducing a **clipping mechanism**:
+$$
+\mathcal{L}_{\text{actor}}^{\text{PPO}} = -\mathbb{E}_t \Bigl[ \min \bigl( r_t(\theta) \widehat{A}_t, \; \text{clip}(r_t(\theta), 1 - \varepsilon, 1 + \varepsilon) \, \widehat{A}_t \bigr) \Bigr],
+$$
+where $r_t(\theta) = \frac{\pi_\theta(a_t \mid s_t)}{\pi_{\text{old}}(a_t \mid s_t)}$ is the importance sampling ratio. Clipping ensures $r_t(\theta)$ stays within $[1 - \varepsilon, 1 + \varepsilon]$, preventing overly large updates to the policy.
+
+**Advantage term:** Both A2C and PPO use **Generalized Advantage Estimation (GAE)** to compute the advantage:
+$$
+\widehat{A}_t = \sum_{k=0}^{\infty} (\gamma \lambda)^k \delta_{t+k}, \qquad \delta_t = r_t + \gamma V(s_{t+1}) - V(s_t),
+$$ {#eq-gae-summary}
+where $\gamma$ is the discount factor and $\lambda$ is the GAE bias-variance trade-off parameter.
+
+## Comparison of Policy-Based Methods {#sec-policy-based-comparison}
+
+::: {.column-page}
+
+| | **A2C** | **PPO** |
+|:---|:---|:---|
+| **Data** | On-policy rollouts ($n_{\text{steps}} \times n_{\text{envs}}$); discarded after update | On-policy rollouts; **reused for $n_{\text{epochs}}$ passes** |
+| **Networks** | Policy $\pi_\theta(a \mid s)$, Value $V_\phi(s)$ | Policy $\pi_\theta(a \mid s)$, Value $V_\phi(s)$ |
+| **Critic loss** | $(G_t^\lambda - V_\phi(s_t))^2$ (GAE returns) | $(G_t^\lambda - V_\phi(s_t))^2$ (GAE returns) |
+| **Actor loss** | $-\widehat{A}_t \cdot \log \pi_\theta(a_t \mid s_t)$ | $-\min\{r_t(\theta) \widehat{A}_t,\; \text{Clip}(r_t(\theta), 1{\pm}\varepsilon)\widehat{A}_t\}$ |
+| **Advantage** | GAE: $\sum_{\ell=0}^{T} (\gamma\lambda)^\ell \delta_{t+\ell}$ | GAE (same) |
+| **Gradient steps** | 1 per rollout | $n_{\text{epochs}} \times \frac{\text{buffer}}{\text{batch}}$ per rollout |
+| **Trust region** | None (single gradient step) | Clipped ratio $r_t(\theta) \in [1{-}\varepsilon, 1{+}\varepsilon]$ |
+| **Sample efficiency** | Lower (no reuse) | Higher (multi-epoch reuse) |
+| **Entropy bonus** | $c_{\text{ent}} \cdot H(\pi_\theta)$ | $c_{\text{ent}} \cdot H(\pi_\theta)$ |
+
+: Comparison of policy-based methods. {#tbl-policy-based-comparison .striped .hover}
+
+:::
+
+
+## Chapter Summary {#sec-chapter-summary}
+
+This chapter covered **policy-based deep RL methods** that directly optimize parameterized policies using gradient ascent on the expected return. The following table summarizes the algorithms covered.
+
+### Summary of Policy-Based Algorithms
+
+| Algorithm | Family | Key Innovation | Action Space |
+|:---|:---|:---|:---|
+| **A2C** | Policy gradient | Advantage actor-critic, on-policy | Both |
+| **PPO** | Policy gradient | Clipped surrogate objective (trust region) | Both |
+
+: Summary of policy-based deep RL algorithms. {#tbl-ch8-summary .striped .hover}
+
+### Key Concepts
+
+- **Policy gradient theorem:** the gradient of the expected return takes the form $\mathbb{E}[A^\pi(s,a) \cdot \nabla \log \pi_\theta(a \mid s)]$, weighting log-probabilities by how good actions are.
+- **REINFORCE variance:** using full trajectory returns as the advantage estimate leads to high variance; actor-critic methods reduce this by learning a value function baseline.
+- **TD error as advantage:** the one-step TD error $r + \gamma V(s') - V(s)$ is an unbiased estimator of the advantage $A^\pi(s,a)$, requiring only a value function (not a Q-function).
+- **Generalized Advantage Estimation (GAE):** interpolates between 1-step TD ($\lambda=0$) and Monte Carlo ($\lambda=1$) to balance bias and variance in the critic.
+- **Clipped surrogate (PPO):** constrains the policy ratio $r(\theta; s, a) \in [1-\varepsilon, 1+\varepsilon]$, preventing destructive large updates while allowing multiple gradient steps per rollout.
+- **On-policy vs. off-policy:** A2C and PPO are on-policy (data collected from the current policy), trading sample efficiency for stability and simplicity.
+
+### Algorithm Specifications {#sec-algorithm-specs}
+
+The following tables provide a detailed specification for each algorithm, covering data collection, network architecture, loss functions, and key hyperparameters.
+
+#### A2C (Advantage Actor-Critic)
+
+| Component | Specification |
+|:---|:---|
+| **Data collection** | On-policy. Run $\pi_\theta$ in $n_{\text{envs}}$ parallel environments for $n_{\text{steps}}$ steps. Rollout buffer of size $n_{\text{steps}} \times n_{\text{envs}}$. **Data discarded after each update** |
+| **Networks** | Policy $\pi_\theta(a \mid s)$, Value $V_\phi(s)$ — may share a backbone with separate heads |
+| **Critic loss** | $L(\phi) = (G_t^\lambda - V_\phi(s_t))^2$, where $G_t^\lambda$ is the GAE return |
+| **Actor loss** | $L(\theta) = -\widehat{A}_t \cdot \log \pi_\theta(a_t \mid s_t) - c_{\text{ent}} \cdot H(\pi_\theta)$ |
+| **Target update** | None — on-policy, no target networks |
+| **Exploration** | Stochastic policy + entropy bonus $c_{\text{ent}} \cdot H(\pi)$ |
+| **Action space** | Both discrete and continuous |
+
+: A2C specification. {.striped .hover}
+
+#### PPO (Proximal Policy Optimization)
+
+| Component | Specification |
+|:---|:---|
+| **Data collection** | On-policy. Same as A2C, but data is **reused for $n_{\text{epochs}}$ passes** (sample reuse via importance sampling) |
+| **Networks** | Policy $\pi_\theta(a \mid s)$, Value $V_\phi(s)$ — may share a backbone |
+| **Critic loss** | $L(\phi) = (G_t^\lambda - V_\phi(s_t))^2$, where $G_t^\lambda$ is the GAE return |
+| **Actor loss** | $L^{\text{clip}}(\theta) = -\min\bigl\{r_t(\theta) \widehat{A}_t,\; \text{Clip}(r_t(\theta), 1 \pm \varepsilon) \widehat{A}_t\bigr\} - c_{\text{ent}} \cdot H(\pi_\theta)$; \quad $r_t(\theta) = \pi_\theta(a_t \mid s_t) / \pi_{\text{old}}(a_t \mid s_t)$ |
+| **Target update** | None — on-policy |
+| **Exploration** | Stochastic policy + entropy bonus |
+| **Key difference** | Clipped ratio $r_t(\theta) \in [1-\varepsilon, 1+\varepsilon]$ replaces trust-region constraint; allows multiple gradient steps per rollout |
+| **Action space** | Both discrete and continuous |
+
+: PPO specification. {.striped .hover}
+
+### References {#sec-ch8-references}
+
+- R. J. Williams, "Simple statistical gradient-following algorithms for connectionist reinforcement learning," *Machine Learning*, vol. 8, pp. 229--256, 1992.
+- V. Mnih, A. P. Badia, M. Mirza, et al., "Asynchronous methods for deep reinforcement learning," *ICML*, 2016.
+- J. Schulman, P. Moritz, S. Levine, M. Jordan, and P. Abbeel, "High-dimensional continuous control using generalized advantage estimation," *ICLR*, 2016.
+- J. Schulman, F. Wolski, P. Dhariwal, A. Radford, and O. Klimov, "Proximal policy optimization algorithms," *arXiv:1707.06347*, 2017.
+
+::: {.callout-tip}
+## Looking Ahead
+In the next chapter we will study **transformer architectures** --- the neural network design that powers modern large language models. We will see how transformers are increasingly used as function approximators within RL systems, and how the paradigm of **reinforcement learning from human feedback (RLHF)** combines the policy optimization objectives studied in this chapter (especially PPO) with the transformer architecture.
+:::

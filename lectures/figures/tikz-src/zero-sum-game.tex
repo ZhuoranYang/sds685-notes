@@ -1,0 +1,103 @@
+\documentclass[tikz,border=10pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage{mathpazo}
+\usepackage{amsmath,amssymb}
+\usetikzlibrary{arrows.meta, positioning, calc, decorations.markings}
+
+\definecolor{stblue}{HTML}{7B97AD}
+\definecolor{rwgold}{HTML}{B8995E}
+\definecolor{sage}{HTML}{7A9A7E}
+\definecolor{dkbrown}{HTML}{3D3530}
+\definecolor{wmgray}{HTML}{7B7067}
+\definecolor{cream}{HTML}{F9F6F0}
+\definecolor{border}{HTML}{D4C9B8}
+
+\begin{document}
+\begin{tikzpicture}[
+  >={Stealth[length=2.5mm, width=2mm]},
+  arr/.style={draw=dkbrown, line width=0.8pt, ->},
+  alice/.style={circle, draw=stblue, line width=1.5pt, fill=stblue!12,
+    minimum size=15mm, font=\normalsize\bfseries, inner sep=0pt},
+  bob/.style={regular polygon, regular polygon sides=4, draw=rwgold,
+    line width=1.5pt, fill=rwgold!12,
+    minimum size=15mm, font=\normalsize\bfseries, inner sep=0pt},
+  elabel/.style={font=\small, fill=cream, fill opacity=0.9, text opacity=1,
+    inner sep=2pt, rounded corners=2pt},
+  term/.style={circle, draw=sage, line width=1.2pt, fill=sage!12,
+    minimum size=10mm, font=\small\bfseries, inner sep=0pt},
+]
+
+% Background
+\fill[cream, rounded corners=10pt] (-4.8,-7.2) rectangle (10.8,3.8);
+\draw[border, rounded corners=10pt, line width=1pt] (-4.8,-7.2) rectangle (10.8,3.8);
+
+% Title
+\node[font=\large\bfseries, text=dkbrown] at (3.0,3.1)
+  {Two-Player Zero-Sum Turn-Based Game};
+
+% === Level 0: Alice's turn ===
+\node[alice] (s0) at (3.0,1.5) {$s_0$};
+\node[font=\small\itshape, text=stblue, anchor=east] at ($(s0.west)+(-0.4,0)$) {Alice};
+\node[font=\scriptsize, text=stblue] at ($(s0.south)+(0,-0.1)$) {$\max$};
+
+% === Level 1: Bob's turn ===
+\node[bob] (s1) at (0,-1.5) {$s_1$};
+\node[font=\small\itshape, text=rwgold, anchor=east] at ($(s1.west)+(-0.3,0)$) {Bob};
+\node[font=\scriptsize, text=rwgold] at ($(s1.south)+(0,-0.15)$) {$\min$};
+
+\node[bob] (s2) at (6,-1.5) {$s_2$};
+\node[font=\small\itshape, text=rwgold, anchor=west] at ($(s2.east)+(0.3,0)$) {Bob};
+\node[font=\scriptsize, text=rwgold] at ($(s2.south)+(0,-0.15)$) {$\min$};
+
+% === Level 2: Alice's turn ===
+\node[alice] (s3) at (-2.5,-4.5) {$s_3$};
+\node[font=\scriptsize, text=stblue] at ($(s3.south)+(0,-0.1)$) {$\max$};
+
+\node[alice] (s4) at (2.0,-4.5) {$s_4$};
+\node[font=\scriptsize, text=stblue] at ($(s4.south)+(0,-0.1)$) {$\max$};
+
+\node[alice] (s5) at (4.0,-4.5) {$s_5$};
+\node[font=\scriptsize, text=stblue] at ($(s5.south)+(0,-0.1)$) {$\max$};
+
+\node[alice] (s6) at (8.5,-4.5) {$s_6$};
+\node[font=\scriptsize, text=stblue] at ($(s6.south)+(0,-0.1)$) {$\max$};
+
+% === Edges: Level 0 -> 1 ===
+\draw[arr, line width=1pt, stblue] (s0) -- node[elabel, above left, text=stblue]
+  {$a_1$} (s1);
+\draw[arr, line width=1pt, stblue] (s0) -- node[elabel, above right, text=stblue]
+  {$a_2$} (s2);
+
+% === Edges: Level 1 -> 2 ===
+\draw[arr, line width=1pt, rwgold, dashed] (s1) -- node[elabel, above left, text=rwgold]
+  {$b_1$} (s3);
+\draw[arr, line width=1pt, rwgold, dashed] (s1) -- node[elabel, above right=-1pt, text=rwgold]
+  {$b_2$} (s4);
+
+\draw[arr, line width=1pt, rwgold, dashed] (s2) -- node[elabel, above left=-1pt, text=rwgold]
+  {$b_1$} (s5);
+\draw[arr, line width=1pt, rwgold, dashed] (s2) -- node[elabel, above right, text=rwgold]
+  {$b_2$} (s6);
+
+% === Dots below level 2 ===
+\node[font=\large, text=wmgray] at (-2.5,-5.8) {$\vdots$};
+\node[font=\large, text=wmgray] at (2.0,-5.8) {$\vdots$};
+\node[font=\large, text=wmgray] at (4.0,-5.8) {$\vdots$};
+\node[font=\large, text=wmgray] at (8.5,-5.8) {$\vdots$};
+
+% === Legend ===
+\draw[rounded corners=5pt, border, fill=cream, line width=0.8pt]
+  (-4.4,-6.9) rectangle (2.8,-6.0);
+\node[alice, minimum size=6mm, font=\tiny\bfseries, inner sep=0pt] (la) at (-3.7,-6.45) {};
+\node[font=\footnotesize, text=dkbrown, anchor=west] at (-3.2,-6.45)
+  {$s \in \mathcal{S}_1$: Alice (max)};
+\node[bob, minimum size=6mm, font=\tiny\bfseries, inner sep=0pt] (lb) at (0.2,-6.45) {};
+\node[font=\footnotesize, text=dkbrown, anchor=west] at (0.7,-6.45)
+  {$s \in \mathcal{S}_2$: Bob (min)};
+
+% Reward annotations
+\node[font=\scriptsize, text=sage, anchor=west] at (3.5,-6.45)
+  {Alice gets $r_t$, Bob gets $-r_t$ at every step};
+
+\end{tikzpicture}
+\end{document}
