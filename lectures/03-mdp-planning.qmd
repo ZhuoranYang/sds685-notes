@@ -30,10 +30,14 @@ This lecture develops a comprehensive toolkit of planning algorithms. We begin w
 Before developing planning algorithms, we recall the key results established in the previous lecture. These results tell us *what* we are trying to compute; the algorithms in this lecture tell us *how*.
 
 ::: {#thm-fundamental}
-## Fundamental Theorem of MDPs
+## Fundamental Theorem of MDPs (Recap from @thm-fundamental-mdp)
 
-1. It suffices to focus on **memoryless (Markov)** policies.
-2. $\pi^*$ is greedy with respect to $V^*(Q^*)$. Moreover, $V^*(Q^*)$ is the unique solution to the Bellman equation.
+For any finite MDP with discount factor $\gamma \in [0,1)$:
+
+1. The optimal value function $V^*$ is the **unique fixed point** of the Bellman optimality operator: $V^* = \mathcal{T} V^*$.
+2. Any policy $\pi^*$ that is **greedy** with respect to $V^*$ is optimal.
+
+Consequently, there always exists an optimal policy that is **memoryless** and **deterministic**. This tells us *what* to compute --- the fixed point of $\mathcal{T}$ --- and the algorithms below tell us *how*.
 :::
 
 ### Bellman Operators {#sec-bellman-operators}
