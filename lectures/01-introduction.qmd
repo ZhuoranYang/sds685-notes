@@ -580,7 +580,7 @@ Imitation learning (BC and DAgger) requires an **expert** that can label arbitra
 
 The following notebook implements behavior cloning and DAgger on the MountainCar environment, comparing the learned policy against the expert.
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ZhuoranYang/zhuoran-yale-teaching/blob/main/SDS685/notebooks/01-behavior-cloning.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ZhuoranYang/sds685-notes/blob/main/notebooks/01-behavior-cloning.ipynb)
 
 ::: {.callout-tip}
 ## Looking Ahead

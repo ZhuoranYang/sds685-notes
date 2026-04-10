@@ -220,7 +220,7 @@ The key insight is that the language model's next-token distribution is exactly 
 
 The following notebook explores standard Gymnasium environments (classic control, Atari, MuJoCo) with random and pretrained policies. Click the badge to run it interactively on Google Colab.
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ZhuoranYang/zhuoran-yale-teaching/blob/main/SDS685/notebooks/01-rl-environments.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ZhuoranYang/sds685-notes/blob/main/notebooks/01-rl-environments.ipynb)
 
 ## Objective in MDP {#sec-objective}
 
